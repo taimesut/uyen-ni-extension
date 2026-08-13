@@ -76,14 +76,12 @@ export const DoiSoatPage = () => {
     <div className="app-page space-y-5 sm:space-y-6">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <span className="soft-kicker">
-            <ClipboardCheck className="h-3.5 w-3.5" /> Audit workspace
-          </span>
-          <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-[#563c47] sm:text-4xl">
+          <span className="soft-kicker">Audit workspace</span>
+          <h1 className="mt-2 text-3xl font-black tracking-[-0.035em] text-[#44373d] sm:text-4xl">
             Đối soát
           </h1>
-          <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-[#8c707c]">
-            Dữ liệu lấy từ sheet <strong className="text-pink-600">raw</strong>, chỉ giữ hai nhóm aging cần audit.
+          <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[#786970]">
+            Dữ liệu từ sheet <strong className="font-bold text-[#9f4664]">raw</strong>, chỉ hiển thị hai nhóm aging cần audit.
           </p>
         </div>
 
@@ -91,7 +89,7 @@ export const DoiSoatPage = () => {
           type="button"
           onClick={() => void loadData()}
           disabled={loading}
-          className="btn btn-primary min-h-11 rounded-2xl border-0 px-5 font-extrabold shadow-[0_10px_28px_rgba(219,107,145,.2)]"
+          className="btn btn-primary min-h-11 rounded-xl border-0 px-5 font-bold shadow-sm"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Làm mới
@@ -99,45 +97,45 @@ export const DoiSoatPage = () => {
       </section>
 
       <section className="grid gap-3 sm:grid-cols-3">
-        <div className="soft-card p-4 sm:p-5">
+        <div className="surface-card p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs font-extrabold uppercase tracking-[0.13em] text-[#9b7886]">Tổng audit</span>
-            <span className="grid h-9 w-9 place-items-center rounded-2xl bg-pink-50 text-pink-500">
+            <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#817078]">Tổng audit</span>
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#f3e5ea] text-[#a64e6b]">
               <PackageSearch className="h-4 w-4" />
             </span>
           </div>
-          <div className="mt-3 text-3xl font-black text-[#5d414d]">{result.total}</div>
+          <div className="mt-3 text-3xl font-black text-[#493a40]">{result.total}</div>
         </div>
 
-        <div className="soft-card p-4 sm:p-5">
+        <div className="surface-card p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs font-extrabold uppercase tracking-[0.13em] text-amber-600">24H → 36H</span>
-            <span className="grid h-9 w-9 place-items-center rounded-2xl bg-amber-50 text-amber-500">
+            <span className="text-xs font-bold uppercase tracking-[0.1em] text-amber-700">24H → 36H</span>
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-50 text-amber-600">
               <Clock3 className="h-4 w-4" />
             </span>
           </div>
-          <div className="mt-3 text-3xl font-black text-amber-600">{result.count24To36}</div>
+          <div className="mt-3 text-3xl font-black text-amber-700">{result.count24To36}</div>
         </div>
 
-        <div className="soft-card p-4 sm:p-5">
+        <div className="surface-card p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs font-extrabold uppercase tracking-[0.13em] text-rose-600">&gt; 36H</span>
-            <span className="grid h-9 w-9 place-items-center rounded-2xl bg-rose-50 text-rose-500">
+            <span className="text-xs font-bold uppercase tracking-[0.1em] text-rose-700">&gt; 36H</span>
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-50 text-rose-600">
               <AlertTriangle className="h-4 w-4" />
             </span>
           </div>
-          <div className="mt-3 text-3xl font-black text-rose-600">{result.countOver36}</div>
+          <div className="mt-3 text-3xl font-black text-rose-700">{result.countOver36}</div>
         </div>
       </section>
 
-      <section className="soft-card overflow-hidden">
-        <div className="space-y-3 border-b border-pink-100 p-4 sm:p-5">
+      <section className="surface-card overflow-hidden">
+        <div className="space-y-3 border-b border-[#eadde2] p-4 sm:p-5">
           <div className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-pink-400" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a68591]" />
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              className="input min-h-12 w-full rounded-2xl border-pink-100 bg-pink-50/50 pl-11 font-semibold outline-none focus:border-pink-300 focus:bg-white"
+              className="input min-h-11 w-full rounded-xl border-[#e6d9de] bg-[#fcfafb] pl-11 font-medium outline-none focus:border-[#c98ba0] focus:bg-white"
               placeholder="Tìm trip, TO, tracking, trạng thái..."
             />
           </div>
@@ -148,16 +146,16 @@ export const DoiSoatPage = () => {
                 key={filter.value}
                 type="button"
                 onClick={() => setAgingFilter(filter.value)}
-                className={`min-h-9 rounded-full px-3.5 text-xs font-extrabold transition ${
+                className={`min-h-9 rounded-lg px-3.5 text-xs font-bold transition ${
                   agingFilter === filter.value
-                    ? "bg-pink-500 text-white shadow-sm"
-                    : "border border-pink-100 bg-white text-[#866776] hover:bg-pink-50"
+                    ? "bg-[#c45d7c] text-white"
+                    : "border border-[#e6d9de] bg-white text-[#6f5f66] hover:bg-[#faf4f6]"
                 }`}
               >
                 {filter.label}
               </button>
             ))}
-            <span className="ml-auto self-center text-xs font-bold text-[#9a7c89]">
+            <span className="ml-auto self-center text-xs font-semibold text-[#8d7982]">
               {rows.length} dòng
             </span>
           </div>
@@ -165,19 +163,19 @@ export const DoiSoatPage = () => {
 
         <div className="md:hidden">
           {loading && rows.length === 0 ? (
-            <div className="p-10 text-center text-sm font-bold text-pink-400">Đang tải dữ liệu...</div>
+            <div className="p-10 text-center text-sm font-semibold text-[#9f6c7d]">Đang tải dữ liệu...</div>
           ) : rows.length === 0 ? (
-            <div className="p-10 text-center text-sm font-bold text-[#9b7c89]">Không có dữ liệu cần audit.</div>
+            <div className="p-10 text-center text-sm font-semibold text-[#87747c]">Không có dữ liệu cần audit.</div>
           ) : (
-            <div className="divide-y divide-pink-100">
+            <div className="divide-y divide-[#eee5e8]">
               {rows.map((row, index) => (
                 <article key={`${row.trip_number}-${row.to_number}-${row.fleet_order_id}-${index}`} className="space-y-3 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-pink-400">SPX Tracking Number</div>
-                      <div className="mt-1 break-all font-mono text-sm font-black text-[#5d414d]">{row.fleet_order_id || "—"}</div>
+                      <div className="field-label">SPX Tracking Number</div>
+                      <div className="mt-1 break-all font-mono text-sm font-bold text-[#493a40]">{row.fleet_order_id || "—"}</div>
                     </div>
-                    <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${row.aging_group === "> 36H" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
+                    <span className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-bold ${row.aging_group === "> 36H" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
                       {row.aging_group}
                     </span>
                   </div>
@@ -202,7 +200,7 @@ export const DoiSoatPage = () => {
         <div className="hidden overflow-x-auto md:block">
           <table className="table min-w-[1080px]">
             <thead>
-              <tr className="border-pink-100 bg-pink-50/60 text-[#7e5d6c]">
+              <tr className="border-[#eadde2] bg-[#faf7f8] text-[#6f5f66]">
                 <th>Trip Number</th>
                 <th>TO Number</th>
                 <th>SPX Tracking Number</th>
@@ -214,19 +212,19 @@ export const DoiSoatPage = () => {
             </thead>
             <tbody>
               {loading && rows.length === 0 ? (
-                <tr><td colSpan={7} className="py-12 text-center font-bold text-pink-400">Đang tải dữ liệu...</td></tr>
+                <tr><td colSpan={7} className="py-12 text-center font-semibold text-[#9f6c7d]">Đang tải dữ liệu...</td></tr>
               ) : rows.length === 0 ? (
-                <tr><td colSpan={7} className="py-12 text-center font-bold text-[#9b7c89]">Không có dữ liệu cần audit.</td></tr>
+                <tr><td colSpan={7} className="py-12 text-center font-semibold text-[#87747c]">Không có dữ liệu cần audit.</td></tr>
               ) : rows.map((row, index) => (
-                <tr key={`${row.trip_number}-${row.to_number}-${row.fleet_order_id}-${index}`} className="border-pink-50 hover:bg-pink-50/40">
-                  <td className="font-extrabold text-[#604650]">{row.trip_number || "—"}</td>
-                  <td className="font-semibold">{row.to_number || "—"}</td>
-                  <td className="font-mono text-xs font-bold">{row.fleet_order_id || "—"}</td>
+                <tr key={`${row.trip_number}-${row.to_number}-${row.fleet_order_id}-${index}`} className="border-[#eee5e8] hover:bg-[#fcfafb]">
+                  <td className="font-bold text-[#493a40]">{row.trip_number || "—"}</td>
+                  <td className="font-medium">{row.to_number || "—"}</td>
+                  <td className="font-mono text-xs font-semibold">{row.fleet_order_id || "—"}</td>
                   <td>{row.bulky_type || "—"}</td>
                   <td>{row.arrived_time || "—"}</td>
                   <td>{row.last_status_tracking || "—"}</td>
                   <td>
-                    <span className={`rounded-full px-3 py-1 text-xs font-black ${row.aging_group === "> 36H" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
+                    <span className={`rounded-lg px-2.5 py-1 text-xs font-bold ${row.aging_group === "> 36H" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
                       {row.aging_group}
                     </span>
                   </td>
