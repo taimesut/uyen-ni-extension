@@ -17,15 +17,15 @@ export const MobileLayout = ({ children }: MobileLayoutProps) => (
     <header className="sticky top-0 z-40 border-b border-[#eadde2] bg-white/95 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <NavLink to="/" className="flex min-w-0 items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#c45d7c] text-sm font-black text-white shadow-sm">
-            P3
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#c45d7c] text-white shadow-sm">
+            <ClipboardCheck className="h-5 w-5" strokeWidth={2.4} />
           </span>
           <span className="min-w-0">
             <span className="block text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[#a76579]">
-              Pleiku 03
+              SPX Operations
             </span>
             <span className="block truncate text-base font-black tracking-tight text-[#45373d]">
-              Audit Dashboard
+              Audit workspace
             </span>
           </span>
         </NavLink>
