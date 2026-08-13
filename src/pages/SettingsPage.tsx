@@ -1,4 +1,4 @@
-import { CheckCircle2, KeyRound, Save, ShieldCheck, Trash2 } from "lucide-react";
+import { CheckCircle2,Save, ShieldCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { showToast } from "../components/Toast";
 import { getConfigs, saveConfigs } from "../utils/config";
