@@ -1,11 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Pleiku 03 Audit">
-  <defs>
-    <linearGradient id="g" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F09AB7"/>
-      <stop offset="1" stop-color="#D85F86"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="20" fill="#FFF1F6"/>
-  <path d="M32 49.2 15.5 33.8C7.4 26.2 12.7 13 23.2 13c4.7 0 7.3 2.6 8.8 5 1.5-2.4 4.1-5 8.8-5 10.5 0 15.8 13.2 7.7 20.8L32 49.2Z" fill="url(#g)"/>
-  <circle cx="49" cy="14" r="4" fill="#FFD7E4"/>
+  <rect width="64" height="64" rx="16" fill="#F5EAEE"/>
+  <rect x="13" y="13" width="38" height="38" rx="11" fill="#C45D7C"/>
+  <path d="M23 26h18M23 32h11M23 38h8" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <path d="m36 38 3 3 6-7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
