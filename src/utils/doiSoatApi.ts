@@ -1,22 +1,29 @@
-import { normalizeDoiSoatRows, summarizeDoiSoatRows, type DoiSoatResult } from "./doiSoat";
+import {
+  normalizeDoiSoatRows,
+  summarizeDoiSoatRows,
+  type DoiSoatResult,
+} from "./doiSoat";
 
 const CONNECTION_ERROR = "Không thể kết nối Google Apps Script.";
 
-interface GasScriptRunner {
-  withSuccessHandler(handler: (value: unknown) => void): GasScriptRunner;
-  withFailureHandler(handler: (error: unknown) => void): GasScriptRunner;
+interface DoiSoatGasRunner {
+  withSuccessHandler(handler: (value: unknown) => void): DoiSoatGasRunner;
+  withFailureHandler(handler: (error: unknown) => void): DoiSoatGasRunner;
   getDoiSoatRaw(): void;
 }
 
-declare global {
-  interface Window {
-    google?: {
-      script?: {
-        run?: GasScriptRunner;
-      };
+interface DoiSoatGasWindow {
+  google?: {
+    script?: {
+      run?: DoiSoatGasRunner;
     };
-  }
+  };
 }
+
+const getDoiSoatGasRunner = (): DoiSoatGasRunner | undefined => {
+  if (typeof window === "undefined") return undefined;
+  return (window as unknown as DoiSoatGasWindow).google?.script?.run;
+};
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error && error.message.trim()) return error.message;
@@ -30,7 +37,7 @@ const getErrorMessage = (error: unknown): string => {
 
 export const fetchDoiSoatRaw = (): Promise<DoiSoatResult> =>
   new Promise((resolve, reject) => {
-    const runner = typeof window === "undefined" ? undefined : window.google?.script?.run;
+    const runner = getDoiSoatGasRunner();
     if (!runner) {
       reject(new Error("Tab Đối soát chỉ hoạt động trên Google Apps Script."));
       return;
@@ -44,6 +51,8 @@ export const fetchDoiSoatRaw = (): Promise<DoiSoatResult> =>
             : value;
         resolve(summarizeDoiSoatRows(normalizeDoiSoatRows(rawRows)));
       })
-      .withFailureHandler((error: unknown) => reject(new Error(getErrorMessage(error))))
+      .withFailureHandler((error: unknown) =>
+        reject(new Error(getErrorMessage(error))),
+      )
       .getDoiSoatRaw();
   });
