@@ -1,85 +1,45 @@
 export interface AppConfig {
-  soc: string;
-  soc_id?: string;
   cookies: string;
-  hubs: string[];
-  hub_ids?: Record<string, string>;
-  socs: string[];
-  soc_ids?: Record<string, string>;
-  group_socs: Record<string, string[]>;
-  raw_group_socs_text?: string;
-  proxy_url?: string;
-  ggsheet_log_url?: string;
-  scanner_url?: string;
 }
 
-export const SCANNER_URL = "https://scan-qr.taimesut.net";
+const STORAGE_KEY = "spx-audit-config";
+const LEGACY_STORAGE_KEY = "configs";
+const EMPTY_CONFIG: AppConfig = { cookies: "" };
 
-export const getConfigs = (): AppConfig => {
+const parseConfig = (raw: string | null): AppConfig | null => {
+  if (!raw) return null;
+
   try {
-    const raw = localStorage.getItem("configs");
-    if (!raw) return { soc: "", cookies: "", hubs: [], socs: [], group_socs: {} };
-    return JSON.parse(raw);
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return null;
+
+    const cookies = (parsed as { cookies?: unknown }).cookies;
+    return {
+      cookies: typeof cookies === "string" ? cookies : "",
+    };
   } catch {
-    return { soc: "", cookies: "", hubs: [], socs: [], group_socs: {} };
+    return null;
   }
 };
 
-export const saveConfigs = (configs: AppConfig) => {
-  localStorage.setItem("configs", JSON.stringify(configs));
+export const getConfigs = (): AppConfig => {
+  if (typeof window === "undefined") return EMPTY_CONFIG;
+
+  return (
+    parseConfig(window.localStorage.getItem(STORAGE_KEY)) ??
+    parseConfig(window.localStorage.getItem(LEGACY_STORAGE_KEY)) ??
+    EMPTY_CONFIG
+  );
 };
 
-export const getProxyUrl = (): string => {
-  const configs = getConfigs();
-  return configs.proxy_url || "";
+export const saveConfigs = (config: AppConfig): void => {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ cookies: config.cookies.trim() }),
+  );
+  window.localStorage.removeItem(LEGACY_STORAGE_KEY);
 };
 
-export const getLogUrl = (): string => {
-  const configs = getConfigs();
-  return configs.ggsheet_log_url || "";
-};
-
-export const getScannerUrl = (): string => {
-  return SCANNER_URL;
-};
-
-export const getGroupSocsBySOC = (soc: string): string[] => {
-  const groups = getGroupSocs();
-  return groups[soc] ?? [soc];
-};
-
-export const getGroupSocs = (): Record<string, string[]> => {
-  const configs = getConfigs();
-  return configs.group_socs || {};
-};
-
-export const getHubs = (): string[] => {
-  const configs = getConfigs();
-  return configs.hubs || [];
-};
-
-export const getSocs = (): string[] => {
-  const configs = getConfigs();
-  return configs.socs || [];
-};
-
-export const getCookies = (): string => {
-  const configs = getConfigs();
-  return configs.cookies || "";
-};
-
-export const getSoc = (): string => {
-  const configs = getConfigs();
-  return configs.soc || "";
-};
-
-export const getSocId = (): string => getConfigs().soc_id || "";
-
-export const getStationId = (name: string): string => {
-  const configs = getConfigs();
-  if (name === configs.soc) return configs.soc_id || "";
-  return configs.hub_ids?.[name] || configs.soc_ids?.[name] || "";
-};
-
-export const getStationIds = (names: string[]): string[] =>
-  names.map(getStationId).filter(Boolean);
+export const getCookies = (): string => getConfigs().cookies;

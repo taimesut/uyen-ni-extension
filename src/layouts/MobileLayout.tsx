@@ -1,135 +1,79 @@
-import { ClipboardCheck, House, KeyRound, Menu, Package, X } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-import ToggleTheme from "../components/ToggleTheme";
-import { getSoc } from "../utils/config";
+import type { ReactNode } from "react";
+import { ClipboardCheck, Heart, Home, KeyRound, Sparkles } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 interface MobileLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 const NAV_ITEMS = [
-  { path: "/", label: "Trang Chủ", icon: House },
+  { path: "/", label: "Trang chủ", icon: Home },
   { path: "/doi-soat", label: "Đối soát", icon: ClipboardCheck },
-  { path: "/cai-dat", label: "Cài đặt Cookie", icon: KeyRound },
+  { path: "/cai-dat", label: "Cookie", icon: KeyRound },
 ] as const;
 
-export const MobileLayout = ({ children }: MobileLayoutProps) => {
-  const location = useLocation();
-  const currentSoc = getSoc() || "PLEIKU 03";
-
-  const closeDrawer = () => {
-    const checkbox = document.getElementById(
-      "mobile-sidebar-drawer",
-    ) as HTMLInputElement | null;
-    if (checkbox) checkbox.checked = false;
-  };
-
-  const toggleDrawer = () => {
-    const checkbox = document.getElementById(
-      "mobile-sidebar-drawer",
-    ) as HTMLInputElement | null;
-    if (checkbox) checkbox.checked = !checkbox.checked;
-  };
-
-  return (
-    <div className="drawer app-shell min-h-screen bg-base-100 font-sans relative overflow-x-clip">
-      <input
-        id="mobile-sidebar-drawer"
-        type="checkbox"
-        className="drawer-toggle"
-      />
-
-      <div className="drawer-content flex min-h-screen min-w-0 flex-col relative z-10">
-        <header className="navbar h-14 min-h-14 bg-base-100/90 backdrop-blur-md border-b border-base-200 sticky top-0 z-40 w-full px-2 sm:px-3 md:px-6">
-          <div className="flex-none">
-            <button
-              type="button"
-              onClick={toggleDrawer}
-              aria-label="Mở menu"
-              className="btn btn-square btn-ghost drawer-button relative z-50 min-h-11 min-w-11 touch-manipulation rounded-xl p-2"
-            >
-              <Menu className="pointer-events-none h-6 w-6" />
-            </button>
-          </div>
-
-          <div className="mx-1 min-w-0 flex-1 px-1 sm:mx-2 sm:px-2 font-black text-base sm:text-lg md:text-xl tracking-tight flex items-center gap-2">
-            <span className="p-1.5 bg-primary/10 text-primary rounded-xl">
-              <Package className="w-5 h-5" />
-            </span>
-            <span className="truncate" title={currentSoc}>
-              <span className="text-primary font-black">SPX</span>{" "}
-              <span className="align-middle">{currentSoc}</span>
-            </span>
-          </div>
-
-          <div className="flex-none flex items-center gap-2">
-            <ToggleTheme />
-          </div>
-        </header>
-
-        <main className="app-main min-w-0 flex-1 bg-base-200/40 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:pb-12">
-          {children}
-        </main>
-      </div>
-
-      <div className="drawer-side z-50">
-        <label
-          htmlFor="mobile-sidebar-drawer"
-          aria-label="Đóng menu"
-          className="drawer-overlay"
-        />
-
-        <div className="menu bg-base-100 text-base-content min-h-full w-[min(86vw,20rem)] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-5 flex flex-col shadow-2xl">
-          <div className="space-y-5">
-            <div className="pb-4 border-b border-base-200 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-primary-content font-bold shadow-md">
-                  <Package className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="font-extrabold text-base block leading-tight">
-                    Ops FTE
-                  </span>
-                  <span className="text-xs text-base-content/60 font-medium">
-                    {currentSoc}
-                  </span>
-                </div>
-              </div>
-
-              <label
-                htmlFor="mobile-sidebar-drawer"
-                className="btn btn-sm btn-circle btn-ghost min-h-11 min-w-11"
-              >
-                <X className="w-4 h-4" />
-              </label>
-            </div>
-
-            <ul className="space-y-1.5 text-sm font-semibold">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-
-                return (
-                  <li key={item.path}>
-                    <Link
-                      to={item.path}
-                      onClick={closeDrawer}
-                      className={`flex min-h-11 items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                        isActive
-                          ? "bg-primary text-primary-content font-bold shadow-xs"
-                          : "hover:bg-base-200 text-base-content/80"
-                      }`}
-                    >
-                      <Icon className="w-5 h-5 flex-shrink-0" />
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </div>
-      </div>
+export const MobileLayout = ({ children }: MobileLayoutProps) => (
+  <div className="relative min-h-screen overflow-x-hidden text-[#4f3b45]">
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-pink-200/40 blur-3xl" />
+      <div className="absolute -right-24 top-40 h-80 w-80 rounded-full bg-rose-200/35 blur-3xl" />
+      <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-fuchsia-100/40 blur-3xl" />
     </div>
-  );
-};
+
+    <header className="sticky top-0 z-40 border-b border-pink-100/80 bg-[#fff9fb]/85 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <NavLink to="/" className="flex min-w-0 items-center gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-pink-400 to-rose-400 text-white shadow-[0_8px_24px_rgba(219,107,145,.28)]">
+            <Heart className="h-5 w-5 fill-current" />
+          </span>
+          <span className="min-w-0">
+            <span className="flex items-center gap-1.5 text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-pink-400">
+              Pleiku 03 <Sparkles className="h-3 w-3" />
+            </span>
+            <span className="block truncate text-base font-black tracking-tight text-[#573b47]">
+              Audit Corner
+            </span>
+          </span>
+        </NavLink>
+
+        <nav className="hidden items-center gap-1 rounded-2xl border border-pink-100 bg-white/70 p-1.5 shadow-sm sm:flex">
+          {NAV_ITEMS.map(({ path, label, icon: Icon }) => (
+            <NavLink
+              key={path}
+              to={path}
+              className={({ isActive }) =>
+                `flex min-h-10 items-center gap-2 rounded-xl px-3.5 text-sm font-bold transition ${
+                  isActive
+                    ? "bg-pink-100 text-pink-700 shadow-sm"
+                    : "text-[#765866] hover:bg-pink-50 hover:text-pink-700"
+                }`
+              }
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
+    </header>
+
+    <main className="relative z-10 pb-28 sm:pb-10">{children}</main>
+
+    <nav className="fixed inset-x-3 bottom-3 z-50 mx-auto grid max-w-md grid-cols-3 rounded-[1.4rem] border border-pink-100 bg-white/90 p-1.5 shadow-[0_18px_50px_rgba(128,67,91,.18)] backdrop-blur-xl sm:hidden">
+      {NAV_ITEMS.map(({ path, label, icon: Icon }) => (
+        <NavLink
+          key={path}
+          to={path}
+          className={({ isActive }) =>
+            `flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl text-[0.68rem] font-extrabold transition ${
+              isActive ? "bg-pink-100 text-pink-700" : "text-[#8b6a78]"
+            }`
+          }
+        >
+          <Icon className="h-5 w-5" />
+          {label}
+        </NavLink>
+      ))}
+    </nav>
+  </div>
+);

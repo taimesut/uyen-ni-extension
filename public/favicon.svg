@@ -1,39 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Pleiku 03 Audit">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#F53D2D"/>
-      <stop offset="100%" style="stop-color:#FF8C00"/>
-    </linearGradient>
-    <linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.15"/>
-      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0"/>
+    <linearGradient id="g" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F09AB7"/>
+      <stop offset="1" stop-color="#D85F86"/>
     </linearGradient>
   </defs>
-
-  <!-- Background rounded square -->
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <!-- Shine overlay -->
-  <rect width="512" height="256" rx="112" fill="url(#shine)"/>
-
-  <!-- Package box body -->
-  <rect x="128" y="192" width="256" height="220" rx="16" fill="white" opacity="0.95"/>
-
-  <!-- Package lid -->
-  <path d="M112 192 L256 152 L400 192 L256 232 Z" fill="white"/>
-
-  <!-- Center divider on lid -->
-  <path d="M256 152 L256 232" stroke="#FF6A00" stroke-width="8" stroke-linecap="round"/>
-
-  <!-- Bow/ribbon on top -->
-  <path d="M220 152 Q256 128 292 152" stroke="#FF6A00" stroke-width="10" fill="none" stroke-linecap="round"/>
-  
-  <!-- Vertical stripe on box -->
-  <rect x="240" y="192" width="32" height="220" fill="#FF6A00" opacity="0.35" rx="4"/>
-
-  <!-- Horizontal band -->
-  <rect x="128" y="260" width="256" height="28" fill="#FF6A00" opacity="0.25" rx="0"/>
-  
-  <!-- SPX text label area (subtle) -->
-  <rect x="160" y="310" width="192" height="64" rx="8" fill="#FF6A00" opacity="0.15"/>
-  <text x="256" y="352" font-family="Arial Black, sans-serif" font-size="36" font-weight="900" fill="#F53D2D" text-anchor="middle" opacity="0.8">SPX</text>
+  <rect width="64" height="64" rx="20" fill="#FFF1F6"/>
+  <path d="M32 49.2 15.5 33.8C7.4 26.2 12.7 13 23.2 13c4.7 0 7.3 2.6 8.8 5 1.5-2.4 4.1-5 8.8-5 10.5 0 15.8 13.2 7.7 20.8L32 49.2Z" fill="url(#g)"/>
+  <circle cx="49" cy="14" r="4" fill="#FFD7E4"/>
 </svg>
