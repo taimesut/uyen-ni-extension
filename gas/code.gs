@@ -111,7 +111,7 @@ function doGet() {
   }
 
   return HtmlService.createHtmlOutputFromFile("index")
-    .setTitle("Pleiku 03 Audit")
+    .setTitle("Audit workspace")
     .addMetaTag("viewport", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no")
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
