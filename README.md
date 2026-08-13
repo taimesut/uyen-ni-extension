@@ -1,10 +1,12 @@
-# Pleiku 03 Audit
+# Audit workspace
 
-Ứng dụng nội bộ tối giản để đối soát dữ liệu từ Google Sheet `raw`.
+Ứng dụng nội bộ hỗ trợ theo dõi và đối soát dữ liệu aging từ Google Sheet `raw`.
+
+**Author:** uyenni.nguyentran@spxexpress.com
 
 ## Chức năng
 
-- **Trang chủ**: điểm vào nhanh cho các tác vụ chính.
+- **Trang chủ**: truy cập nhanh các tác vụ chính.
 - **Đối soát**: chỉ lấy các dòng có `aging_group` bằng `24H -> 36H` hoặc `> 36H`.
 - **Cookie**: lưu SPX Cookie cục bộ trên trình duyệt.
 
