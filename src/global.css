@@ -1,33 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 @plugin "daisyui";
 
 @theme {
-  --font-sans: "Nunito", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --color-primary: #db6b91;
+  --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --color-primary: #c45d7c;
   --color-primary-content: #ffffff;
-  --color-secondary: #ee9ab5;
+  --color-secondary: #a76579;
   --color-secondary-content: #ffffff;
 }
 
 :root {
   color-scheme: light;
-  --color-base-100: #fffdfd;
-  --color-base-200: #fff6f9;
-  --color-base-300: #fbe9ef;
-  --color-base-content: #503b45;
-  --color-primary: #db6b91;
+  --color-base-100: #ffffff;
+  --color-base-200: #faf8f9;
+  --color-base-300: #eee5e8;
+  --color-base-content: #41363b;
+  --color-primary: #c45d7c;
   --color-primary-content: #ffffff;
-  --color-secondary: #ee9ab5;
+  --color-secondary: #a76579;
   --color-secondary-content: #ffffff;
-  --color-accent: #c78aaa;
+  --color-accent: #8c6a77;
   --color-accent-content: #ffffff;
-  --color-neutral: #725866;
+  --color-neutral: #62545a;
   --color-neutral-content: #ffffff;
-  --color-info: #8aa7cf;
-  --color-success: #6ebf9d;
-  --color-warning: #e5a84c;
-  --color-error: #df6c79;
+  --color-info: #6f8fb8;
+  --color-success: #5c9a7e;
+  --color-warning: #c9923d;
+  --color-error: #c85f6b;
 }
 
 * {
@@ -44,18 +44,15 @@ body,
 
 html {
   overflow-x: clip;
-  background: #fff8fb;
+  background: #faf8f9;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 8% 0%, rgba(251, 207, 222, 0.5), transparent 28rem),
-    radial-gradient(circle at 96% 26%, rgba(254, 226, 235, 0.68), transparent 24rem),
-    linear-gradient(180deg, #fffafb 0%, #fff8fb 48%, #fffdfd 100%);
-  color: #503b45;
-  font-family: "Nunito", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background: #faf8f9;
+  color: #41363b;
+  font-family: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -81,77 +78,74 @@ a {
   padding: 1.25rem 0.875rem 2rem;
 }
 
+.surface-card,
 .soft-card {
   min-width: 0;
-  border: 1px solid rgba(244, 190, 208, 0.55);
-  border-radius: 1.5rem;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 12px 34px rgba(139, 79, 103, 0.08);
-  backdrop-filter: blur(14px);
+  border: 1px solid #eadde2;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(68, 47, 56, 0.045);
 }
 
 .soft-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  border: 1px solid rgba(241, 169, 193, 0.45);
-  border-radius: 999px;
-  background: rgba(255, 240, 245, 0.8);
-  padding: 0.4rem 0.7rem;
-  color: #c75d83;
+  gap: 0.35rem;
+  color: #a64e6b;
   font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.14em;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .field-label {
   display: block;
-  color: #a58291;
+  color: #8e7a82;
   font-size: 0.65rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .field-value {
   margin-top: 0.2rem;
   overflow-wrap: anywhere;
-  color: #5f4651;
+  color: #4f4248;
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.45;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #df7398, #d85f86) !important;
-  border-color: transparent !important;
+  background: #c45d7c !important;
+  border-color: #c45d7c !important;
   color: #ffffff !important;
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #d9678f, #cf527b) !important;
+  background: #ad4f6d !important;
+  border-color: #ad4f6d !important;
 }
 
 .input,
 .textarea {
-  color: #5b424d;
+  color: #493d42;
 }
 
 .table :where(th) {
   font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.035em;
+  font-weight: 800;
+  letter-spacing: 0.025em;
   text-transform: none;
 }
 
 .table :where(td) {
-  color: #684d59;
+  color: #5a4b51;
   font-size: 0.8rem;
 }
 
 :focus-visible {
-  outline: 3px solid rgba(219, 107, 145, 0.28);
+  outline: 3px solid rgba(196, 93, 124, 0.22);
   outline-offset: 2px;
 }
 
