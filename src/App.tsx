@@ -9,29 +9,23 @@ import { LayMaTOPage } from "./pages/LayMaTOPage";
 import { TaoBienBanSuVuPage } from "./pages/TaoBienBanSuVuPage";
 import { ToastContainer } from "./components/Toast";
 import { BanGiaoPdaPage } from "./pages/BanGiaoPdaPage";
+import { DoiSoatPage } from "./pages/DoiSoatPage";
 
 export const App = () => {
   return (
     <HashRouter>
       <ToastContainer />
       <MobileLayout>
-        {/* Cấu hình các Routes */}
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route
-            path="/check-sot/ngoai-tinh"
-            element={<CheckSotNgoaiTinhPage />}
-          />
-          <Route
-            path="/check-sot/noi-tinh/overview"
-            element={<InternalHubOverviewPage />}
-          />
+          <Route path="/check-sot/ngoai-tinh" element={<CheckSotNgoaiTinhPage />} />
+          <Route path="/check-sot/noi-tinh/overview" element={<InternalHubOverviewPage />} />
           <Route path="/check-sot/noi-tinh" element={<CheckSotNoiTinhPage />} />
           <Route path="/cai-dat" element={<SettingsPage />} />
           <Route path="/tao-bien-ban-su-vu" element={<TaoBienBanSuVuPage />} />
           <Route path="/lay-ma-to" element={<LayMaTOPage />} />
           <Route path="/ban-giao-pda" element={<BanGiaoPdaPage />} />
-          {/* Route bắt lỗi 404 */}
+          <Route path="/doi-soat" element={<DoiSoatPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </MobileLayout>
