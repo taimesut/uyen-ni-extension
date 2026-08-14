@@ -73,48 +73,39 @@ function parseFmsResponse_(response, label) {
   return parsed;
 }
 
-function flattenFmsTracking_(items, output, seen) {
-  if (!Array.isArray(items)) return;
+function findLatestFmsTracking_(items, latest) {
+  if (!Array.isArray(items)) return latest;
 
   items.forEach(function (item) {
     if (!item || typeof item !== "object") return;
 
-    var id = Number(item.id || 0);
-    var status = Number(item.status || 0);
-    var timestamp = Number(item.timestamp || 0);
-    var key = String(id) + "|" + String(status) + "|" + String(timestamp);
+    var candidate = {
+      id: Number(item.id || 0),
+      status: Number(item.status || 0),
+      timestamp: Number(item.timestamp || 0),
+      message: String(item.message || ""),
+      station_name: String(item.station_name || "")
+    };
 
-    if (!seen[key]) {
-      seen[key] = true;
-      output.push({
-        id: id,
-        status: status,
-        timestamp: timestamp,
-        message: String(item.message || ""),
-        station_name: String(item.station_name || "")
-      });
+    if (!latest || candidate.timestamp > Number(latest.timestamp || 0)) {
+      latest = candidate;
     }
 
-    flattenFmsTracking_(item.children, output, seen);
-    flattenFmsTracking_(item.event_children, output, seen);
+    latest = findLatestFmsTracking_(item.children, latest);
+    latest = findLatestFmsTracking_(item.event_children, latest);
   });
+
+  return latest;
 }
 
-function getFmsTrackingEvents_(response) {
+function getFmsLatestTrackingEvent_(response) {
   var parsed = parseFmsResponse_(response, "Tracking detail");
   var trackingList =
     parsed && parsed.data && Array.isArray(parsed.data.tracking_list)
       ? parsed.data.tracking_list
       : [];
-  var output = [];
-  var seen = {};
 
-  flattenFmsTracking_(trackingList, output, seen);
-  output.sort(function (left, right) {
-    return Number(left.timestamp || 0) - Number(right.timestamp || 0);
-  });
-
-  return output;
+  return findLatestFmsTracking_(trackingList, null);
 }
 
 function getFmsData(cookie, pageNo) {
@@ -162,11 +153,11 @@ function getFmsData(cookie, pageNo) {
     : [];
 
   var rows = orders.map(function (order, index) {
-    var trackingEvents = [];
+    var latestTrackingEvent = null;
     var trackingError = "";
 
     try {
-      trackingEvents = getFmsTrackingEvents_(detailResponses[index]);
+      latestTrackingEvent = getFmsLatestTrackingEvent_(detailResponses[index]);
     } catch (error) {
       trackingError = error && error.message ? error.message : String(error || "");
     }
@@ -178,7 +169,7 @@ function getFmsData(cookie, pageNo) {
       bulky_type: Number(order.bulky_type || 0),
       current_station_name: String(order.current_station_name || ""),
       next_station_name: String(order.next_station_name || ""),
-      tracking_events: trackingEvents,
+      latest_tracking_event: latestTrackingEvent,
       tracking_error: trackingError
     };
   });
