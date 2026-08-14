@@ -8,7 +8,7 @@
 
 - **Trang chủ**: truy cập nhanh các tác vụ chính.
 - **Đối soát**: chỉ lấy các dòng có `aging_group` bằng `24H -> 36H` hoặc `> 36H`.
-- **FMS**: gọi SPX FMS theo station `1030 -> 1812`, status `880,36,15`, sau đó lấy tracking detail cho từng `shipment_id` và hiển thị `status + timestamp`.
+- **FMS**: gọi SPX FMS theo station `1030 -> 1812`, status `880,36,15`, sau đó lấy trạng thái tracking cuối cùng của từng `shipment_id`.
 - **Cookie**: lưu SPX Cookie cục bộ trên trình duyệt.
 
 ## Dữ liệu đối soát
@@ -31,7 +31,9 @@ Search endpoint:
 - `next_station_ids`: `1812`
 - `order_status`: `880,36,15`
 
-Mỗi `shipment_id` tiếp tục gọi `/api/fleet_order/order/detail/tracking_info` để lấy lịch sử tracking. Frontend hiển thị SPX Tracking Number, TO, order status, bulky type, station và toàn bộ `status + timestamp` trong tracking list.
+Mỗi `shipment_id` tiếp tục gọi `/api/fleet_order/order/detail/tracking_info`. Backend duyệt `tracking_list`, `children` và `event_children`, chỉ giữ event có `timestamp` lớn nhất rồi trả về frontend dưới dạng `latest_tracking_event`.
+
+Frontend hiển thị mỗi SPX đúng một dòng gồm SPX Tracking Number, TO, order status, bulky type, station, status cuối, timestamp cập nhật cuối, số giờ đã qua và message/station của event cuối.
 
 ## Stack
 
