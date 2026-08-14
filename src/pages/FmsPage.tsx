@@ -14,6 +14,7 @@ import {
   formatFmsTimestamp,
   type FmsOrderRow,
   type FmsResult,
+  type FmsTrackingEvent,
 } from "../utils/fms";
 import { fetchFmsData } from "../utils/fmsApi";
 
@@ -23,6 +24,12 @@ const EMPTY_RESULT: FmsResult = {
   total: 0,
   rows: [],
 };
+
+interface FlatFmsRow {
+  order: FmsOrderRow;
+  event: FmsTrackingEvent | null;
+  key: string;
+}
 
 const TrackingHistory = ({ row }: { row: FmsOrderRow }) => {
   if (row.trackingError) {
@@ -118,6 +125,28 @@ export const FmsPage = () => {
     );
   }, [result.rows, search]);
 
+  const flatRows = useMemo<FlatFmsRow[]>(
+    () =>
+      rows.flatMap((order) => {
+        if (order.trackingEvents.length === 0) {
+          return [
+            {
+              order,
+              event: null,
+              key: `${order.shipmentId}-empty`,
+            },
+          ];
+        }
+
+        return order.trackingEvents.map((event, index) => ({
+          order,
+          event,
+          key: `${order.shipmentId}-${event.id}-${event.status}-${event.timestamp}-${index}`,
+        }));
+      }),
+    [rows],
+  );
+
   const pageCount = Math.max(1, Math.ceil(result.total / result.count));
 
   return (
@@ -179,13 +208,13 @@ export const FmsPage = () => {
             <div className="surface-card p-4 sm:p-5">
               <div className="text-xs font-bold uppercase tracking-[0.1em] text-[#817078]">Trang hiện tại</div>
               <div className="mt-3 text-3xl font-black text-[#493a40]">{result.pageNo}</div>
-              <div className="mt-1 text-xs font-semibold text-[#927e87]">{rows.length} / {result.count} dòng</div>
+              <div className="mt-1 text-xs font-semibold text-[#927e87]">{rows.length} / {result.count} đơn</div>
             </div>
 
             <div className="surface-card p-4 sm:p-5">
-              <div className="text-xs font-bold uppercase tracking-[0.1em] text-[#817078]">Số trang</div>
-              <div className="mt-3 text-3xl font-black text-[#493a40]">{pageCount}</div>
-              <div className="mt-1 text-xs font-semibold text-[#927e87]">24 đơn mỗi trang</div>
+              <div className="text-xs font-bold uppercase tracking-[0.1em] text-[#817078]">Tracking rows</div>
+              <div className="mt-3 text-3xl font-black text-[#493a40]">{flatRows.length}</div>
+              <div className="mt-1 text-xs font-semibold text-[#927e87]">{pageCount} trang FMS</div>
             </div>
           </section>
 
@@ -242,7 +271,7 @@ export const FmsPage = () => {
             </div>
 
             <div className="hidden overflow-x-auto md:block">
-              <table className="table min-w-[1180px]">
+              <table className="table min-w-[1500px]">
                 <thead>
                   <tr className="border-[#eadde2] bg-[#faf7f8] text-[#6f5f66]">
                     <th>SPX Tracking Number</th>
@@ -251,23 +280,44 @@ export const FmsPage = () => {
                     <th>Bulky Type</th>
                     <th>Current Station</th>
                     <th>Next Station</th>
-                    <th className="min-w-[380px]">Status / Timestamp</th>
+                    <th>Tracking Status</th>
+                    <th>Timestamp</th>
+                    <th>Thời gian</th>
+                    <th>Message / Station</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading && result.rows.length === 0 ? (
-                    <tr><td colSpan={7} className="py-12 text-center font-semibold text-[#9f6c7d]">Đang tải dữ liệu FMS...</td></tr>
-                  ) : rows.length === 0 ? (
-                    <tr><td colSpan={7} className="py-12 text-center font-semibold text-[#87747c]">Không có dữ liệu FMS.</td></tr>
-                  ) : rows.map((row) => (
-                    <tr key={row.shipmentId} className="border-[#eee5e8] align-top hover:bg-[#fcfafb]">
-                      <td className="font-mono text-xs font-black text-[#493a40]">{row.shipmentId}</td>
-                      <td className="font-mono text-xs font-semibold">{row.currentToNumber || "—"}</td>
-                      <td className="font-mono font-bold">{row.orderStatus || "—"}</td>
-                      <td>{row.bulkyType}</td>
-                      <td>{row.currentStationName || "—"}</td>
-                      <td>{row.nextStationName || "—"}</td>
-                      <td><TrackingHistory row={row} /></td>
+                    <tr><td colSpan={10} className="py-12 text-center font-semibold text-[#9f6c7d]">Đang tải dữ liệu FMS...</td></tr>
+                  ) : flatRows.length === 0 ? (
+                    <tr><td colSpan={10} className="py-12 text-center font-semibold text-[#87747c]">Không có dữ liệu FMS.</td></tr>
+                  ) : flatRows.map(({ order, event, key }) => (
+                    <tr key={key} className="border-[#eee5e8] align-top hover:bg-[#fcfafb]">
+                      <td className="font-mono text-xs font-black text-[#493a40]">{order.shipmentId}</td>
+                      <td className="font-mono text-xs font-semibold">{order.currentToNumber || "—"}</td>
+                      <td className="font-mono font-bold">{order.orderStatus || "—"}</td>
+                      <td>{order.bulkyType}</td>
+                      <td>{order.currentStationName || "—"}</td>
+                      <td>{order.nextStationName || "—"}</td>
+                      <td>
+                        {event ? (
+                          <span className="rounded-md bg-[#f3e5ea] px-2 py-1 font-mono text-xs font-black text-[#9f4664]">
+                            {event.status}
+                          </span>
+                        ) : "—"}
+                      </td>
+                      <td className="font-mono text-xs font-semibold">{event?.timestamp || "—"}</td>
+                      <td className="whitespace-nowrap text-xs font-semibold">{event ? formatFmsTimestamp(event.timestamp) : "—"}</td>
+                      <td className="max-w-[360px] text-xs leading-5">
+                        {order.trackingError ? (
+                          <span className="font-semibold text-rose-700">{order.trackingError}</span>
+                        ) : event ? (
+                          <>
+                            {event.message || "—"}
+                            {event.stationName ? <span className="font-semibold text-[#8f4d63]"> · {event.stationName}</span> : null}
+                          </>
+                        ) : "Không có tracking."}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
