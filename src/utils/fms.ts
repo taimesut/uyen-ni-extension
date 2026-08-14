@@ -13,7 +13,7 @@ export interface FmsOrderRow {
   bulkyType: number;
   currentStationName: string;
   nextStationName: string;
-  trackingEvents: FmsTrackingEvent[];
+  latestTrackingEvent: FmsTrackingEvent | null;
   trackingError: string;
 }
 
@@ -50,6 +50,16 @@ const normalizeTrackingEvent = (value: unknown): FmsTrackingEvent | null => {
   };
 };
 
+const getLatestEvent = (events: FmsTrackingEvent[]): FmsTrackingEvent | null => {
+  let latest: FmsTrackingEvent | null = null;
+
+  for (const event of events) {
+    if (!latest || event.timestamp > latest.timestamp) latest = event;
+  }
+
+  return latest;
+};
+
 const normalizeRow = (value: unknown): FmsOrderRow | null => {
   const row = asObject(value);
   if (!row) return null;
@@ -57,16 +67,21 @@ const normalizeRow = (value: unknown): FmsOrderRow | null => {
   const shipmentId = asString(row.shipment_id ?? row.shipmentId).trim();
   if (!shipmentId) return null;
 
-  const rawEvents = Array.isArray(row.tracking_events)
+  const explicitLatest = normalizeTrackingEvent(
+    row.latest_tracking_event ?? row.latestTrackingEvent,
+  );
+
+  const legacyRawEvents = Array.isArray(row.tracking_events)
     ? row.tracking_events
     : Array.isArray(row.trackingEvents)
       ? row.trackingEvents
       : [];
 
-  const trackingEvents = rawEvents
-    .map(normalizeTrackingEvent)
-    .filter((event): event is FmsTrackingEvent => event !== null)
-    .sort((left, right) => left.timestamp - right.timestamp);
+  const legacyLatest = getLatestEvent(
+    legacyRawEvents
+      .map(normalizeTrackingEvent)
+      .filter((event): event is FmsTrackingEvent => event !== null),
+  );
 
   return {
     shipmentId,
@@ -77,7 +92,7 @@ const normalizeRow = (value: unknown): FmsOrderRow | null => {
       row.current_station_name ?? row.currentStationName,
     ),
     nextStationName: asString(row.next_station_name ?? row.nextStationName),
-    trackingEvents,
+    latestTrackingEvent: explicitLatest ?? legacyLatest,
     trackingError: asString(row.tracking_error ?? row.trackingError),
   };
 };
@@ -95,18 +110,6 @@ export const normalizeFmsResult = (value: unknown): FmsResult => {
     total: Math.max(0, asNumber(result?.total)),
     rows,
   };
-};
-
-export const getLatestFmsTrackingEvent = (
-  row: Pick<FmsOrderRow, "trackingEvents">,
-): FmsTrackingEvent | null => {
-  let latest: FmsTrackingEvent | null = null;
-
-  for (const event of row.trackingEvents) {
-    if (!latest || event.timestamp > latest.timestamp) latest = event;
-  }
-
-  return latest;
 };
 
 export const getFmsElapsedHours = (
