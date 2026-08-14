@@ -127,7 +127,7 @@ export const FmsPage = () => {
 
   const flatRows = useMemo<FlatFmsRow[]>(
     () =>
-      rows.flatMap((order) => {
+      rows.flatMap<FlatFmsRow>((order): FlatFmsRow[] => {
         if (order.trackingEvents.length === 0) {
           return [
             {
