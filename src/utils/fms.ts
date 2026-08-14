@@ -97,6 +97,39 @@ export const normalizeFmsResult = (value: unknown): FmsResult => {
   };
 };
 
+export const getLatestFmsTrackingEvent = (
+  row: Pick<FmsOrderRow, "trackingEvents">,
+): FmsTrackingEvent | null => {
+  let latest: FmsTrackingEvent | null = null;
+
+  for (const event of row.trackingEvents) {
+    if (!latest || event.timestamp > latest.timestamp) latest = event;
+  }
+
+  return latest;
+};
+
+export const getFmsElapsedHours = (
+  timestamp: number,
+  nowMs = Date.now(),
+): number | null => {
+  if (!Number.isFinite(timestamp) || timestamp <= 0 || !Number.isFinite(nowMs)) {
+    return null;
+  }
+
+  return Math.max(0, nowMs - timestamp * 1000) / 3_600_000;
+};
+
+export const formatFmsElapsedHours = (
+  timestamp: number,
+  nowMs = Date.now(),
+): string => {
+  const hours = getFmsElapsedHours(timestamp, nowMs);
+  if (hours === null) return "—";
+  if (hours < 0.1) return "< 0.1 giờ";
+  return `${hours.toFixed(1)} giờ`;
+};
+
 export const formatFmsTimestamp = (timestamp: number): string => {
   if (!Number.isFinite(timestamp) || timestamp <= 0) return "—";
 
