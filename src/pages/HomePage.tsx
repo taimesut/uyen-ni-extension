@@ -1,4 +1,10 @@
-import { ArrowRight, ClipboardCheck, KeyRound, Mail } from "lucide-react";
+import {
+  ArrowRight,
+  ClipboardCheck,
+  Database,
+  KeyRound,
+  Mail,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const HomePage = () => (
@@ -7,10 +13,10 @@ export const HomePage = () => (
       <div className="max-w-3xl">
         <span className="soft-kicker">Audit workspace</span>
         <h1 className="mt-4 text-3xl font-black leading-tight tracking-[-0.035em] text-[#44373d] sm:text-4xl lg:text-5xl">
-          Theo dõi và đối soát dữ liệu aging rõ ràng hơn.
+          Theo dõi và đối soát dữ liệu vận hành rõ ràng hơn.
         </h1>
         <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-[#786970] sm:text-base">
-          Tập trung các đơn thuộc nhóm 24H → 36H và &gt; 36H, hỗ trợ tìm kiếm nhanh theo Trip, TO và SPX Tracking Number để xử lý audit hiệu quả hơn.
+          Tổng hợp dữ liệu aging từ Google Sheet và dữ liệu FMS từ SPX để hỗ trợ tra cứu Trip, TO, SPX Tracking Number và lịch sử status nhanh hơn.
         </p>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -23,17 +29,17 @@ export const HomePage = () => (
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
-            to="/cai-dat"
+            to="/fms"
             className="btn min-h-11 rounded-xl border border-[#e6d9de] bg-white px-5 font-bold text-[#8f4d63] shadow-none hover:bg-[#faf4f6]"
           >
-            <KeyRound className="h-4.5 w-4.5" />
-            Cài đặt Cookie
+            <Database className="h-4.5 w-4.5" />
+            Xem dữ liệu FMS
           </Link>
         </div>
       </div>
     </section>
 
-    <section className="grid gap-4 md:grid-cols-2">
+    <section className="grid gap-4 md:grid-cols-3">
       <Link
         to="/doi-soat"
         className="group surface-card p-5 transition hover:border-[#dcb8c4] sm:p-6"
@@ -46,7 +52,23 @@ export const HomePage = () => (
         </div>
         <h2 className="mt-4 text-lg font-black text-[#493a40]">Đối soát aging</h2>
         <p className="mt-2 text-sm font-medium leading-6 text-[#796970]">
-          Xem danh sách đơn cần audit, lọc theo nhóm aging và tra cứu nhanh các thông tin vận hành quan trọng.
+          Xem các đơn thuộc nhóm 24H → 36H và &gt; 36H từ sheet raw, có tìm kiếm và lọc nhanh.
+        </p>
+      </Link>
+
+      <Link
+        to="/fms"
+        className="group surface-card p-5 transition hover:border-[#dcb8c4] sm:p-6"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#f3e5ea] text-[#a64e6b]">
+            <Database className="h-5 w-5" />
+          </span>
+          <ArrowRight className="h-5 w-5 text-[#b89aa5] transition group-hover:translate-x-0.5 group-hover:text-[#a64e6b]" />
+        </div>
+        <h2 className="mt-4 text-lg font-black text-[#493a40]">Dữ liệu FMS</h2>
+        <p className="mt-2 text-sm font-medium leading-6 text-[#796970]">
+          Lấy danh sách đơn từ FMS và ghép lịch sử status, timestamp theo từng SPX Tracking Number.
         </p>
       </Link>
 
@@ -62,7 +84,7 @@ export const HomePage = () => (
         </div>
         <h2 className="mt-4 text-lg font-black text-[#493a40]">Cookie SPX</h2>
         <p className="mt-2 text-sm font-medium leading-6 text-[#796970]">
-          Lưu và cập nhật SPX Cookie trên thiết bị hiện tại khi cần sử dụng cho các tích hợp nội bộ.
+          Lưu và cập nhật SPX Cookie trên thiết bị hiện tại để sử dụng cho dữ liệu FMS.
         </p>
       </Link>
     </section>

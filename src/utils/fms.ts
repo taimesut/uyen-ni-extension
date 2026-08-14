@@ -1,0 +1,112 @@
+export interface FmsTrackingEvent {
+  id: number;
+  status: number;
+  timestamp: number;
+  message: string;
+  stationName: string;
+}
+
+export interface FmsOrderRow {
+  shipmentId: string;
+  currentToNumber: string;
+  orderStatus: number;
+  bulkyType: number;
+  currentStationName: string;
+  nextStationName: string;
+  trackingEvents: FmsTrackingEvent[];
+  trackingError: string;
+}
+
+export interface FmsResult {
+  pageNo: number;
+  count: number;
+  total: number;
+  rows: FmsOrderRow[];
+}
+
+const asObject = (value: unknown): Record<string, unknown> | null =>
+  typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : null;
+
+const asString = (value: unknown): string =>
+  typeof value === "string" ? value : value == null ? "" : String(value);
+
+const asNumber = (value: unknown): number => {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const normalizeTrackingEvent = (value: unknown): FmsTrackingEvent | null => {
+  const event = asObject(value);
+  if (!event) return null;
+
+  return {
+    id: asNumber(event.id),
+    status: asNumber(event.status),
+    timestamp: asNumber(event.timestamp),
+    message: asString(event.message),
+    stationName: asString(event.station_name ?? event.stationName),
+  };
+};
+
+const normalizeRow = (value: unknown): FmsOrderRow | null => {
+  const row = asObject(value);
+  if (!row) return null;
+
+  const shipmentId = asString(row.shipment_id ?? row.shipmentId).trim();
+  if (!shipmentId) return null;
+
+  const rawEvents = Array.isArray(row.tracking_events)
+    ? row.tracking_events
+    : Array.isArray(row.trackingEvents)
+      ? row.trackingEvents
+      : [];
+
+  const trackingEvents = rawEvents
+    .map(normalizeTrackingEvent)
+    .filter((event): event is FmsTrackingEvent => event !== null)
+    .sort((left, right) => left.timestamp - right.timestamp);
+
+  return {
+    shipmentId,
+    currentToNumber: asString(row.current_to_number ?? row.currentToNumber),
+    orderStatus: asNumber(row.order_status ?? row.orderStatus),
+    bulkyType: asNumber(row.bulky_type ?? row.bulkyType),
+    currentStationName: asString(
+      row.current_station_name ?? row.currentStationName,
+    ),
+    nextStationName: asString(row.next_station_name ?? row.nextStationName),
+    trackingEvents,
+    trackingError: asString(row.tracking_error ?? row.trackingError),
+  };
+};
+
+export const normalizeFmsResult = (value: unknown): FmsResult => {
+  const result = asObject(value);
+  const rawRows = result && Array.isArray(result.rows) ? result.rows : [];
+  const rows = rawRows
+    .map(normalizeRow)
+    .filter((row): row is FmsOrderRow => row !== null);
+
+  return {
+    pageNo: Math.max(1, asNumber(result?.page_no ?? result?.pageNo) || 1),
+    count: Math.max(1, asNumber(result?.count) || 24),
+    total: Math.max(0, asNumber(result?.total)),
+    rows,
+  };
+};
+
+export const formatFmsTimestamp = (timestamp: number): string => {
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return "—";
+
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(new Date(timestamp * 1000));
+};

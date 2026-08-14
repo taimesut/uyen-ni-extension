@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ClipboardCheck, Home, KeyRound } from "lucide-react";
+import { ClipboardCheck, Database, Home, KeyRound } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 interface MobileLayoutProps {
@@ -9,6 +9,7 @@ interface MobileLayoutProps {
 const NAV_ITEMS = [
   { path: "/", label: "Trang chủ", icon: Home },
   { path: "/doi-soat", label: "Đối soát", icon: ClipboardCheck },
+  { path: "/fms", label: "FMS", icon: Database },
   { path: "/cai-dat", label: "Cookie", icon: KeyRound },
 ] as const;
 
@@ -53,13 +54,13 @@ export const MobileLayout = ({ children }: MobileLayoutProps) => (
 
     <main className="pb-24 sm:pb-10">{children}</main>
 
-    <nav className="fixed inset-x-3 bottom-3 z-50 mx-auto grid max-w-md grid-cols-3 rounded-2xl border border-[#eadde2] bg-white/95 p-1.5 shadow-[0_12px_35px_rgba(75,55,64,.12)] backdrop-blur-xl sm:hidden">
+    <nav className="fixed inset-x-3 bottom-3 z-50 mx-auto grid max-w-md grid-cols-4 rounded-2xl border border-[#eadde2] bg-white/95 p-1.5 shadow-[0_12px_35px_rgba(75,55,64,.12)] backdrop-blur-xl sm:hidden">
       {NAV_ITEMS.map(({ path, label, icon: Icon }) => (
         <NavLink
           key={path}
           to={path}
           className={({ isActive }) =>
-            `flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[0.68rem] font-bold transition ${
+            `flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[0.64rem] font-bold transition ${
               isActive ? "bg-[#f3e5ea] text-[#9f4664]" : "text-[#796971]"
             }`
           }
