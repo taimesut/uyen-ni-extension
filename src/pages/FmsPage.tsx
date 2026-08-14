@@ -27,6 +27,9 @@ const EMPTY_RESULT: FmsResult = {
   rows: [],
 };
 
+const PAGE_SIZE = 20;
+type ElapsedFilter = "ALL" | Exclude<FmsElapsedGroup, "—">;
+
 const StatusValue = ({ status }: { status: number }) => (
   <div className="space-y-1">
     <span className="inline-flex rounded-md bg-[#f3e5ea] px-2 py-0.5 font-mono text-xs font-black text-[#9f4664]">
@@ -59,10 +62,12 @@ export const FmsPage = () => {
   const [result, setResult] = useState<FmsResult>(EMPTY_RESULT);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [elapsedFilter, setElapsedFilter] = useState<ElapsedFilter>("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
   const [cookieAvailable, setCookieAvailable] = useState(() => Boolean(getCookies()));
   const [nowMs, setNowMs] = useState(() => Date.now());
 
-  const loadData = useCallback(async (pageNo: number) => {
+  const loadData = useCallback(async () => {
     const cookie = getCookies();
     setCookieAvailable(Boolean(cookie));
 
@@ -70,8 +75,9 @@ export const FmsPage = () => {
 
     setLoading(true);
     try {
-      setResult(await fetchFmsData(cookie, pageNo));
+      setResult(await fetchFmsData(cookie, 1));
       setNowMs(Date.now());
+      setCurrentPage(1);
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Không thể tải dữ liệu FMS.",
@@ -83,7 +89,7 @@ export const FmsPage = () => {
   }, []);
 
   useEffect(() => {
-    void loadData(1);
+    void loadData();
   }, [loadData]);
 
   useEffect(() => {
@@ -95,22 +101,16 @@ export const FmsPage = () => {
     const keyword = search.trim().toLowerCase();
 
     const filtered = result.rows.filter((row) => {
-      if (!keyword) return true;
+      if (keyword && !row.shipmentId.toLowerCase().includes(keyword)) {
+        return false;
+      }
+
+      if (elapsedFilter === "ALL") return true;
 
       const latest = row.latestTrackingEvent;
-      const elapsedGroup = latest
-        ? getFmsElapsedGroup(latest.timestamp, nowMs)
-        : "—";
+      if (!latest) return false;
 
-      return [
-        row.shipmentId,
-        row.currentToNumber,
-        latest ? String(latest.status) : "",
-        latest ? getFmsTrackingStatusLabel(latest.status) : "",
-        latest ? formatFmsTimestamp(latest.timestamp) : "",
-        latest ? formatFmsElapsedHours(latest.timestamp, nowMs) : "",
-        elapsedGroup,
-      ].some((value) => value.toLowerCase().includes(keyword));
+      return getFmsElapsedGroup(latest.timestamp, nowMs) === elapsedFilter;
     });
 
     return [...filtered].sort((left, right) => {
@@ -133,9 +133,17 @@ export const FmsPage = () => {
 
       return leftLatest.timestamp - rightLatest.timestamp;
     });
-  }, [result.rows, search, nowMs]);
+  }, [result.rows, search, elapsedFilter, nowMs]);
 
-  const pageCount = Math.max(1, Math.ceil(result.total / result.count));
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const pageRows = rows.slice(pageStart, pageStart + PAGE_SIZE);
+  const resultStart = rows.length === 0 ? 0 : pageStart + 1;
+  const resultEnd = Math.min(pageStart + PAGE_SIZE, rows.length);
+
+  useEffect(() => {
+    if (currentPage > pageCount) setCurrentPage(pageCount);
+  }, [currentPage, pageCount]);
 
   return (
     <div className="app-page space-y-5 sm:space-y-6">
@@ -152,7 +160,7 @@ export const FmsPage = () => {
 
         <button
           type="button"
-          onClick={() => void loadData(result.pageNo)}
+          onClick={() => void loadData()}
           disabled={loading || !cookieAvailable}
           className="btn btn-primary min-h-11 rounded-xl border-0 px-5 font-bold shadow-sm"
         >
@@ -183,17 +191,39 @@ export const FmsPage = () => {
       ) : (
         <section className="surface-card overflow-hidden">
           <div className="space-y-3 border-b border-[#eadde2] p-4 sm:p-5">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a68591]" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                className="input min-h-11 w-full rounded-xl border-[#e6d9de] bg-[#fcfafb] pl-11 font-medium outline-none focus:border-[#c98ba0] focus:bg-white"
-                placeholder="Tìm SPX, TO, trạng thái cuối hoặc nhóm thời gian..."
-              />
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a68591]" />
+                <input
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="input min-h-11 w-full rounded-xl border-[#e6d9de] bg-[#fcfafb] pl-11 font-medium outline-none focus:border-[#c98ba0] focus:bg-white"
+                  placeholder="Tìm SPX Tracking Number..."
+                />
+              </div>
+
+              <select
+                value={elapsedFilter}
+                onChange={(event) => {
+                  setElapsedFilter(event.target.value as ElapsedFilter);
+                  setCurrentPage(1);
+                }}
+                className="select min-h-11 w-full rounded-xl border-[#e6d9de] bg-[#fcfafb] font-bold text-[#6f5f66] outline-none focus:border-[#c98ba0] focus:bg-white"
+                aria-label="Lọc nhóm thời gian đã qua"
+              >
+                <option value="ALL">Tất cả nhóm thời gian</option>
+                <option value="< 24H">&lt; 24H</option>
+                <option value="24H → 36H">24H → 36H</option>
+                <option value="> 36H">&gt; 36H</option>
+              </select>
             </div>
-            <div className="text-xs font-semibold text-[#8d7982]">
-              Sắp xếp ưu tiên: &gt; 36H → 24H → 36H → &lt; 24H
+
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[#8d7982]">
+              <span>Sắp xếp ưu tiên: &gt; 36H → 24H → 36H → &lt; 24H</span>
+              <span>{rows.length} kết quả · {PAGE_SIZE} đơn/trang</span>
             </div>
           </div>
 
@@ -204,11 +234,11 @@ export const FmsPage = () => {
               </div>
             ) : rows.length === 0 ? (
               <div className="p-10 text-center text-sm font-semibold text-[#87747c]">
-                Không có dữ liệu FMS.
+                Không có dữ liệu phù hợp.
               </div>
             ) : (
               <div className="divide-y divide-[#eee5e8]">
-                {rows.map((row) => {
+                {pageRows.map((row) => {
                   const latest = row.latestTrackingEvent;
                   const elapsedGroup = latest
                     ? getFmsElapsedGroup(latest.timestamp, nowMs)
@@ -292,11 +322,11 @@ export const FmsPage = () => {
                 ) : rows.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center font-semibold text-[#87747c]">
-                      Không có dữ liệu FMS.
+                      Không có dữ liệu phù hợp.
                     </td>
                   </tr>
                 ) : (
-                  rows.map((row) => {
+                  pageRows.map((row) => {
                     const latest = row.latestTrackingEvent;
                     const elapsedGroup = latest
                       ? getFmsElapsedGroup(latest.timestamp, nowMs)
@@ -333,28 +363,36 @@ export const FmsPage = () => {
             </table>
           </div>
 
-          <div className="flex items-center justify-between gap-3 border-t border-[#eadde2] p-4 sm:p-5">
-            <button
-              type="button"
-              onClick={() => void loadData(result.pageNo - 1)}
-              disabled={loading || result.pageNo <= 1}
-              className="btn min-h-10 rounded-xl border border-[#e6d9de] bg-white px-4 font-bold text-[#6f5f66] shadow-none hover:bg-[#faf4f6]"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Trước
-            </button>
+          <div className="flex flex-col gap-3 border-t border-[#eadde2] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <span className="text-xs font-bold text-[#7f6c75]">
-              Trang {result.pageNo} / {pageCount}
+              Hiển thị {resultStart}-{resultEnd} / {rows.length} kết quả
             </span>
-            <button
-              type="button"
-              onClick={() => void loadData(result.pageNo + 1)}
-              disabled={loading || result.pageNo >= pageCount}
-              className="btn min-h-10 rounded-xl border border-[#e6d9de] bg-white px-4 font-bold text-[#6f5f66] shadow-none hover:bg-[#faf4f6]"
-            >
-              Sau
-              <ChevronRight className="h-4 w-4" />
-            </button>
+
+            <div className="flex items-center justify-between gap-3 sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={currentPage <= 1}
+                className="btn min-h-10 rounded-xl border border-[#e6d9de] bg-white px-4 font-bold text-[#6f5f66] shadow-none hover:bg-[#faf4f6]"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Trước
+              </button>
+
+              <span className="min-w-24 text-center text-xs font-bold text-[#7f6c75]">
+                Trang {currentPage} / {pageCount}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
+                disabled={currentPage >= pageCount}
+                className="btn min-h-10 rounded-xl border border-[#e6d9de] bg-white px-4 font-bold text-[#6f5f66] shadow-none hover:bg-[#faf4f6]"
+              >
+                Sau
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </section>
       )}
