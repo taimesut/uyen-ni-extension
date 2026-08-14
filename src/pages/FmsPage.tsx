@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  Database,
   KeyRound,
   RefreshCw,
   Search,
@@ -14,6 +13,9 @@ import { getCookies } from "../utils/config";
 import {
   formatFmsElapsedHours,
   formatFmsTimestamp,
+  getFmsElapsedGroup,
+  getFmsElapsedGroupRank,
+  type FmsElapsedGroup,
   type FmsResult,
 } from "../utils/fms";
 import { fetchFmsData } from "../utils/fmsApi";
@@ -35,6 +37,23 @@ const StatusValue = ({ status }: { status: number }) => (
     </div>
   </div>
 );
+
+const ElapsedGroupBadge = ({ group }: { group: FmsElapsedGroup }) => {
+  const className =
+    group === "> 36H"
+      ? "border-rose-200 bg-rose-50 text-rose-700"
+      : group === "24H → 36H"
+        ? "border-amber-200 bg-amber-50 text-amber-700"
+        : group === "< 24H"
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : "border-[#e6d9de] bg-[#faf8f9] text-[#8a757e]";
+
+  return (
+    <span className={`inline-flex rounded-lg border px-2.5 py-1 text-xs font-black ${className}`}>
+      {group}
+    </span>
+  );
+};
 
 export const FmsPage = () => {
   const [result, setResult] = useState<FmsResult>(EMPTY_RESULT);
@@ -74,29 +93,49 @@ export const FmsPage = () => {
 
   const rows = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    if (!keyword) return result.rows;
 
-    return result.rows.filter((row) => {
+    const filtered = result.rows.filter((row) => {
+      if (!keyword) return true;
+
       const latest = row.latestTrackingEvent;
+      const elapsedGroup = latest
+        ? getFmsElapsedGroup(latest.timestamp, nowMs)
+        : "—";
+
       return [
         row.shipmentId,
         row.currentToNumber,
-        String(row.orderStatus),
-        getFmsTrackingStatusLabel(row.orderStatus),
-        String(row.bulkyType),
-        row.currentStationName,
-        row.nextStationName,
         latest ? String(latest.status) : "",
         latest ? getFmsTrackingStatusLabel(latest.status) : "",
-        latest ? String(latest.timestamp) : "",
-        latest?.message ?? "",
-        latest?.stationName ?? "",
+        latest ? formatFmsTimestamp(latest.timestamp) : "",
+        latest ? formatFmsElapsedHours(latest.timestamp, nowMs) : "",
+        elapsedGroup,
       ].some((value) => value.toLowerCase().includes(keyword));
     });
-  }, [result.rows, search]);
+
+    return [...filtered].sort((left, right) => {
+      const leftLatest = left.latestTrackingEvent;
+      const rightLatest = right.latestTrackingEvent;
+      const leftGroup = leftLatest
+        ? getFmsElapsedGroup(leftLatest.timestamp, nowMs)
+        : "—";
+      const rightGroup = rightLatest
+        ? getFmsElapsedGroup(rightLatest.timestamp, nowMs)
+        : "—";
+
+      const groupDifference =
+        getFmsElapsedGroupRank(leftGroup) - getFmsElapsedGroupRank(rightGroup);
+      if (groupDifference !== 0) return groupDifference;
+
+      if (!leftLatest && !rightLatest) return 0;
+      if (!leftLatest) return 1;
+      if (!rightLatest) return -1;
+
+      return leftLatest.timestamp - rightLatest.timestamp;
+    });
+  }, [result.rows, search, nowMs]);
 
   const pageCount = Math.max(1, Math.ceil(result.total / result.count));
-  const rowsWithLatestStatus = rows.filter((row) => row.latestTrackingEvent !== null).length;
 
   return (
     <div className="app-page space-y-5 sm:space-y-6">
@@ -107,7 +146,7 @@ export const FmsPage = () => {
             Dữ liệu FMS
           </h1>
           <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-[#786970]">
-            Mỗi SPX chỉ hiển thị trạng thái tracking cuối cùng theo timestamp mới nhất.
+            Mỗi SPX chỉ hiển thị trạng thái cuối và được phân nhóm theo thời gian đã qua: &lt; 24H, 24H → 36H và &gt; 36H.
           </p>
         </div>
 
@@ -142,173 +181,182 @@ export const FmsPage = () => {
           </Link>
         </section>
       ) : (
-        <>
-          <section className="grid gap-3 sm:grid-cols-3">
-            <div className="surface-card p-4 sm:p-5">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#817078]">Tổng FMS</span>
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#f3e5ea] text-[#a64e6b]">
-                  <Database className="h-4 w-4" />
-                </span>
+        <section className="surface-card overflow-hidden">
+          <div className="space-y-3 border-b border-[#eadde2] p-4 sm:p-5">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a68591]" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="input min-h-11 w-full rounded-xl border-[#e6d9de] bg-[#fcfafb] pl-11 font-medium outline-none focus:border-[#c98ba0] focus:bg-white"
+                placeholder="Tìm SPX, TO, trạng thái cuối hoặc nhóm thời gian..."
+              />
+            </div>
+            <div className="text-xs font-semibold text-[#8d7982]">
+              Sắp xếp ưu tiên: &gt; 36H → 24H → 36H → &lt; 24H
+            </div>
+          </div>
+
+          <div className="md:hidden">
+            {loading && result.rows.length === 0 ? (
+              <div className="p-10 text-center text-sm font-semibold text-[#9f6c7d]">
+                Đang tải dữ liệu FMS...
               </div>
-              <div className="mt-3 text-3xl font-black text-[#493a40]">{result.total}</div>
-            </div>
-
-            <div className="surface-card p-4 sm:p-5">
-              <div className="text-xs font-bold uppercase tracking-[0.1em] text-[#817078]">Trang hiện tại</div>
-              <div className="mt-3 text-3xl font-black text-[#493a40]">{result.pageNo}</div>
-              <div className="mt-1 text-xs font-semibold text-[#927e87]">{rows.length} / {result.count} đơn</div>
-            </div>
-
-            <div className="surface-card p-4 sm:p-5">
-              <div className="text-xs font-bold uppercase tracking-[0.1em] text-[#817078]">Có status cuối</div>
-              <div className="mt-3 text-3xl font-black text-[#493a40]">{rowsWithLatestStatus}</div>
-              <div className="mt-1 text-xs font-semibold text-[#927e87]">{pageCount} trang FMS</div>
-            </div>
-          </section>
-
-          <section className="surface-card overflow-hidden">
-            <div className="space-y-3 border-b border-[#eadde2] p-4 sm:p-5">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a68591]" />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  className="input min-h-11 w-full rounded-xl border-[#e6d9de] bg-[#fcfafb] pl-11 font-medium outline-none focus:border-[#c98ba0] focus:bg-white"
-                  placeholder="Tìm SPX, TO, status cuối, timestamp, station..."
-                />
+            ) : rows.length === 0 ? (
+              <div className="p-10 text-center text-sm font-semibold text-[#87747c]">
+                Không có dữ liệu FMS.
               </div>
-              <div className="text-xs font-semibold text-[#8d7982]">
-                Payload: station 1030 → 1812 · status 880,36,15 · count 24
-              </div>
-            </div>
+            ) : (
+              <div className="divide-y divide-[#eee5e8]">
+                {rows.map((row) => {
+                  const latest = row.latestTrackingEvent;
+                  const elapsedGroup = latest
+                    ? getFmsElapsedGroup(latest.timestamp, nowMs)
+                    : "—";
 
-            <div className="md:hidden">
-              {loading && result.rows.length === 0 ? (
-                <div className="p-10 text-center text-sm font-semibold text-[#9f6c7d]">Đang tải dữ liệu FMS...</div>
-              ) : rows.length === 0 ? (
-                <div className="p-10 text-center text-sm font-semibold text-[#87747c]">Không có dữ liệu FMS.</div>
-              ) : (
-                <div className="divide-y divide-[#eee5e8]">
-                  {rows.map((row) => {
-                    const latest = row.latestTrackingEvent;
-                    return (
-                      <article key={row.shipmentId} className="space-y-4 p-4">
+                  return (
+                    <article key={row.shipmentId} className="space-y-4 p-4">
+                      <div>
+                        <div className="field-label">SPX Tracking Number</div>
+                        <div className="mt-1 break-all font-mono text-sm font-black text-[#493a40]">
+                          {row.shipmentId}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="field-label">TO Number</span>
+                        <div className="field-value">{row.currentToNumber || "—"}</div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <div className="field-label">SPX Tracking Number</div>
-                          <div className="mt-1 break-all font-mono text-sm font-black text-[#493a40]">{row.shipmentId}</div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div><span className="field-label">TO Number</span><div className="field-value">{row.currentToNumber || "—"}</div></div>
-                          <div><span className="field-label">Order Status</span><div className="mt-1"><StatusValue status={row.orderStatus} /></div></div>
-                          <div><span className="field-label">Bulky Type</span><div className="field-value">{row.bulkyType}</div></div>
-                          <div><span className="field-label">Đã qua</span><div className="field-value font-black text-[#9f4664]">{latest ? formatFmsElapsedHours(latest.timestamp, nowMs) : "—"}</div></div>
-                        </div>
-
-                        <div>
-                          <span className="field-label">Route</span>
-                          <div className="field-value">{row.currentStationName || "—"} → {row.nextStationName || "—"}</div>
-                        </div>
-
-                        <div className="rounded-xl border border-[#eadde2] bg-[#faf7f8] p-3">
                           <span className="field-label">Trạng thái cuối</span>
-                          {row.trackingError ? (
-                            <div className="mt-2 text-xs font-semibold text-rose-700">{row.trackingError}</div>
-                          ) : latest ? (
-                            <div className="mt-2 space-y-2">
-                              <StatusValue status={latest.status} />
-                              <div className="text-xs font-semibold text-[#75636b]">{formatFmsTimestamp(latest.timestamp)}</div>
-                              {(latest.message || latest.stationName) && (
-                                <div className="text-xs leading-5 text-[#75636b]">
-                                  {latest.message || "—"}{latest.stationName ? ` · ${latest.stationName}` : ""}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="field-value">Không có tracking.</div>
-                          )}
+                          <div className="mt-1">
+                            {latest ? <StatusValue status={latest.status} /> : "—"}
+                          </div>
                         </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                        <div>
+                          <span className="field-label">Nhóm thời gian</span>
+                          <div className="mt-1">
+                            <ElapsedGroupBadge group={elapsedGroup} />
+                          </div>
+                        </div>
+                      </div>
 
-            <div className="hidden overflow-x-auto md:block">
-              <table className="table min-w-[1500px]">
-                <thead>
-                  <tr className="border-[#eadde2] bg-[#faf7f8] text-[#6f5f66]">
-                    <th>SPX Tracking Number</th>
-                    <th>TO Number</th>
-                    <th>Order Status</th>
-                    <th>Bulky Type</th>
-                    <th>Current Station</th>
-                    <th>Next Station</th>
-                    <th>Trạng thái cuối</th>
-                    <th>Timestamp</th>
-                    <th>Cập nhật cuối</th>
-                    <th>Đã qua</th>
-                    <th>Message / Station</th>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <span className="field-label">Cập nhật cuối</span>
+                          <div className="field-value">
+                            {latest ? formatFmsTimestamp(latest.timestamp) : "—"}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="field-label">Đã qua</span>
+                          <div className="field-value font-black text-[#9f4664]">
+                            {latest ? formatFmsElapsedHours(latest.timestamp, nowMs) : "—"}
+                          </div>
+                        </div>
+                      </div>
+
+                      {row.trackingError ? (
+                        <div className="text-xs font-semibold text-rose-700">
+                          {row.trackingError}
+                        </div>
+                      ) : null}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
+            <table className="table min-w-[1050px]">
+              <thead>
+                <tr className="border-[#eadde2] bg-[#faf7f8] text-[#6f5f66]">
+                  <th>SPX Tracking Number</th>
+                  <th>TO Number</th>
+                  <th>Trạng thái cuối</th>
+                  <th>Cập nhật cuối</th>
+                  <th>Đã qua</th>
+                  <th>Nhóm thời gian</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading && result.rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center font-semibold text-[#9f6c7d]">
+                      Đang tải dữ liệu FMS...
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {loading && result.rows.length === 0 ? (
-                    <tr><td colSpan={11} className="py-12 text-center font-semibold text-[#9f6c7d]">Đang tải dữ liệu FMS...</td></tr>
-                  ) : rows.length === 0 ? (
-                    <tr><td colSpan={11} className="py-12 text-center font-semibold text-[#87747c]">Không có dữ liệu FMS.</td></tr>
-                  ) : rows.map((row) => {
+                ) : rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center font-semibold text-[#87747c]">
+                      Không có dữ liệu FMS.
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map((row) => {
                     const latest = row.latestTrackingEvent;
+                    const elapsedGroup = latest
+                      ? getFmsElapsedGroup(latest.timestamp, nowMs)
+                      : "—";
+
                     return (
-                      <tr key={row.shipmentId} className="border-[#eee5e8] align-top hover:bg-[#fcfafb]">
-                        <td className="font-mono text-xs font-black text-[#493a40]">{row.shipmentId}</td>
-                        <td className="font-mono text-xs font-semibold">{row.currentToNumber || "—"}</td>
-                        <td><StatusValue status={row.orderStatus} /></td>
-                        <td>{row.bulkyType}</td>
-                        <td>{row.currentStationName || "—"}</td>
-                        <td>{row.nextStationName || "—"}</td>
-                        <td>{latest ? <StatusValue status={latest.status} /> : "—"}</td>
-                        <td className="font-mono text-xs font-semibold">{latest?.timestamp || "—"}</td>
-                        <td className="whitespace-nowrap text-xs font-semibold">{latest ? formatFmsTimestamp(latest.timestamp) : "—"}</td>
-                        <td className="whitespace-nowrap font-black text-[#9f4664]">{latest ? formatFmsElapsedHours(latest.timestamp, nowMs) : "—"}</td>
-                        <td className="max-w-[360px] text-xs leading-5">
-                          {row.trackingError ? (
-                            <span className="font-semibold text-rose-700">{row.trackingError}</span>
-                          ) : latest ? (
-                            <>{latest.message || "—"}{latest.stationName ? <span className="font-semibold text-[#8f4d63]"> · {latest.stationName}</span> : null}</>
-                          ) : "Không có tracking."}
+                      <tr
+                        key={row.shipmentId}
+                        className="border-[#eee5e8] align-middle hover:bg-[#fcfafb]"
+                      >
+                        <td className="font-mono text-xs font-black text-[#493a40]">
+                          {row.shipmentId}
+                        </td>
+                        <td className="font-mono text-xs font-semibold">
+                          {row.currentToNumber || "—"}
+                        </td>
+                        <td>
+                          {latest ? <StatusValue status={latest.status} /> : "—"}
+                        </td>
+                        <td className="whitespace-nowrap text-xs font-semibold">
+                          {latest ? formatFmsTimestamp(latest.timestamp) : "—"}
+                        </td>
+                        <td className="whitespace-nowrap font-black text-[#9f4664]">
+                          {latest ? formatFmsElapsedHours(latest.timestamp, nowMs) : "—"}
+                        </td>
+                        <td>
+                          <ElapsedGroupBadge group={elapsedGroup} />
                         </td>
                       </tr>
                     );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
 
-            <div className="flex items-center justify-between gap-3 border-t border-[#eadde2] p-4 sm:p-5">
-              <button
-                type="button"
-                onClick={() => void loadData(result.pageNo - 1)}
-                disabled={loading || result.pageNo <= 1}
-                className="btn min-h-10 rounded-xl border border-[#e6d9de] bg-white px-4 font-bold text-[#6f5f66] shadow-none hover:bg-[#faf4f6]"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Trước
-              </button>
-              <span className="text-xs font-bold text-[#7f6c75]">Trang {result.pageNo} / {pageCount}</span>
-              <button
-                type="button"
-                onClick={() => void loadData(result.pageNo + 1)}
-                disabled={loading || result.pageNo >= pageCount}
-                className="btn min-h-10 rounded-xl border border-[#e6d9de] bg-white px-4 font-bold text-[#6f5f66] shadow-none hover:bg-[#faf4f6]"
-              >
-                Sau
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          </section>
-        </>
+          <div className="flex items-center justify-between gap-3 border-t border-[#eadde2] p-4 sm:p-5">
+            <button
+              type="button"
+              onClick={() => void loadData(result.pageNo - 1)}
+              disabled={loading || result.pageNo <= 1}
+              className="btn min-h-10 rounded-xl border border-[#e6d9de] bg-white px-4 font-bold text-[#6f5f66] shadow-none hover:bg-[#faf4f6]"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Trước
+            </button>
+            <span className="text-xs font-bold text-[#7f6c75]">
+              Trang {result.pageNo} / {pageCount}
+            </span>
+            <button
+              type="button"
+              onClick={() => void loadData(result.pageNo + 1)}
+              disabled={loading || result.pageNo >= pageCount}
+              className="btn min-h-10 rounded-xl border border-[#e6d9de] bg-white px-4 font-bold text-[#6f5f66] shadow-none hover:bg-[#faf4f6]"
+            >
+              Sau
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </section>
       )}
     </div>
   );
