@@ -9,9 +9,12 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { showToast } from "../components/Toast";
+import { getFmsTrackingStatusLabel } from "../config/fmsTrackingStatus";
 import { getCookies } from "../utils/config";
 import {
+  formatFmsElapsedHours,
   formatFmsTimestamp,
+  getLatestFmsTrackingEvent,
   type FmsOrderRow,
   type FmsResult,
   type FmsTrackingEvent,
@@ -30,6 +33,17 @@ interface FlatFmsRow {
   event: FmsTrackingEvent | null;
   key: string;
 }
+
+const StatusValue = ({ status }: { status: number }) => (
+  <div className="space-y-1">
+    <span className="inline-flex rounded-md bg-[#f3e5ea] px-2 py-0.5 font-mono text-xs font-black text-[#9f4664]">
+      {status}
+    </span>
+    <div className="break-words text-[0.72rem] font-semibold leading-4 text-[#6f5f66]">
+      {getFmsTrackingStatusLabel(status)}
+    </div>
+  </div>
+);
 
 const TrackingHistory = ({ row }: { row: FmsOrderRow }) => {
   if (row.trackingError) {
@@ -53,7 +67,10 @@ const TrackingHistory = ({ row }: { row: FmsOrderRow }) => {
         >
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="rounded-md bg-[#f3e5ea] px-2 py-0.5 font-mono text-xs font-black text-[#9f4664]">
-              Status {event.status}
+              {event.status}
+            </span>
+            <span className="text-xs font-bold text-[#6f5f66]">
+              {getFmsTrackingStatusLabel(event.status)}
             </span>
             <span className="font-mono text-[0.72rem] font-semibold text-[#695860]">
               {event.timestamp}
@@ -79,6 +96,7 @@ export const FmsPage = () => {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [cookieAvailable, setCookieAvailable] = useState(() => Boolean(getCookies()));
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const loadData = useCallback(async (pageNo: number) => {
     const cookie = getCookies();
@@ -89,6 +107,7 @@ export const FmsPage = () => {
     setLoading(true);
     try {
       setResult(await fetchFmsData(cookie, pageNo));
+      setNowMs(Date.now());
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Không thể tải dữ liệu FMS.",
@@ -103,6 +122,11 @@ export const FmsPage = () => {
     void loadData(1);
   }, [loadData]);
 
+  useEffect(() => {
+    const timerId = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(timerId);
+  }, []);
+
   const rows = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     if (!keyword) return result.rows;
@@ -112,11 +136,13 @@ export const FmsPage = () => {
         row.shipmentId,
         row.currentToNumber,
         String(row.orderStatus),
+        getFmsTrackingStatusLabel(row.orderStatus),
         String(row.bulkyType),
         row.currentStationName,
         row.nextStationName,
         ...row.trackingEvents.flatMap((event) => [
           String(event.status),
+          getFmsTrackingStatusLabel(event.status),
           String(event.timestamp),
           event.message,
           event.stationName,
@@ -226,7 +252,7 @@ export const FmsPage = () => {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   className="input min-h-11 w-full rounded-xl border-[#e6d9de] bg-[#fcfafb] pl-11 font-medium outline-none focus:border-[#c98ba0] focus:bg-white"
-                  placeholder="Tìm SPX, TO, status, timestamp, station..."
+                  placeholder="Tìm SPX, TO, status code/tên, timestamp, station..."
                 />
               </div>
               <div className="text-xs font-semibold text-[#8d7982]">
@@ -241,37 +267,58 @@ export const FmsPage = () => {
                 <div className="p-10 text-center text-sm font-semibold text-[#87747c]">Không có dữ liệu FMS.</div>
               ) : (
                 <div className="divide-y divide-[#eee5e8]">
-                  {rows.map((row) => (
-                    <article key={row.shipmentId} className="space-y-4 p-4">
-                      <div>
-                        <div className="field-label">SPX Tracking Number</div>
-                        <div className="mt-1 break-all font-mono text-sm font-black text-[#493a40]">{row.shipmentId}</div>
-                      </div>
+                  {rows.map((row) => {
+                    const latestEvent = getLatestFmsTrackingEvent(row);
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div><span className="field-label">TO Number</span><div className="field-value">{row.currentToNumber || "—"}</div></div>
-                        <div><span className="field-label">Order Status</span><div className="field-value font-mono">{row.orderStatus || "—"}</div></div>
-                        <div><span className="field-label">Bulky Type</span><div className="field-value">{row.bulkyType}</div></div>
-                        <div><span className="field-label">Tracking Events</span><div className="field-value">{row.trackingEvents.length}</div></div>
-                      </div>
+                    return (
+                      <article key={row.shipmentId} className="space-y-4 p-4">
+                        <div>
+                          <div className="field-label">SPX Tracking Number</div>
+                          <div className="mt-1 break-all font-mono text-sm font-black text-[#493a40]">{row.shipmentId}</div>
+                        </div>
 
-                      <div>
-                        <span className="field-label">Route</span>
-                        <div className="field-value">{row.currentStationName || "—"} → {row.nextStationName || "—"}</div>
-                      </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div><span className="field-label">TO Number</span><div className="field-value">{row.currentToNumber || "—"}</div></div>
+                          <div><span className="field-label">Order Status</span><div className="mt-1"><StatusValue status={row.orderStatus} /></div></div>
+                          <div><span className="field-label">Bulky Type</span><div className="field-value">{row.bulkyType}</div></div>
+                          <div><span className="field-label">Tracking Events</span><div className="field-value">{row.trackingEvents.length}</div></div>
+                        </div>
 
-                      <div>
-                        <span className="field-label">Status / Timestamp</span>
-                        <div className="mt-2"><TrackingHistory row={row} /></div>
-                      </div>
-                    </article>
-                  ))}
+                        <div>
+                          <span className="field-label">Route</span>
+                          <div className="field-value">{row.currentStationName || "—"} → {row.nextStationName || "—"}</div>
+                        </div>
+
+                        <div className="rounded-xl border border-[#eadde2] bg-[#faf7f8] p-3">
+                          <span className="field-label">Trạng thái cuối</span>
+                          {latestEvent ? (
+                            <div className="mt-2 space-y-2">
+                              <StatusValue status={latestEvent.status} />
+                              <div className="text-xs font-semibold text-[#75636b]">
+                                {formatFmsTimestamp(latestEvent.timestamp)}
+                              </div>
+                              <div className="text-sm font-black text-[#9f4664]">
+                                Đã qua {formatFmsElapsedHours(latestEvent.timestamp, nowMs)}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="field-value">—</div>
+                          )}
+                        </div>
+
+                        <div>
+                          <span className="field-label">Lịch sử status / timestamp</span>
+                          <div className="mt-2"><TrackingHistory row={row} /></div>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
             <div className="hidden overflow-x-auto md:block">
-              <table className="table min-w-[1500px]">
+              <table className="table min-w-[2100px]">
                 <thead>
                   <tr className="border-[#eadde2] bg-[#faf7f8] text-[#6f5f66]">
                     <th>SPX Tracking Number</th>
@@ -283,43 +330,51 @@ export const FmsPage = () => {
                     <th>Tracking Status</th>
                     <th>Timestamp</th>
                     <th>Thời gian</th>
+                    <th>Trạng thái cuối</th>
+                    <th>Cập nhật cuối</th>
+                    <th>Đã qua</th>
                     <th>Message / Station</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading && result.rows.length === 0 ? (
-                    <tr><td colSpan={10} className="py-12 text-center font-semibold text-[#9f6c7d]">Đang tải dữ liệu FMS...</td></tr>
+                    <tr><td colSpan={13} className="py-12 text-center font-semibold text-[#9f6c7d]">Đang tải dữ liệu FMS...</td></tr>
                   ) : flatRows.length === 0 ? (
-                    <tr><td colSpan={10} className="py-12 text-center font-semibold text-[#87747c]">Không có dữ liệu FMS.</td></tr>
-                  ) : flatRows.map(({ order, event, key }) => (
-                    <tr key={key} className="border-[#eee5e8] align-top hover:bg-[#fcfafb]">
-                      <td className="font-mono text-xs font-black text-[#493a40]">{order.shipmentId}</td>
-                      <td className="font-mono text-xs font-semibold">{order.currentToNumber || "—"}</td>
-                      <td className="font-mono font-bold">{order.orderStatus || "—"}</td>
-                      <td>{order.bulkyType}</td>
-                      <td>{order.currentStationName || "—"}</td>
-                      <td>{order.nextStationName || "—"}</td>
-                      <td>
-                        {event ? (
-                          <span className="rounded-md bg-[#f3e5ea] px-2 py-1 font-mono text-xs font-black text-[#9f4664]">
-                            {event.status}
-                          </span>
-                        ) : "—"}
-                      </td>
-                      <td className="font-mono text-xs font-semibold">{event?.timestamp || "—"}</td>
-                      <td className="whitespace-nowrap text-xs font-semibold">{event ? formatFmsTimestamp(event.timestamp) : "—"}</td>
-                      <td className="max-w-[360px] text-xs leading-5">
-                        {order.trackingError ? (
-                          <span className="font-semibold text-rose-700">{order.trackingError}</span>
-                        ) : event ? (
-                          <>
-                            {event.message || "—"}
-                            {event.stationName ? <span className="font-semibold text-[#8f4d63]"> · {event.stationName}</span> : null}
-                          </>
-                        ) : "Không có tracking."}
-                      </td>
-                    </tr>
-                  ))}
+                    <tr><td colSpan={13} className="py-12 text-center font-semibold text-[#87747c]">Không có dữ liệu FMS.</td></tr>
+                  ) : flatRows.map(({ order, event, key }) => {
+                    const latestEvent = getLatestFmsTrackingEvent(order);
+
+                    return (
+                      <tr key={key} className="border-[#eee5e8] align-top hover:bg-[#fcfafb]">
+                        <td className="font-mono text-xs font-black text-[#493a40]">{order.shipmentId}</td>
+                        <td className="font-mono text-xs font-semibold">{order.currentToNumber || "—"}</td>
+                        <td><StatusValue status={order.orderStatus} /></td>
+                        <td>{order.bulkyType}</td>
+                        <td>{order.currentStationName || "—"}</td>
+                        <td>{order.nextStationName || "—"}</td>
+                        <td>{event ? <StatusValue status={event.status} /> : "—"}</td>
+                        <td className="font-mono text-xs font-semibold">{event?.timestamp || "—"}</td>
+                        <td className="whitespace-nowrap text-xs font-semibold">{event ? formatFmsTimestamp(event.timestamp) : "—"}</td>
+                        <td>{latestEvent ? <StatusValue status={latestEvent.status} /> : "—"}</td>
+                        <td className="whitespace-nowrap text-xs font-semibold">
+                          {latestEvent ? formatFmsTimestamp(latestEvent.timestamp) : "—"}
+                        </td>
+                        <td className="whitespace-nowrap font-black text-[#9f4664]">
+                          {latestEvent ? formatFmsElapsedHours(latestEvent.timestamp, nowMs) : "—"}
+                        </td>
+                        <td className="max-w-[360px] text-xs leading-5">
+                          {order.trackingError ? (
+                            <span className="font-semibold text-rose-700">{order.trackingError}</span>
+                          ) : event ? (
+                            <>
+                              {event.message || "—"}
+                              {event.stationName ? <span className="font-semibold text-[#8f4d63]"> · {event.stationName}</span> : null}
+                            </>
+                          ) : "Không có tracking."}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
