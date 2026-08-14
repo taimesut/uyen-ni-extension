@@ -3,6 +3,8 @@ import test from "node:test";
 import { getFmsTrackingStatusLabel } from "../src/config/fmsTrackingStatus.ts";
 import {
   formatFmsElapsedHours,
+  getFmsElapsedGroup,
+  getFmsElapsedGroupRank,
   getFmsElapsedHours,
   normalizeFmsResult,
 } from "../src/utils/fms.ts";
@@ -70,4 +72,19 @@ test("elapsed hours use latest status timestamp", () => {
 
   assert.equal(getFmsElapsedHours(timestamp, nowMs), 3.5);
   assert.equal(formatFmsElapsedHours(timestamp, nowMs), "3.5 giờ");
+});
+
+test("FMS elapsed groups use 24H and 36H boundaries", () => {
+  const timestamp = 1000;
+  const nowAt = (hours: number) => (timestamp + hours * 3600) * 1000;
+
+  assert.equal(getFmsElapsedGroup(timestamp, nowAt(23.99)), "< 24H");
+  assert.equal(getFmsElapsedGroup(timestamp, nowAt(24)), "24H → 36H");
+  assert.equal(getFmsElapsedGroup(timestamp, nowAt(36)), "24H → 36H");
+  assert.equal(getFmsElapsedGroup(timestamp, nowAt(36.01)), "> 36H");
+});
+
+test("FMS elapsed groups sort oldest risk group first", () => {
+  assert.ok(getFmsElapsedGroupRank("> 36H") < getFmsElapsedGroupRank("24H → 36H"));
+  assert.ok(getFmsElapsedGroupRank("24H → 36H") < getFmsElapsedGroupRank("< 24H"));
 });
