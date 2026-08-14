@@ -24,6 +24,8 @@ export interface FmsResult {
   rows: FmsOrderRow[];
 }
 
+export type FmsElapsedGroup = "< 24H" | "24H → 36H" | "> 36H" | "—";
+
 const asObject = (value: unknown): Record<string, unknown> | null =>
   typeof value === "object" && value !== null
     ? (value as Record<string, unknown>)
@@ -121,6 +123,24 @@ export const getFmsElapsedHours = (
   }
 
   return Math.max(0, nowMs - timestamp * 1000) / 3_600_000;
+};
+
+export const getFmsElapsedGroup = (
+  timestamp: number,
+  nowMs = Date.now(),
+): FmsElapsedGroup => {
+  const hours = getFmsElapsedHours(timestamp, nowMs);
+  if (hours === null) return "—";
+  if (hours < 24) return "< 24H";
+  if (hours <= 36) return "24H → 36H";
+  return "> 36H";
+};
+
+export const getFmsElapsedGroupRank = (group: FmsElapsedGroup): number => {
+  if (group === "> 36H") return 0;
+  if (group === "24H → 36H") return 1;
+  if (group === "< 24H") return 2;
+  return 3;
 };
 
 export const formatFmsElapsedHours = (
