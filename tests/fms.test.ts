@@ -4,11 +4,10 @@ import { getFmsTrackingStatusLabel } from "../src/config/fmsTrackingStatus.ts";
 import {
   formatFmsElapsedHours,
   getFmsElapsedHours,
-  getLatestFmsTrackingEvent,
   normalizeFmsResult,
 } from "../src/utils/fms.ts";
 
-test("normalizeFmsResult keeps SPX rows and tracking status timestamps", () => {
+test("normalizeFmsResult keeps only latest tracking event from GAS response", () => {
   const result = normalizeFmsResult({
     page_no: 1,
     count: 24,
@@ -21,35 +20,24 @@ test("normalizeFmsResult keeps SPX rows and tracking status timestamps", () => {
         bulky_type: 2,
         current_station_name: "Pleiku SOC",
         next_station_name: "44-GLI Pleiku 03 Hub",
-        tracking_events: [
-          { id: 2, status: 42, timestamp: 1786522640 },
-          { id: 1, status: 0, timestamp: 1786496388 },
-        ],
+        latest_tracking_event: {
+          id: 2,
+          status: 42,
+          timestamp: 1786522640,
+          message: "Parcel received by pickup hub",
+          station_name: "20-HNI Hoang Mai Hub",
+        },
       },
     ],
   });
 
   assert.equal(result.total, 1);
   assert.equal(result.rows[0]?.shipmentId, "SPXVN060473505378");
-  assert.deepEqual(
-    result.rows[0]?.trackingEvents.map((event) => [event.status, event.timestamp]),
-    [
-      [0, 1786496388],
-      [42, 1786522640],
-    ],
-  );
+  assert.equal(result.rows[0]?.latestTrackingEvent?.status, 42);
+  assert.equal(result.rows[0]?.latestTrackingEvent?.timestamp, 1786522640);
 });
 
-test("FMS status map resolves codes from tracking_status_list", () => {
-  assert.equal(getFmsTrackingStatusLabel(0), "Created");
-  assert.equal(getFmsTrackingStatusLabel(42), "FMHub_Received");
-  assert.equal(getFmsTrackingStatusLabel(880), "LMHub_LHArrived");
-  assert.equal(getFmsTrackingStatusLabel(36), "SOC_LHTransported");
-  assert.equal(getFmsTrackingStatusLabel(15), "SOC_LHTransporting");
-  assert.equal(getFmsTrackingStatusLabel(999999), "Unknown_999999");
-});
-
-test("latest FMS event and elapsed hours use the newest timestamp", () => {
+test("normalizeFmsResult remains compatible with old tracking_events response", () => {
   const result = normalizeFmsResult({
     rows: [
       {
@@ -63,14 +51,23 @@ test("latest FMS event and elapsed hours use the newest timestamp", () => {
     ],
   });
 
-  const row = result.rows[0];
-  assert.ok(row);
+  assert.equal(result.rows[0]?.latestTrackingEvent?.status, 42);
+  assert.equal(result.rows[0]?.latestTrackingEvent?.timestamp, 4600);
+});
 
-  const latest = getLatestFmsTrackingEvent(row);
-  assert.equal(latest?.status, 42);
-  assert.equal(latest?.timestamp, 4600);
+test("FMS status map resolves codes from tracking_status_list", () => {
+  assert.equal(getFmsTrackingStatusLabel(0), "Created");
+  assert.equal(getFmsTrackingStatusLabel(42), "FMHub_Received");
+  assert.equal(getFmsTrackingStatusLabel(880), "LMHub_LHArrived");
+  assert.equal(getFmsTrackingStatusLabel(36), "SOC_LHTransported");
+  assert.equal(getFmsTrackingStatusLabel(15), "SOC_LHTransporting");
+  assert.equal(getFmsTrackingStatusLabel(999999), "Unknown_999999");
+});
 
-  const nowMs = (4600 + 3.5 * 3600) * 1000;
-  assert.equal(getFmsElapsedHours(4600, nowMs), 3.5);
-  assert.equal(formatFmsElapsedHours(4600, nowMs), "3.5 giờ");
+test("elapsed hours use latest status timestamp", () => {
+  const timestamp = 4600;
+  const nowMs = (timestamp + 3.5 * 3600) * 1000;
+
+  assert.equal(getFmsElapsedHours(timestamp, nowMs), 3.5);
+  assert.equal(formatFmsElapsedHours(timestamp, nowMs), "3.5 giờ");
 });
