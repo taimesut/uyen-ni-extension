@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 
 const BIRTHDAY_EMAIL = "uyenni.nguyentran@spxexpress.com";
+// const BIRTHDAY_EMAIL = "thanhtai.nguyen04@spxexpress.com";
 const BIRTHDAY_MONTH_INDEX = 7;
 const BIRTHDAY_DAY = 16;
 const DISPLAY_MS = 18_000;
@@ -26,11 +27,20 @@ interface BirthdayWindow {
   };
 }
 
-const COLORS = ["#fb7185", "#f9a8d4", "#fde68a", "#7dd3fc", "#c4b5fd", "#86efac"];
+const COLORS = [
+  "#fb7185",
+  "#f9a8d4",
+  "#fde68a",
+  "#7dd3fc",
+  "#c4b5fd",
+  "#86efac",
+];
 
 const isBirthdayToday = () => {
   const now = new Date();
-  return now.getMonth() === BIRTHDAY_MONTH_INDEX && now.getDate() === BIRTHDAY_DAY;
+  return (
+    now.getMonth() === BIRTHDAY_MONTH_INDEX && now.getDate() === BIRTHDAY_DAY
+  );
 };
 
 const getBirthdayRunner = (): BirthdayGasRunner | undefined => {
@@ -98,7 +108,11 @@ export const BirthdayLauncher = () => {
       .withSuccessHandler((value: unknown) => {
         if (!value || typeof value !== "object") return;
         const profile = value as CurrentUserProfile;
-        if (normalizeEmail(profile.email) !== BIRTHDAY_EMAIL) return;
+        if (
+          normalizeEmail(profile.email) !== BIRTHDAY_EMAIL &&
+          normalizeEmail(profile.email) !== "thanhtai.nguyen04@spxexpress.com"
+        )
+          return;
         if (profile.allowed === false) return;
         setVisible(true);
       })
@@ -109,7 +123,10 @@ export const BirthdayLauncher = () => {
   useEffect(() => {
     if (!visible) return;
 
-    const fadeTimer = window.setTimeout(() => setClosing(true), DISPLAY_MS - FADE_MS);
+    const fadeTimer = window.setTimeout(
+      () => setClosing(true),
+      DISPLAY_MS - FADE_MS,
+    );
     const closeTimer = window.setTimeout(() => setVisible(false), DISPLAY_MS);
 
     return () => {
@@ -275,10 +292,18 @@ export const BirthdayLauncher = () => {
       <div className="birthday-ring absolute left-1/2 top-1/2 h-[48vmin] w-[48vmin] rounded-full border border-white/25" />
       <div className="birthday-ring absolute left-1/2 top-1/2 h-[68vmin] w-[68vmin] rounded-full border border-pink-300/15 [animation-delay:1.1s]" />
 
-      <div className="birthday-float absolute left-[6%] top-[15%] select-none text-5xl drop-shadow-2xl sm:text-7xl">🎈</div>
-      <div className="birthday-float absolute right-[7%] top-[13%] select-none text-5xl drop-shadow-2xl sm:text-7xl [animation-delay:-1.4s]">🎈</div>
-      <div className="birthday-float absolute bottom-[13%] left-[11%] select-none text-4xl sm:text-6xl [animation-delay:-2.2s]">✨</div>
-      <div className="birthday-float absolute bottom-[14%] right-[10%] select-none text-4xl sm:text-6xl [animation-delay:-.8s]">🎉</div>
+      <div className="birthday-float absolute left-[6%] top-[15%] select-none text-5xl drop-shadow-2xl sm:text-7xl">
+        🎈
+      </div>
+      <div className="birthday-float absolute right-[7%] top-[13%] select-none text-5xl drop-shadow-2xl sm:text-7xl [animation-delay:-1.4s]">
+        🎈
+      </div>
+      <div className="birthday-float absolute bottom-[13%] left-[11%] select-none text-4xl sm:text-6xl [animation-delay:-2.2s]">
+        ✨
+      </div>
+      <div className="birthday-float absolute bottom-[14%] right-[10%] select-none text-4xl sm:text-6xl [animation-delay:-.8s]">
+        🎉
+      </div>
 
       <button
         type="button"
@@ -295,7 +320,9 @@ export const BirthdayLauncher = () => {
             16 · 08
           </div>
 
-          <div className="birthday-cake mb-4 select-none text-7xl drop-shadow-[0_0_35px_rgba(255,255,255,.25)] sm:text-9xl">🎂</div>
+          <div className="birthday-cake mb-4 select-none text-7xl drop-shadow-[0_0_35px_rgba(255,255,255,.25)] sm:text-9xl">
+            🎂
+          </div>
 
           <h1 className="birthday-reveal birthday-glow birthday-shimmer relative overflow-hidden bg-gradient-to-r from-pink-200 via-amber-100 to-sky-200 bg-clip-text text-4xl font-black leading-[.95] tracking-[-.05em] text-transparent sm:text-6xl md:text-8xl [animation-delay:1.35s]">
             CHÚC MỪNG
@@ -304,7 +331,8 @@ export const BirthdayLauncher = () => {
           </h1>
 
           <p className="birthday-reveal mx-auto mt-6 max-w-xl text-base font-bold leading-7 text-white/85 sm:text-xl [animation-delay:1.7s]">
-            Chúc bạn tuổi mới thật nhiều niềm vui và luôn gặp những điều dễ thương nhất. ✨
+            Chúc Ni tuổi mới thật nhiều niềm vui và luôn gặp những điều dễ
+            thương nhất. ✨
           </p>
 
           <div className="birthday-reveal mx-auto mt-7 inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-black tracking-[.16em] text-pink-100 backdrop-blur-lg [animation-delay:2s]">
