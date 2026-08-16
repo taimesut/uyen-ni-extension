@@ -54,15 +54,6 @@ function getCurrentUserAccess_() {
   }
 }
 
-function getCurrentUserProfile() {
-  var access = getCurrentUserAccess_();
-  return {
-    allowed: Boolean(access.allowed),
-    email: normalizeEmail_(access.email),
-    reason: String(access.reason || "")
-  };
-}
-
 function escapeHtml_(value) {
   return String(value || "").replace(/[&<>"']/g, function (character) {
     return {
