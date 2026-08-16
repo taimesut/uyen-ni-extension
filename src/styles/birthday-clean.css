@@ -1,0 +1,8 @@
+.birthday-glow {
+  animation: none !important;
+  text-shadow: none !important;
+}
+
+.birthday-shimmer::after {
+  display: none !important;
+}
