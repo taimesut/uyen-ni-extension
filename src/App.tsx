@@ -1,4 +1,5 @@
 import { HashRouter, Route, Routes } from "react-router-dom";
+import { BirthdayLauncher } from "./components/BirthdayLauncher";
 import { ToastContainer } from "./components/Toast";
 import { MobileLayout } from "./layouts/MobileLayout";
 import { DoiSoatPage } from "./pages/DoiSoatPage";
@@ -9,6 +10,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 export const App = () => {
   return (
     <HashRouter>
+      <BirthdayLauncher />
       <ToastContainer />
       <MobileLayout>
         <Routes>
