@@ -63,6 +63,7 @@ export const FmsPage = () => {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [elapsedFilter, setElapsedFilter] = useState<ElapsedFilter>("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [cookieAvailable, setCookieAvailable] = useState(() => Boolean(getCookies()));
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -97,20 +98,47 @@ export const FmsPage = () => {
     return () => window.clearInterval(timerId);
   }, []);
 
+  const statusOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          result.rows
+            .map((row) => row.latestTrackingEvent?.status)
+            .filter((status): status is number => typeof status === "number"),
+        ),
+      ).sort((left, right) => left - right),
+    [result.rows],
+  );
+
   const rows = useMemo(() => {
     const keyword = search.trim().toLowerCase();
 
     const filtered = result.rows.filter((row) => {
-      if (keyword && !row.shipmentId.toLowerCase().includes(keyword)) {
-        return false;
+      const latest = row.latestTrackingEvent;
+
+      if (statusFilter !== "ALL") {
+        if (!latest || String(latest.status) !== statusFilter) return false;
       }
 
-      if (elapsedFilter === "ALL") return true;
+      if (elapsedFilter !== "ALL") {
+        if (!latest) return false;
+        if (getFmsElapsedGroup(latest.timestamp, nowMs) !== elapsedFilter) {
+          return false;
+        }
+      }
 
-      const latest = row.latestTrackingEvent;
-      if (!latest) return false;
+      if (!keyword) return true;
 
-      return getFmsElapsedGroup(latest.timestamp, nowMs) === elapsedFilter;
+      const searchableValues = [
+        row.shipmentId,
+        row.currentToNumber,
+        latest ? String(latest.status) : "",
+        latest ? getFmsTrackingStatusLabel(latest.status) : "",
+      ];
+
+      return searchableValues.some((value) =>
+        value.toLowerCase().includes(keyword),
+      );
     });
 
     return [...filtered].sort((left, right) => {
@@ -133,7 +161,7 @@ export const FmsPage = () => {
 
       return leftLatest.timestamp - rightLatest.timestamp;
     });
-  }, [result.rows, search, elapsedFilter, nowMs]);
+  }, [result.rows, search, elapsedFilter, statusFilter, nowMs]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const pageStart = (currentPage - 1) * PAGE_SIZE;
@@ -191,7 +219,7 @@ export const FmsPage = () => {
       ) : (
         <section className="surface-card overflow-hidden">
           <div className="space-y-3 border-b border-[#eadde2] p-4 sm:p-5">
-            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_260px]">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a68591]" />
                 <input
@@ -201,7 +229,7 @@ export const FmsPage = () => {
                     setCurrentPage(1);
                   }}
                   className="input min-h-11 w-full rounded-xl border-[#e6d9de] bg-[#fcfafb] pl-11 font-medium outline-none focus:border-[#c98ba0] focus:bg-white"
-                  placeholder="Tìm SPX Tracking Number..."
+                  placeholder="Tìm SPX, TO hoặc trạng thái..."
                 />
               </div>
 
@@ -219,10 +247,27 @@ export const FmsPage = () => {
                 <option value="24H → 36H">24H → 36H</option>
                 <option value="> 36H">&gt; 36H</option>
               </select>
+
+              <select
+                value={statusFilter}
+                onChange={(event) => {
+                  setStatusFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                className="select min-h-11 w-full rounded-xl border-[#e6d9de] bg-[#fcfafb] font-bold text-[#6f5f66] outline-none focus:border-[#c98ba0] focus:bg-white"
+                aria-label="Lọc trạng thái cuối"
+              >
+                <option value="ALL">Tất cả trạng thái cuối</option>
+                {statusOptions.map((status) => (
+                  <option key={status} value={String(status)}>
+                    {status} · {getFmsTrackingStatusLabel(status)}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[#8d7982]">
-              <span>Sắp xếp ưu tiên: &gt; 36H → 24H → 36H → &lt; 24H</span>
+              <span>Search theo SPX Tracking Number, TO Number, mã hoặc tên trạng thái</span>
               <span>{rows.length} kết quả · {PAGE_SIZE} đơn/trang</span>
             </div>
           </div>
