@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 
 const BIRTHDAY_EMAIL = "uyenni.nguyentran@spxexpress.com";
 const BIRTHDAY_MONTH_INDEX = 7;
@@ -264,7 +265,7 @@ export const BirthdayLauncher = () => {
                   "--angle": `${particle.angle}deg`,
                   "--distance": `${particle.distance}px`,
                   "--delay": `${firework.delay + (particle.id % 3) * 0.035}s`,
-                } as React.CSSProperties
+                } as CSSProperties
               }
             />
           ))}
