@@ -4,7 +4,8 @@
  *  - Embed manifest.json thành data URI (không cần file riêng)
  *  - Embed apple-touch-icon PNGs thành base64 data URI (không cần upload ảnh)
  *  - Embed favicon SVG thành data URI
- * Kết quả: dist/index.html hoàn toàn self-contained, deploy lên Apps Script OK
+ *  - Đồng bộ bản build cuối sang gas/index.html để `clasp push` luôn dùng frontend mới nhất
+ * Kết quả: dist/index.html và gas/index.html đều self-contained, sẵn sàng deploy Apps Script.
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -13,6 +14,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const distHtml = join(__dirname, 'dist', 'index.html');
+const gasHtml = join(__dirname, 'gas', 'index.html');
 const publicDir = join(__dirname, 'public');
 
 console.log('🔧 Patching dist/index.html for single-file PWA...');
@@ -119,6 +121,7 @@ if (faviconUri) {
 html = html.replace(/\t(?=\r?\n)/g, '\\t');
 
 writeFileSync(distHtml, html, 'utf-8');
+writeFileSync(gasHtml, html, 'utf-8');
 
 const finalSize = Buffer.byteLength(html, 'utf-8');
 const finalKb = (finalSize / 1024).toFixed(1);
@@ -127,4 +130,5 @@ console.log('   ✓ manifest.json → inline data URI');
 console.log('   ✓ apple-touch-icon PNGs → base64 data URIs');
 console.log('   ✓ favicon SVG → data URI');
 console.log('   ✓ trailing control tabs → JavaScript escapes');
-console.log('\n🚀 dist/index.html ready for Apps Script deploy!');
+console.log('   ✓ dist/index.html → gas/index.html');
+console.log('\n🚀 gas/index.html ready for `clasp push`!');
