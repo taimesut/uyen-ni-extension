@@ -2,24 +2,1173 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="manifest" href="/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta
+      name="description"
+      content="Hướng dẫn từng bước để người mới có thể tải source, chạy thử và build một dự án web."
+    />
+    <title>Build dự án cho người mới</title>
 
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Audit workspace" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f8fb;
+        --surface: #ffffff;
+        --surface-soft: #f8fafc;
+        --text: #172033;
+        --muted: #64748b;
+        --line: #dfe6ef;
+        --primary: #2563eb;
+        --primary-soft: #eff6ff;
+        --success: #15803d;
+        --success-soft: #f0fdf4;
+        --warning: #a16207;
+        --warning-soft: #fffbeb;
+        --danger: #b91c1c;
+        --danger-soft: #fef2f2;
+        --code: #101827;
+        --radius: 18px;
+        --shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+      }
 
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="application-name" content="Audit workspace" />
-    <meta name="author" content="uyenni.nguyentran@spxexpress.com" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Audit workspace hỗ trợ theo dõi và đối soát các đơn aging cần xử lý." />
-    <meta name="theme-color" content="#C45D7C" />
-    <title>Audit workspace</title>
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        line-height: 1.6;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      a {
+        color: var(--primary);
+      }
+
+      .container {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        border-bottom: 1px solid rgba(223, 230, 239, 0.9);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(14px);
+      }
+
+      .topbar-inner {
+        min-height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .brand-icon {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        border-radius: 12px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 20px;
+        font-weight: 900;
+      }
+
+      .brand-title {
+        font-weight: 850;
+        letter-spacing: -0.02em;
+      }
+
+      .brand-subtitle {
+        margin-top: 1px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .progress-wrap {
+        width: min(360px, 42vw);
+      }
+
+      .progress-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 7px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .progress {
+        height: 8px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e8eef7;
+      }
+
+      .progress-bar {
+        width: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #2563eb, #38bdf8);
+        transition: width 240ms ease;
+      }
+
+      main {
+        padding: 44px 0 72px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+        gap: 24px;
+        align-items: stretch;
+      }
+
+      .hero-main,
+      .hero-side,
+      .card,
+      .step,
+      .faq {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .hero-main {
+        padding: clamp(26px, 4vw, 46px);
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 11px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: #1d4ed8;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 760px;
+        margin: 18px 0 16px;
+        font-size: clamp(34px, 6vw, 58px);
+        line-height: 1.04;
+        letter-spacing: -0.05em;
+      }
+
+      .lead {
+        max-width: 720px;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 17px;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 24px;
+      }
+
+      .btn {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        color: var(--text);
+        font-weight: 800;
+        text-decoration: none;
+        transition:
+          transform 120ms ease,
+          background 120ms ease,
+          border-color 120ms ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        border-color: #c7d2e2;
+        background: #f8fafc;
+      }
+
+      .btn-primary {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #fff;
+      }
+
+      .btn-primary:hover {
+        border-color: #1d4ed8;
+        background: #1d4ed8;
+      }
+
+      .btn-small {
+        min-height: 36px;
+        padding: 7px 11px;
+        border-radius: 9px;
+        font-size: 12px;
+      }
+
+      .hero-side {
+        padding: 24px;
+      }
+
+      .hero-side h2 {
+        margin-bottom: 16px;
+        font-size: 18px;
+      }
+
+      .simple-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .simple-item {
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .simple-number {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: #eef2ff;
+        color: #3730a3;
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .simple-item strong {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 14px;
+      }
+
+      .simple-item span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .section {
+        margin-top: 34px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .section-head h2 {
+        margin: 0 0 4px;
+        font-size: 24px;
+        letter-spacing: -0.025em;
+      }
+
+      .section-head p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .concept-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+
+      .card {
+        padding: 20px;
+        box-shadow: none;
+      }
+
+      .card-label {
+        display: inline-flex;
+        margin-bottom: 10px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .card h3 {
+        margin-bottom: 7px;
+        font-size: 17px;
+      }
+
+      .card p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .steps {
+        display: grid;
+        gap: 14px;
+      }
+
+      .step {
+        overflow: hidden;
+        box-shadow: none;
+        transition:
+          border-color 160ms ease,
+          box-shadow 160ms ease;
+      }
+
+      .step[data-done="true"] {
+        border-color: #bbf7d0;
+        box-shadow: inset 4px 0 0 #22c55e;
+      }
+
+      .step-header {
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: center;
+        width: 100%;
+        padding: 18px 20px;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 900;
+      }
+
+      .step-title {
+        font-size: 17px;
+        font-weight: 850;
+      }
+
+      .step-desc {
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .step-status {
+        min-width: 76px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 900;
+        text-align: center;
+      }
+
+      .step[data-done="true"] .step-status {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+
+      .step-body {
+        display: none;
+        padding: 0 20px 20px 82px;
+      }
+
+      .step[data-open="true"] .step-body {
+        display: block;
+      }
+
+      .step-body p,
+      .step-body li {
+        color: #475569;
+      }
+
+      .step-body ul,
+      .step-body ol {
+        padding-left: 22px;
+      }
+
+      .note {
+        margin: 14px 0;
+        padding: 13px 15px;
+        border: 1px solid #bfdbfe;
+        border-radius: 12px;
+        background: var(--primary-soft);
+        color: #1e3a8a;
+        font-size: 14px;
+      }
+
+      .note-warning {
+        border-color: #fde68a;
+        background: var(--warning-soft);
+        color: #854d0e;
+      }
+
+      .note-success {
+        border-color: #bbf7d0;
+        background: var(--success-soft);
+        color: #166534;
+      }
+
+      .command {
+        margin: 12px 0;
+        overflow: hidden;
+        border: 1px solid #273449;
+        border-radius: 13px;
+        background: var(--code);
+      }
+
+      .command-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 9px 10px 9px 14px;
+        border-bottom: 1px solid #273449;
+        color: #9fb0c8;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .copy-btn {
+        min-height: 30px;
+        padding: 5px 9px;
+        border: 1px solid #3c4c64;
+        border-radius: 8px;
+        background: #1b2638;
+        color: #e2e8f0;
+        font-size: 11px;
+        font-weight: 850;
+      }
+
+      .copy-btn:hover {
+        background: #24334a;
+      }
+
+      pre {
+        margin: 0;
+        padding: 15px;
+        overflow-x: auto;
+        color: #e5edf7;
+        font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .done-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .done-btn {
+        min-height: 40px;
+        padding: 8px 13px;
+        border: 1px solid #bbf7d0;
+        border-radius: 10px;
+        background: var(--success-soft);
+        color: var(--success);
+        font-weight: 850;
+      }
+
+      .done-btn[aria-pressed="true"] {
+        border-color: #22c55e;
+        background: #dcfce7;
+      }
+
+      .done-hint {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .troubles-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+
+      .faq {
+        padding: 20px;
+        box-shadow: none;
+      }
+
+      .faq h3 {
+        margin-bottom: 8px;
+        font-size: 16px;
+      }
+
+      .faq p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .checklist {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .check-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        background: #fff;
+      }
+
+      .check-item input {
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+        accent-color: var(--primary);
+      }
+
+      .footer-note {
+        margin-top: 34px;
+        padding: 20px;
+        border: 1px dashed #cbd5e1;
+        border-radius: var(--radius);
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .toast {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 40;
+        max-width: min(360px, calc(100vw - 36px));
+        padding: 11px 14px;
+        border-radius: 11px;
+        background: #0f172a;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 750;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(12px);
+        transition: 180ms ease;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (max-width: 860px) {
+        .hero,
+        .concept-grid,
+        .troubles-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .progress-wrap {
+          width: 190px;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .container {
+          width: min(100% - 20px, 1120px);
+        }
+
+        .topbar-inner {
+          min-height: 64px;
+        }
+
+        .brand-subtitle,
+        .progress-top span:first-child {
+          display: none;
+        }
+
+        .progress-wrap {
+          width: 110px;
+        }
+
+        main {
+          padding-top: 24px;
+        }
+
+        .hero-main,
+        .hero-side {
+          padding: 20px;
+        }
+
+        .step-header {
+          grid-template-columns: 42px minmax(0, 1fr);
+          padding: 15px;
+        }
+
+        .step-number {
+          width: 42px;
+          height: 42px;
+          border-radius: 12px;
+        }
+
+        .step-status {
+          grid-column: 2;
+          justify-self: start;
+          min-width: 0;
+        }
+
+        .step-body {
+          padding: 0 15px 18px;
+        }
+
+        .section-head {
+          align-items: start;
+          flex-direction: column;
+        }
+      }
+    </style>
   </head>
+
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">
+          <div class="brand-icon">B</div>
+          <div>
+            <div class="brand-title">Build dự án</div>
+            <div class="brand-subtitle">Hướng dẫn từng bước, không cần học thuộc lệnh</div>
+          </div>
+        </div>
+
+        <div class="progress-wrap" aria-label="Tiến độ học">
+          <div class="progress-top">
+            <span>Tiến độ của bạn</span>
+            <span id="progressText">0 / 6 bước</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <section class="hero">
+          <div class="hero-main">
+            <span class="eyebrow">👋 Dành cho người mới bắt đầu</span>
+            <h1>Từ một thư mục source đến bản build chạy được.</h1>
+            <p class="lead">
+              Trang này hướng dẫn đúng thứ tự cần làm. Mỗi bước chỉ có một việc chính,
+              lệnh có nút <strong>Copy</strong>, làm xong thì đánh dấu để biết mình đang ở đâu.
+            </p>
+
+            <div class="hero-actions">
+              <button class="btn btn-primary" data-scroll-to="step-1">Bắt đầu từ bước 1</button>
+              <button class="btn" id="resetProgress">Làm lại từ đầu</button>
+            </div>
+          </div>
+
+          <aside class="hero-side">
+            <h2>Nhìn nhanh: mình sẽ làm gì?</h2>
+            <div class="simple-list">
+              <div class="simple-item">
+                <div class="simple-number">1</div>
+                <div><strong>Chuẩn bị máy</strong><span>Cài Node.js và VS Code.</span></div>
+              </div>
+              <div class="simple-item">
+                <div class="simple-number">2</div>
+                <div><strong>Lấy source</strong><span>Tải ZIP hoặc clone project về máy.</span></div>
+              </div>
+              <div class="simple-item">
+                <div class="simple-number">3</div>
+                <div><strong>Cài thư viện</strong><span>Chạy một lệnh: npm install.</span></div>
+              </div>
+              <div class="simple-item">
+                <div class="simple-number">4</div>
+                <div><strong>Chạy thử</strong><span>Mở web trên máy trước khi build.</span></div>
+              </div>
+              <div class="simple-item">
+                <div class="simple-number">5</div>
+                <div><strong>Build</strong><span>Tạo bản dùng để đưa lên môi trường chạy thật.</span></div>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>3 từ cần hiểu trước</h2>
+              <p>Không cần nhớ định nghĩa kỹ thuật, chỉ cần hiểu ý nghĩa.</p>
+            </div>
+          </div>
+
+          <div class="concept-grid">
+            <article class="card">
+              <span class="card-label">Source</span>
+              <h3>Code gốc của dự án</h3>
+              <p>Toàn bộ file mà người làm dự án chỉnh sửa hằng ngày.</p>
+            </article>
+            <article class="card">
+              <span class="card-label">Build</span>
+              <h3>Đóng gói project</h3>
+              <p>Biến source thành bản tối ưu để chạy hoặc đưa lên server.</p>
+            </article>
+            <article class="card">
+              <span class="card-label">dist</span>
+              <h3>Thư mục kết quả</h3>
+              <p>Sau khi build thành công, bản đã đóng gói thường nằm trong thư mục này.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="stepsSection">
+          <div class="section-head">
+            <div>
+              <h2>Làm theo 6 bước</h2>
+              <p>Không cần làm nhiều việc cùng lúc. Xong bước nào mới sang bước tiếp theo.</p>
+            </div>
+          </div>
+
+          <div class="steps">
+            <article class="step" id="step-1" data-step="1" data-open="true" data-done="false">
+              <button class="step-header" type="button" aria-expanded="true">
+                <span class="step-number">1</span>
+                <span>
+                  <span class="step-title">Chuẩn bị công cụ</span>
+                  <span class="step-desc">Cài Node.js và VS Code trước.</span>
+                </span>
+                <span class="step-status">Chưa xong</span>
+              </button>
+              <div class="step-body">
+                <p>Máy chỉ cần có 2 thứ chính:</p>
+                <ol>
+                  <li><strong>Node.js LTS</strong> — để chạy lệnh npm.</li>
+                  <li><strong>VS Code</strong> — để mở project và mở Terminal dễ hơn.</li>
+                </ol>
+
+                <div class="note">
+                  Sau khi cài Node.js, đóng VS Code rồi mở lại để máy nhận lệnh mới.
+                </div>
+
+                <p>Kiểm tra Node.js đã hoạt động chưa:</p>
+                <div class="command">
+                  <div class="command-top"><span>Terminal</span><button class="copy-btn" data-copy="node -v">Copy</button></div>
+                  <pre>node -v</pre>
+                </div>
+                <p>Nếu hiện dạng <strong>v20.x</strong>, <strong>v22.x</strong>... là được.</p>
+
+                <div class="done-row">
+                  <button class="done-btn" type="button" data-done-button aria-pressed="false">✓ Tôi đã xong bước này</button>
+                  <span class="done-hint">Tiến độ được lưu trên trình duyệt này.</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="step" id="step-2" data-step="2" data-open="false" data-done="false">
+              <button class="step-header" type="button" aria-expanded="false">
+                <span class="step-number">2</span>
+                <span>
+                  <span class="step-title">Lấy source về máy</span>
+                  <span class="step-desc">Cách dễ nhất là Download ZIP; Git là cách dùng lâu dài.</span>
+                </span>
+                <span class="step-status">Chưa xong</span>
+              </button>
+              <div class="step-body">
+                <p><strong>Cách dễ cho người mới:</strong> trên GitHub chọn <strong>Code → Download ZIP</strong>, sau đó giải nén.</p>
+
+                <div class="note-warning note">
+                  Nhớ giải nén ZIP trước. Không chạy project trực tiếp bên trong file ZIP.
+                </div>
+
+                <p>Nếu đã biết dùng Git, có thể dùng lệnh:</p>
+                <div class="command">
+                  <div class="command-top"><span>Terminal</span><button class="copy-btn" data-copy="git clone https://github.com/taimesut/pleiku-03.git">Copy</button></div>
+                  <pre>git clone https://github.com/taimesut/pleiku-03.git</pre>
+                </div>
+
+                <div class="done-row">
+                  <button class="done-btn" type="button" data-done-button aria-pressed="false">✓ Tôi đã xong bước này</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="step" id="step-3" data-step="3" data-open="false" data-done="false">
+              <button class="step-header" type="button" aria-expanded="false">
+                <span class="step-number">3</span>
+                <span>
+                  <span class="step-title">Mở đúng thư mục project</span>
+                  <span class="step-desc">Mở thư mục có file package.json.</span>
+                </span>
+                <span class="step-status">Chưa xong</span>
+              </button>
+              <div class="step-body">
+                <p>Trong VS Code:</p>
+                <ol>
+                  <li>Chọn <strong>File → Open Folder</strong>.</li>
+                  <li>Chọn thư mục project vừa tải về.</li>
+                  <li>Nhìn bên trái và kiểm tra có file <strong>package.json</strong>.</li>
+                  <li>Chọn <strong>Terminal → New Terminal</strong>.</li>
+                </ol>
+
+                <div class="note-success note">
+                  Mẹo kiểm tra: nếu thấy <strong>package.json</strong> ở danh sách file bên trái thì gần như bạn đang đứng đúng chỗ.
+                </div>
+
+                <div class="done-row">
+                  <button class="done-btn" type="button" data-done-button aria-pressed="false">✓ Tôi đã xong bước này</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="step" id="step-4" data-step="4" data-open="false" data-done="false">
+              <button class="step-header" type="button" aria-expanded="false">
+                <span class="step-number">4</span>
+                <span>
+                  <span class="step-title">Cài thư viện cho project</span>
+                  <span class="step-desc">Chạy npm install và chờ đến khi Terminal trả về dòng nhập lệnh.</span>
+                </span>
+                <span class="step-status">Chưa xong</span>
+              </button>
+              <div class="step-body">
+                <p>Copy lệnh sau, dán vào Terminal rồi nhấn Enter:</p>
+                <div class="command">
+                  <div class="command-top"><span>Cài dependencies</span><button class="copy-btn" data-copy="npm install">Copy</button></div>
+                  <pre>npm install</pre>
+                </div>
+
+                <p>Lệnh này có thể chạy một lúc. Khi xong, project sẽ có thư mục <strong>node_modules</strong>.</p>
+
+                <div class="note-warning note">
+                  Có warning màu vàng chưa chắc là lỗi. Chỉ cần chú ý nếu Terminal dừng với chữ <strong>error</strong> và không chạy tiếp được.
+                </div>
+
+                <div class="done-row">
+                  <button class="done-btn" type="button" data-done-button aria-pressed="false">✓ Tôi đã xong bước này</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="step" id="step-5" data-step="5" data-open="false" data-done="false">
+              <button class="step-header" type="button" aria-expanded="false">
+                <span class="step-number">5</span>
+                <span>
+                  <span class="step-title">Chạy thử trên máy</span>
+                  <span class="step-desc">Xem project có chạy được trước khi build.</span>
+                </span>
+                <span class="step-status">Chưa xong</span>
+              </button>
+              <div class="step-body">
+                <div class="command">
+                  <div class="command-top"><span>Chạy môi trường dev</span><button class="copy-btn" data-copy="npm run dev">Copy</button></div>
+                  <pre>npm run dev</pre>
+                </div>
+
+                <p>Terminal sẽ hiện một địa chỉ dạng:</p>
+                <div class="command">
+                  <div class="command-top"><span>Ví dụ</span></div>
+                  <pre>Local: http://localhost:5173/</pre>
+                </div>
+
+                <p>Giữ Terminal đó đang chạy và mở địa chỉ trên bằng trình duyệt.</p>
+                <p>Muốn dừng: quay lại Terminal và nhấn <strong>Ctrl + C</strong>.</p>
+
+                <div class="done-row">
+                  <button class="done-btn" type="button" data-done-button aria-pressed="false">✓ Tôi đã xong bước này</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="step" id="step-6" data-step="6" data-open="false" data-done="false">
+              <button class="step-header" type="button" aria-expanded="false">
+                <span class="step-number">6</span>
+                <span>
+                  <span class="step-title">Build dự án</span>
+                  <span class="step-desc">Đây là bước tạo bản đóng gói cuối cùng.</span>
+                </span>
+                <span class="step-status">Chưa xong</span>
+              </button>
+              <div class="step-body">
+                <p>Đảm bảo lệnh dev đã dừng, sau đó chạy:</p>
+                <div class="command">
+                  <div class="command-top"><span>Build project</span><button class="copy-btn" data-copy="npm run build">Copy</button></div>
+                  <pre>npm run build</pre>
+                </div>
+
+                <div class="note-success note">
+                  Nếu Terminal chạy xong và không có error, hãy nhìn trong project. Bạn sẽ thấy thư mục <strong>dist</strong>. Đó là kết quả build.
+                </div>
+
+                <p><strong>Riêng project này:</strong> lệnh build còn chạy script hậu xử lý để chuẩn bị file HTML dùng cho Google Apps Script.</p>
+
+                <details>
+                  <summary><strong>Tùy chọn: đưa bản mới lên Google Apps Script</strong></summary>
+                  <p>Nếu máy đã được cài và đăng nhập clasp:</p>
+                  <div class="command">
+                    <div class="command-top"><span>Đi vào thư mục GAS</span><button class="copy-btn" data-copy="cd gas">Copy</button></div>
+                    <pre>cd gas</pre>
+                  </div>
+                  <div class="command">
+                    <div class="command-top"><span>Đẩy code lên Apps Script</span><button class="copy-btn" data-copy="clasp push">Copy</button></div>
+                    <pre>clasp push</pre>
+                  </div>
+                  <p>Sau đó vào Apps Script và tạo <strong>New version</strong> cho Web App nếu muốn cập nhật bản đang dùng.</p>
+                </details>
+
+                <div class="done-row">
+                  <button class="done-btn" type="button" data-done-button aria-pressed="false">✓ Tôi đã build thành công</button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Nếu gặp lỗi, kiểm tra 4 thứ này trước</h2>
+              <p>Đây là các lỗi người mới gặp nhiều nhất.</p>
+            </div>
+          </div>
+
+          <div class="troubles-grid">
+            <article class="faq">
+              <h3>“npm is not recognized”</h3>
+              <p>Node.js chưa được cài đúng hoặc VS Code chưa mở lại sau khi cài Node.js.</p>
+            </article>
+            <article class="faq">
+              <h3>“package.json not found”</h3>
+              <p>Terminal đang đứng sai thư mục. Mở lại đúng folder có file package.json.</p>
+            </article>
+            <article class="faq">
+              <h3>Trang web không mở</h3>
+              <p>Kiểm tra Terminal chạy npm run dev còn hoạt động và mở đúng URL localhost được in ra.</p>
+            </article>
+            <article class="faq">
+              <h3>Build báo error</h3>
+              <p>Đừng đọc cả màn hình. Kéo xuống gần cuối và tìm dòng error đầu tiên để biết file nào đang lỗi.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Checklist cuối</h2>
+              <p>Nếu đủ các mục dưới đây thì người học đã hiểu flow build cơ bản.</p>
+            </div>
+          </div>
+
+          <div class="checklist">
+            <label class="check-item"><input type="checkbox" data-extra-check="source" /> <span>Tôi biết source là thư mục code gốc.</span></label>
+            <label class="check-item"><input type="checkbox" data-extra-check="terminal" /> <span>Tôi biết mở Terminal ngay trong VS Code.</span></label>
+            <label class="check-item"><input type="checkbox" data-extra-check="install" /> <span>Tôi biết npm install dùng để cài thư viện.</span></label>
+            <label class="check-item"><input type="checkbox" data-extra-check="dev" /> <span>Tôi biết npm run dev dùng để chạy thử trên máy.</span></label>
+            <label class="check-item"><input type="checkbox" data-extra-check="build" /> <span>Tôi biết npm run build tạo bản build và tìm kết quả ở dist.</span></label>
+          </div>
+        </section>
+
+        <div class="footer-note">
+          Mục tiêu của buổi hướng dẫn: <strong>không cần thuộc lệnh</strong>, chỉ cần hiểu đúng thứ tự
+          <strong>lấy source → cài thư viện → chạy thử → build → lấy kết quả</strong>.
+        </div>
+      </div>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      (() => {
+        const STORAGE_KEY = "non-it-build-guide-progress-v1";
+        const EXTRA_KEY = "non-it-build-guide-checklist-v1";
+        const steps = [...document.querySelectorAll(".step")];
+        const progressBar = document.getElementById("progressBar");
+        const progressText = document.getElementById("progressText");
+        const toast = document.getElementById("toast");
+        let toastTimer;
+
+        const showToast = (message) => {
+          toast.textContent = message;
+          toast.classList.add("show");
+          window.clearTimeout(toastTimer);
+          toastTimer = window.setTimeout(() => toast.classList.remove("show"), 1800);
+        };
+
+        const getSavedSteps = () => {
+          try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+          } catch {
+            return {};
+          }
+        };
+
+        const saveSteps = (value) => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+        };
+
+        const updateProgress = () => {
+          const doneCount = steps.filter((step) => step.dataset.done === "true").length;
+          const percent = Math.round((doneCount / steps.length) * 100);
+          progressBar.style.width = `${percent}%`;
+          progressText.textContent = `${doneCount} / ${steps.length} bước`;
+        };
+
+        const setStepDone = (step, done) => {
+          step.dataset.done = String(done);
+          const status = step.querySelector(".step-status");
+          const doneButton = step.querySelector("[data-done-button]");
+          status.textContent = done ? "Đã xong" : "Chưa xong";
+          doneButton.setAttribute("aria-pressed", String(done));
+          doneButton.textContent = done ? "✓ Đã hoàn thành" : step.dataset.step === "6" ? "✓ Tôi đã build thành công" : "✓ Tôi đã xong bước này";
+        };
+
+        const saved = getSavedSteps();
+        steps.forEach((step) => {
+          const number = step.dataset.step;
+          setStepDone(step, Boolean(saved[number]));
+
+          step.querySelector(".step-header").addEventListener("click", () => {
+            const nextOpen = step.dataset.open !== "true";
+            step.dataset.open = String(nextOpen);
+            step.querySelector(".step-header").setAttribute("aria-expanded", String(nextOpen));
+          });
+
+          step.querySelector("[data-done-button]").addEventListener("click", () => {
+            const nextDone = step.dataset.done !== "true";
+            setStepDone(step, nextDone);
+            const state = getSavedSteps();
+            state[number] = nextDone;
+            saveSteps(state);
+            updateProgress();
+
+            if (nextDone) {
+              const nextStep = steps[Number(number)];
+              if (nextStep) {
+                nextStep.dataset.open = "true";
+                nextStep.querySelector(".step-header").setAttribute("aria-expanded", "true");
+                nextStep.scrollIntoView({ behavior: "smooth", block: "center" });
+              } else {
+                showToast("Hoàn thành toàn bộ flow build 🎉");
+              }
+            }
+          });
+        });
+
+        updateProgress();
+
+        document.querySelectorAll("[data-copy]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const text = button.dataset.copy || "";
+            try {
+              await navigator.clipboard.writeText(text);
+            } catch {
+              const input = document.createElement("textarea");
+              input.value = text;
+              document.body.appendChild(input);
+              input.select();
+              document.execCommand("copy");
+              input.remove();
+            }
+            const original = button.textContent;
+            button.textContent = "Đã copy";
+            showToast(`Đã copy: ${text}`);
+            window.setTimeout(() => (button.textContent = original), 1200);
+          });
+        });
+
+        document.querySelectorAll("[data-scroll-to]").forEach((button) => {
+          button.addEventListener("click", () => {
+            document.getElementById(button.dataset.scrollTo)?.scrollIntoView({ behavior: "smooth", block: "center" });
+          });
+        });
+
+        document.getElementById("resetProgress").addEventListener("click", () => {
+          if (!window.confirm("Xóa toàn bộ tiến độ đã đánh dấu và làm lại từ đầu?")) return;
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(EXTRA_KEY);
+          steps.forEach((step, index) => {
+            setStepDone(step, false);
+            step.dataset.open = index === 0 ? "true" : "false";
+            step.querySelector(".step-header").setAttribute("aria-expanded", index === 0 ? "true" : "false");
+          });
+          document.querySelectorAll("[data-extra-check]").forEach((input) => (input.checked = false));
+          updateProgress();
+          showToast("Đã đặt lại tiến độ");
+          document.getElementById("step-1").scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+
+        let extraState = {};
+        try {
+          extraState = JSON.parse(localStorage.getItem(EXTRA_KEY) || "{}");
+        } catch {
+          extraState = {};
+        }
+
+        document.querySelectorAll("[data-extra-check]").forEach((input) => {
+          input.checked = Boolean(extraState[input.dataset.extraCheck]);
+          input.addEventListener("change", () => {
+            extraState[input.dataset.extraCheck] = input.checked;
+            localStorage.setItem(EXTRA_KEY, JSON.stringify(extraState));
+          });
+        });
+      })();
+    </script>
   </body>
 </html>
