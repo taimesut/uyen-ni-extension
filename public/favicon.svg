@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Audit workspace">
-  <rect width="64" height="64" rx="16" fill="#F5EAEE"/>
-  <rect x="13" y="13" width="38" height="38" rx="11" fill="#C45D7C"/>
-  <rect x="22" y="20" width="20" height="25" rx="4" fill="none" stroke="#fff" stroke-width="3"/>
-  <path d="M27 27h10M27 33h7" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-  <path d="m32 39 3 3 7-8" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
