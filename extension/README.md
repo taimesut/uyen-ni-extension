@@ -58,3 +58,10 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Sticky table header, zebra rows và hover highlight.
 - Loading/progress shimmer và hiệu ứng chuyển động nhẹ.
 - Giữ nguyên toàn bộ logic FMS, Delivery Performance và SeaTalk.
+
+
+## v1.5.1 - Delivery Driver Filter
+
+- Không đưa driver vào report nếu toàn bộ KPI đều bằng 0.
+- Driver vẫn được giữ nếu ít nhất một KPI lớn hơn 0.
+- Áp dụng cho bảng report, xếp hạng, total, preview JPG và ảnh gửi SeaTalk.
