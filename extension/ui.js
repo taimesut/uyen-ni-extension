@@ -517,6 +517,75 @@
   `;
   shadow.appendChild(modernStyle);
 
+  // Layout fix v1.5.2: prevent navigation tabs from stretching vertically.
+  const layoutFixStyle = document.createElement("style");
+  layoutFixStyle.id = "spx-layout-fix-v152";
+  layoutFixStyle.textContent = `
+    .main{
+      align-content:start!important;
+      grid-auto-rows:max-content!important;
+    }
+
+    .tabs{
+      align-self:start!important;
+      min-height:48px!important;
+      height:auto!important;
+      flex:none!important;
+    }
+
+    .tab{
+      align-self:center!important;
+    }
+
+    @media(max-width:720px){
+      .main{
+        display:block!important;
+        padding:10px!important;
+      }
+
+      .tabs{
+        position:relative!important;
+        display:grid!important;
+        grid-template-columns:1fr 1fr!important;
+        width:100%!important;
+        min-height:48px!important;
+        height:48px!important;
+        padding:5px!important;
+        margin:0 0 10px!important;
+        border-radius:14px!important;
+      }
+
+      .tab{
+        width:100%!important;
+        height:38px!important;
+        min-height:38px!important;
+        align-self:center!important;
+      }
+
+      .card,
+      .delivery-layout,
+      .delivery-result,
+      .progress,
+      .error{
+        margin-top:10px!important;
+      }
+    }
+
+    @media(max-width:460px){
+      .tabs{
+        grid-template-columns:1fr 1fr!important;
+        height:48px!important;
+      }
+
+      .tab{
+        padding:0 6px!important;
+        font-size:9px!important;
+        white-space:nowrap!important;
+      }
+    }
+  `;
+  shadow.appendChild(layoutFixStyle);
+
   const root = document.createElement("div");
   shadow.appendChild(root);
 
