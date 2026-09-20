@@ -644,7 +644,15 @@
         delay,
         rate
       };
-    }).filter((item) => item.driver);
+    }).filter((item) =>
+      item.driver &&
+      (
+        item.assigned > 0 ||
+        item.delivered > 0 ||
+        item.delay > 0 ||
+        item.rate > 0
+      )
+    );
   
     rows.sort((a, b) =>
       b.rate - a.rate ||
