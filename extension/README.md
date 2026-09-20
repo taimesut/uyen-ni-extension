@@ -1,27 +1,36 @@
-# SPX FMS Audit Pro Fullscreen v1.2.0
+# SPX Operations Tools v1.3.0
 
-## Thay đổi
+Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng session đăng nhập hiện tại. Không cần copy/paste Cookie.
 
-- Panel FMS chiếm **100% màn hình**.
-- Bỏ khoảng trống 16px xung quanh.
-- Bỏ bo góc và shadow ngoài.
-- Header gọn hơn để nhường diện tích cho dữ liệu.
-- Khu điều kiện tải được làm compact hơn.
-- Search kết quả rộng hơn.
-- Bảng kết quả cao hơn, tận dụng gần toàn bộ chiều cao viewport.
-- Bảng tối thiểu 1480px để các cột SPX / TO / Station / Tracking dễ đọc.
-- Sticky header vẫn giữ nguyên.
-- Logic API, manual load, multi-status và result filter theo Order Status giữ nguyên.
+## Tab 1 — FMS Audit
 
-## Cài đặt / cập nhật
+- Current/Next Station: 1030 Pleiku SOC / 1812 Pleiku 03 Hub.
+- Multi-select Order Status.
+- Chỉ request khi bấm **Tải dữ liệu**.
+- Tracking detail theo batch.
+- Lọc kết quả theo Order Status của đúng dataset đã tải.
 
-1. Giải nén ZIP.
-2. Mở `chrome://extensions`.
-3. Nếu đang dùng bản cũ:
-   - Remove bản cũ, hoặc
-   - trỏ Load unpacked sang thư mục mới.
-4. Bật Developer mode.
-5. Chọn **Load unpacked**.
-6. Chọn thư mục `extension`.
-7. Refresh `https://spx.shopee.vn/`.
-8. Nhấn **FMS Audit**.
+## Tab 2 — Export Delivery Performance
+
+1. Chọn `start_date` (`YYYY-MM-DD`), mặc định ngày hiện tại.
+2. Gọi `/api/driverservice/admin/performance/delivery/export/list?function_type=0&frequency=1&start_date=...`.
+3. Lấy `task_id`.
+4. Poll `/spxdata/api/export_platform/export_task/list_for_portal`.
+5. Dò đúng `task_id` cho tới `export_status=2` và có `downloads/...csv`.
+6. Tải CSV vào RAM, không lưu extension storage.
+7. Map report:
+   - Driver → `Driver`
+   - Đơn Nhận → `Number of Delivery Parcels Assigned (VN) with all Exclusions`
+   - Đơn Giao TC → `Number of Parcels Delivered (VN) with all Exclusions`
+   - Delay → `Number of Parcels Onhold (VN) with all Exclusions`
+   - Tỷ Lệ GTC → `Delivery Success Rate (VN) with all Exclusions`
+8. Xếp hạng theo Tỷ Lệ GTC giảm dần; tỷ lệ bằng nhau cùng hạng.
+9. Có **Preview JPG** và tải JPG.
+
+## Cài đặt
+
+1. Chrome → `chrome://extensions`.
+2. Bật Developer mode.
+3. Load unpacked thư mục `extension`.
+4. Refresh `https://spx.shopee.vn/`.
+5. Nhấn nút **SPX Tools**.
