@@ -206,6 +206,317 @@
     @media(max-width:900px){.query,.tools{grid-template-columns:1fr}.arrow{height:15px;transform:rotate(90deg)}}
   `;
   shadow.appendChild(style);
+
+  const modernStyle = document.createElement("style");
+  modernStyle.id = "spx-modern-ui-v150";
+  modernStyle.textContent = `
+    :host{
+      --spx-primary:#ff5a36;
+      --spx-primary-2:#ff7a59;
+      --spx-purple:#7657ff;
+      --spx-cyan:#18b7c9;
+      --spx-green:#17a673;
+      --spx-amber:#f4a51c;
+      --spx-ink:#17202b;
+      --spx-muted:#73808e;
+      --spx-line:rgba(27,39,53,.09);
+      --spx-surface:rgba(255,255,255,.86);
+      --spx-shadow:0 16px 46px rgba(31,41,55,.10);
+      --spx-shadow-lg:0 28px 80px rgba(24,32,45,.18);
+    }
+
+    @keyframes spxFadeUp{
+      from{opacity:0;transform:translateY(10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    @keyframes spxPulse{
+      0%,100%{box-shadow:0 0 0 0 rgba(23,166,115,.22)}
+      50%{box-shadow:0 0 0 7px rgba(23,166,115,0)}
+    }
+    @keyframes spxShimmer{
+      0%{background-position:200% 0}
+      100%{background-position:-200% 0}
+    }
+
+    .launch{
+      min-width:148px;
+      height:52px;
+      border-radius:16px;
+      background:linear-gradient(135deg,var(--spx-primary),#ff8a5c 55%,#ffb052);
+      box-shadow:0 16px 38px rgba(238,77,45,.34);
+      transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+      position:relative;
+      overflow:hidden;
+      letter-spacing:.01em;
+    }
+    .launch::after{
+      content:"";
+      position:absolute;
+      inset:-40% auto -40% -35%;
+      width:38%;
+      transform:rotate(18deg);
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);
+      transition:left .45s ease;
+    }
+    .launch:hover{transform:translateY(-2px) scale(1.015);box-shadow:0 20px 48px rgba(238,77,45,.42)}
+    .launch:hover::after{left:110%}
+    .launch:active{transform:translateY(0) scale(.985)}
+
+    .app{
+      background:
+        radial-gradient(circle at 8% 0%,rgba(255,90,54,.10),transparent 28%),
+        radial-gradient(circle at 98% 6%,rgba(118,87,255,.10),transparent 26%),
+        radial-gradient(circle at 70% 92%,rgba(24,183,201,.08),transparent 24%),
+        linear-gradient(180deg,#f9fafc 0%,#f3f5f8 100%);
+    }
+
+    .header{
+      height:74px;
+      flex-basis:74px;
+      padding:0 24px;
+      border-bottom:1px solid rgba(255,255,255,.72);
+      background:rgba(255,255,255,.82);
+      backdrop-filter:blur(18px) saturate(150%);
+      -webkit-backdrop-filter:blur(18px) saturate(150%);
+      box-shadow:0 1px 0 rgba(20,29,40,.06),0 8px 28px rgba(28,37,49,.04);
+      position:relative;
+      z-index:40;
+    }
+    .header::before{
+      content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;
+      background:linear-gradient(90deg,var(--spx-primary),#ff9f43,var(--spx-purple),var(--spx-cyan));
+      opacity:.78;
+    }
+    .brand{gap:13px}
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      background:linear-gradient(135deg,var(--spx-primary),#ff8b61);
+      box-shadow:0 10px 24px rgba(238,77,45,.25),inset 0 1px 0 rgba(255,255,255,.25);
+      font-size:17px;
+      transform:rotate(-2deg);
+    }
+    .title{font-size:18px;letter-spacing:-.025em;color:var(--spx-ink)}
+    .sub{font-size:10.5px;color:#7a8592}
+    .header-actions{display:flex;align-items:center;gap:8px}
+    .session-pill,.version-pill{
+      height:34px;padding:0 11px;border-radius:999px;display:flex;align-items:center;gap:7px;
+      font-size:9.5px;font-weight:850;border:1px solid rgba(25,42,60,.08);background:rgba(255,255,255,.78);
+      color:#596674;
+    }
+    .session-dot{width:8px;height:8px;border-radius:50%;background:#20b37a;animation:spxPulse 1.8s ease-in-out infinite}
+    .version-pill{color:#7457d7;background:rgba(118,87,255,.08);border-color:rgba(118,87,255,.13)}
+    .close{
+      width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.88);
+      transition:all .16s ease;color:#66717d;
+    }
+    .close:hover{background:#fff0ec;color:#d94a2b;border-color:#ffd5ca;transform:rotate(4deg)}
+
+    .main{padding:16px 20px 20px;gap:14px}
+    .tabs{
+      position:sticky;top:0;z-index:35;
+      width:max-content;max-width:100%;padding:5px;
+      border:1px solid rgba(32,44,58,.08);
+      background:rgba(239,242,246,.76);
+      backdrop-filter:blur(14px);
+      border-radius:14px;
+      box-shadow:0 8px 24px rgba(31,41,55,.06);
+    }
+    .tab{
+      min-width:150px;height:38px;border-radius:10px;font-size:10.5px;
+      transition:all .2s ease;position:relative;overflow:hidden;
+    }
+    .tab:hover{color:#394452;background:rgba(255,255,255,.62);transform:translateY(-1px)}
+    .tab.active{
+      color:#fff;
+      background:linear-gradient(135deg,var(--spx-primary),#ff7958);
+      box-shadow:0 8px 20px rgba(238,77,45,.22);
+    }
+
+    .card,.delivery-result{
+      border:1px solid rgba(37,50,65,.08);
+      border-radius:18px;
+      background:var(--spx-surface);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      box-shadow:var(--spx-shadow);
+      animation:spxFadeUp .28s ease both;
+    }
+    .cardhead,.delivery-result-head{
+      min-height:58px;padding:12px 16px;
+      border-bottom:1px solid rgba(37,50,65,.075);
+      background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(248,250,252,.72));
+      border-radius:18px 18px 0 0;
+    }
+    .cardtitle{font-size:13px;color:#2d3742;letter-spacing:-.01em}
+    .hint{font-size:9.8px;color:#818b97;margin-top:2px}
+
+    .query{padding:14px 16px;gap:12px}
+    .label{font-size:9px;color:#74808d;letter-spacing:.08em}
+    .input,.select,.pick{
+      height:44px;border-radius:12px;border-color:rgba(38,51,65,.12);
+      background:rgba(255,255,255,.92);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.55);
+      transition:border-color .17s ease,box-shadow .17s ease,transform .17s ease;
+    }
+    .input:hover,.select:hover,.pick:hover{border-color:rgba(238,77,45,.32)}
+    .input:focus,.select:focus,.pick:focus{
+      border-color:rgba(238,77,45,.55);
+      box-shadow:0 0 0 4px rgba(238,77,45,.09),0 8px 20px rgba(31,41,55,.05);
+    }
+    .pop{
+      border-radius:15px;border-color:rgba(31,41,55,.10);
+      box-shadow:0 22px 60px rgba(22,30,42,.18);
+      backdrop-filter:blur(18px);background:rgba(255,255,255,.97);padding:7px;
+    }
+    .opt{border-radius:9px;transition:background .12s ease,transform .12s ease}
+    .opt:hover{background:#fff3ef;transform:translateX(2px)}
+
+    .primary{
+      height:44px;border-radius:12px;
+      background:linear-gradient(135deg,var(--spx-primary),#ff7855);
+      box-shadow:0 10px 24px rgba(238,77,45,.22);
+      transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
+      position:relative;overflow:hidden;
+    }
+    .primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 30px rgba(238,77,45,.30);filter:saturate(1.08)}
+    .primary:active:not(:disabled){transform:translateY(0) scale(.985)}
+    .ghostbtn{
+      height:40px;border-radius:10px;background:rgba(255,255,255,.9);
+      transition:all .16s ease;box-shadow:0 3px 10px rgba(31,41,55,.04);
+    }
+    .ghostbtn:hover:not(:disabled){transform:translateY(-1px);border-color:#ffc7b9;background:#fff7f4;color:#cf4d31;box-shadow:0 8px 18px rgba(31,41,55,.08)}
+
+    .progress{
+      position:relative;overflow:hidden;
+      background:linear-gradient(90deg,#fff8e9,#fff2df,#fff8e9);
+      background-size:200% 100%;animation:spxShimmer 2s linear infinite;
+      border-color:#f1d59a;color:#835a13;box-shadow:0 8px 22px rgba(244,165,28,.08);
+    }
+    .error{box-shadow:0 8px 22px rgba(169,45,72,.08)}
+
+    .tools{padding:12px 14px;gap:10px;background:rgba(250,251,252,.62)}
+    .meta{padding:10px 14px;background:rgba(247,249,251,.72)}
+    .tablewrap,.delivery-table-wrap{scrollbar-color:#cfd5dc transparent;scrollbar-width:thin}
+    table{border-spacing:0}
+    th{
+      background:linear-gradient(180deg,#f8fafc,#f3f6f9);
+      color:#687380;letter-spacing:.055em;box-shadow:inset 0 -1px 0 rgba(40,52,65,.08);
+    }
+    td{transition:background .14s ease,transform .14s ease}
+    tbody tr:nth-child(even) td{background:rgba(248,250,252,.56)}
+    tbody tr:hover td{background:#fff7f3!important}
+    tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--spx-primary)}
+    .badge{
+      padding:4px 7px;border-radius:8px;
+      background:linear-gradient(135deg,#fff0ec,#fff7f4);
+      color:#c9482c;border:1px solid #ffd9cf;
+    }
+    .age{border:1px solid rgba(55,65,81,.08);background:#f7f8fa}
+    .pager{height:50px;background:rgba(255,255,255,.74);border-radius:0 0 18px 18px}
+    .pager button{transition:all .15s ease}
+    .pager button:hover{border-color:#ffc8bb;background:#fff4f0;color:#cf4d31}
+
+    .delivery-layout{gap:14px}
+    .delivery-form{padding:16px;gap:14px}
+    .delivery-flow{
+      height:46px;border-radius:12px;border-color:rgba(118,87,255,.18);
+      background:linear-gradient(135deg,rgba(118,87,255,.055),rgba(24,183,201,.045));
+      color:#637080;
+    }
+    .task-chip{
+      padding:6px 10px;background:linear-gradient(135deg,#fff0ec,#fff7f4);
+      border:1px solid #ffd9cf;
+    }
+    .delivery-result-head{padding:13px 16px}
+    .delivery-table thead th{
+      background:linear-gradient(135deg,#16a76d,#1abf84);
+      box-shadow:inset 0 -1px 0 rgba(0,0,0,.08);
+    }
+    .delivery-table tbody tr{transition:filter .14s ease,transform .14s ease}
+    .delivery-table tbody tr:hover{filter:saturate(1.06);transform:translateY(-1px)}
+    .delivery-table tr.rank-first td{background:linear-gradient(90deg,#fff7a8,#fff26d)}
+    .delivery-table tr.rank-second td{background:linear-gradient(90deg,#fff7e8,#ffefd3)}
+    .delivery-table tr.rank-third td{background:linear-gradient(90deg,#fbe6df,#f8d8cc)}
+    .delivery-table tr.rank-zero td{background:linear-gradient(90deg,#f1fbea,#e9f8e1)}
+    .delivery-table tfoot th{background:linear-gradient(135deg,#e6f7fb,#d7f0f6)}
+
+    .preview-backdrop{
+      background:rgba(15,23,42,.72);
+      backdrop-filter:blur(12px) saturate(120%);
+      -webkit-backdrop-filter:blur(12px) saturate(120%);
+      animation:spxFadeUp .18s ease both;
+    }
+    .preview-modal{
+      border-radius:20px;box-shadow:var(--spx-shadow-lg);
+      border:1px solid rgba(255,255,255,.5);
+    }
+    .preview-head{background:linear-gradient(180deg,#fff,#f9fafb)}
+    .preview-scroll{background:radial-gradient(circle at 50% 0%,#3a4250,#242930 62%)}
+    .preview-scroll img{border-radius:8px;box-shadow:0 18px 50px rgba(0,0,0,.36)}
+
+    .seatalk-config{
+      background:linear-gradient(135deg,rgba(238,245,255,.92),rgba(247,250,255,.92))!important;
+      border-color:rgba(71,118,190,.16)!important;
+      box-shadow:0 10px 30px rgba(36,89,169,.06);
+    }
+    .seatalk-send{
+      background:linear-gradient(135deg,#edf5ff,#e8f0ff)!important;
+      border-color:#c8d9f4!important;color:#285da9!important;
+    }
+    .seatalk-send:hover:not(:disabled){background:linear-gradient(135deg,#dfeeff,#e9f2ff)!important;box-shadow:0 8px 18px rgba(36,89,169,.12)}
+
+    .stat-strip,.delivery-kpis{
+      display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px 14px;
+      border-bottom:1px solid rgba(31,41,55,.07);
+    }
+    .stat-card{
+      min-height:72px;padding:12px;border-radius:14px;border:1px solid rgba(31,41,55,.07);
+      background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(249,250,252,.92));
+      box-shadow:0 7px 20px rgba(31,41,55,.045);position:relative;overflow:hidden;
+    }
+    .stat-card::after{content:"";position:absolute;right:-18px;top:-22px;width:70px;height:70px;border-radius:50%;background:var(--stat-color,rgba(238,77,45,.08))}
+    .stat-label{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#7d8793;font-weight:900}
+    .stat-value{margin-top:6px;font-size:21px;line-height:1;font-weight:950;color:#26313d;letter-spacing:-.03em}
+    .stat-note{margin-top:4px;font-size:9px;color:#87919c}
+    .stat-orange{--stat-color:rgba(238,77,45,.12)}
+    .stat-purple{--stat-color:rgba(118,87,255,.12)}
+    .stat-green{--stat-color:rgba(23,166,115,.12)}
+    .stat-amber{--stat-color:rgba(244,165,28,.14)}
+
+    @media(max-width:1100px){
+      .query{grid-template-columns:minmax(180px,1fr) 24px minmax(180px,1fr);}
+      .query .field:nth-of-type(3){grid-column:1/-1}
+      .query .primary{grid-column:1/-1}
+      .tools{grid-template-columns:1fr 180px}
+      .tools .select:last-child{grid-column:1/-1}
+      .stat-strip,.delivery-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media(max-width:720px){
+      .header{height:66px;flex-basis:66px;padding:0 12px}
+      .logo{width:38px;height:38px;border-radius:12px}
+      .title{font-size:15px}.sub{display:none}
+      .session-pill{display:none}.version-pill{height:30px;padding:0 9px}
+      .main{padding:10px;gap:10px}
+      .tabs{width:100%;display:grid;grid-template-columns:1fr 1fr;position:relative}
+      .tab{min-width:0;width:100%;padding:0 8px;font-size:9.5px}
+      .card,.delivery-result{border-radius:15px}
+      .query,.tools,.delivery-form{grid-template-columns:1fr!important;padding:12px}
+      .arrow{height:14px}
+      .stat-strip,.delivery-kpis{grid-template-columns:1fr 1fr;padding:10px}
+      .stat-card{min-height:66px;padding:10px}.stat-value{font-size:18px}
+      .delivery-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}
+      .delivery-actions .ghostbtn{width:100%}
+      .preview-backdrop{padding:8px}.preview-modal{width:100%;height:96vh;border-radius:14px}
+    }
+    @media(max-width:460px){
+      .header-actions .version-pill{display:none}
+      .stat-strip,.delivery-kpis{grid-template-columns:1fr}
+      .delivery-actions{grid-template-columns:1fr}
+      .tabs{grid-template-columns:1fr}
+    }
+  `;
+  shadow.appendChild(modernStyle);
+
   const root = document.createElement("div");
   shadow.appendChild(root);
 
@@ -215,17 +526,21 @@
         <div class="logo">▦</div>
         <div>
           <div class="title">SPX Operations Tools</div>
-          <div class="sub">Chạy trực tiếp trên SPX · dùng session đăng nhập hiện tại</div>
+          <div class="sub">Workspace vận hành · chạy trực tiếp bằng session SPX hiện tại</div>
         </div>
       </div>
-      <button class="close" data-close>×</button>
+      <div class="header-actions">
+        <div class="session-pill"><span class="session-dot"></span><span>${state.bridgeReady ? "SPX Connected" : "Connecting..."}</span></div>
+        <div class="version-pill">v1.5.0</div>
+        <button class="close" data-close title="Đóng SPX Tools">×</button>
+      </div>
     </header>`;
   }
 
   function tabsHtml() {
-    return `<nav class="tabs">
-      <button class="tab ${state.activeTab === "fms" ? "active" : ""}" data-tab="fms">▦ FMS Audit</button>
-      <button class="tab ${state.activeTab === "delivery" ? "active" : ""}" data-tab="delivery">⇩ Export Delivery Performance</button>
+    return `<nav class="tabs" aria-label="SPX Operations Tools">
+      <button class="tab ${state.activeTab === "fms" ? "active" : ""}" data-tab="fms">⌁ &nbsp; FMS Audit</button>
+      <button class="tab ${state.activeTab === "delivery" ? "active" : ""}" data-tab="delivery">◫ &nbsp; Delivery Performance</button>
     </nav>`;
   }
 
@@ -439,6 +754,12 @@
     const t = d.totals || {assigned:0,delivered:0,delay:0,rate:0};
   
     return `<section class="delivery-result">
+      <div class="delivery-kpis">
+        <div class="stat-card stat-orange"><div class="stat-label">Drivers</div><div class="stat-value">${d.rows.length.toLocaleString("en-US")}</div><div class="stat-note">Nhân sự trong report</div></div>
+        <div class="stat-card stat-purple"><div class="stat-label">Đơn Nhận</div><div class="stat-value">${t.assigned.toLocaleString("en-US")}</div><div class="stat-note">Assigned parcels</div></div>
+        <div class="stat-card stat-green"><div class="stat-label">Giao Thành Công</div><div class="stat-value">${t.delivered.toLocaleString("en-US")}</div><div class="stat-note">${t.rate.toFixed(2)}% success rate</div></div>
+        <div class="stat-card stat-amber"><div class="stat-label">Delay</div><div class="stat-value">${t.delay.toLocaleString("en-US")}</div><div class="stat-note">On-hold parcels</div></div>
+      </div>
       <div class="delivery-result-head">
         <div>
           <div class="cardtitle">Delivery Performance Report</div>
@@ -650,8 +971,17 @@
     state.page = Math.min(Math.max(1,state.page),pages);
     const start = (state.page-1)*PAGE_SIZE;
     const view = rows.slice(start,start+PAGE_SIZE);
+    const agingUnder24 = rows.filter(row => aging(row.latest?.timestamp) === "< 24H").length;
+    const aging24to36 = rows.filter(row => aging(row.latest?.timestamp) === "24H → 36H").length;
+    const agingOver36 = rows.filter(row => aging(row.latest?.timestamp) === "> 36H").length;
 
     return `<section class="card">
+      <div class="stat-strip">
+        <div class="stat-card stat-orange"><div class="stat-label">Kết quả</div><div class="stat-value">${rows.length}</div><div class="stat-note">Đơn sau bộ lọc</div></div>
+        <div class="stat-card stat-green"><div class="stat-label">&lt; 24H</div><div class="stat-value">${agingUnder24}</div><div class="stat-note">Trong ngưỡng mới</div></div>
+        <div class="stat-card stat-amber"><div class="stat-label">24H → 36H</div><div class="stat-value">${aging24to36}</div><div class="stat-note">Cần theo dõi</div></div>
+        <div class="stat-card stat-purple"><div class="stat-label">&gt; 36H</div><div class="stat-value">${agingOver36}</div><div class="stat-note">Ưu tiên xử lý</div></div>
+      </div>
       <div class="cardhead"><div><div class="cardtitle">Kết quả đã tải</div><div class="hint">Bộ lọc dưới đây không gọi lại API.</div></div><b>${rows.length} kết quả</b></div>
       <div class="tools">
         <input class="input" data-search placeholder="Tìm SPX, TO, Order Status, Station..." value="${esc(state.search)}">
@@ -681,7 +1011,7 @@
 
   function render() {
     if (!state.open) {
-      root.innerHTML = `<button class="launch" data-open>▦ &nbsp; SPX Tools</button>`;
+      root.innerHTML = `<button class="launch" data-open>✦ &nbsp; SPX Tools</button>`;
       return;
     }
     if (state.activeTab === "delivery") {
