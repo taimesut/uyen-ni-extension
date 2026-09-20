@@ -142,7 +142,7 @@
   }
 
   const host = document.createElement("div");
-  host.style.cssText = "position:fixed;right:18px;bottom:18px;z-index:2147483646";
+  host.style.cssText = "position:fixed;left:18px;top:18px;z-index:2147483646";
   const shadow = host.attachShadow({mode:"open"});
   document.documentElement.appendChild(host);
 
