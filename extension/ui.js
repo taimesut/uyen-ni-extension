@@ -860,6 +860,236 @@
     const n=shadow.querySelector("[data-search]"); if(n){n.focus();n.setSelectionRange(pos,pos);}
   });
 
+  // SeaTalk delivery-report integration (v1.4.0)
+  Object.assign(state.delivery, {
+    seatalkWebhook: "",
+    seatalkLoaded: false,
+    seatalkSending: false,
+    seatalkMessage: "",
+    seatalkError: ""
+  });
+
+  function seatalkValidWebhook(value) {
+    try {
+      const url = new URL(String(value || "").trim());
+      return url.protocol === "https:" &&
+        url.hostname === "openapi.seatalk.io" &&
+        url.pathname.startsWith("/webhook/group/");
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function seatalkLoadWebhook() {
+    if (!globalThis.chrome?.storage?.local) {
+      state.delivery.seatalkLoaded = true;
+      return;
+    }
+
+    chrome.storage.local.get(["seatalkWebhook"], result => {
+      state.delivery.seatalkWebhook = String(result?.seatalkWebhook || "");
+      state.delivery.seatalkLoaded = true;
+      render();
+    });
+  }
+
+  function seatalkSaveWebhook() {
+    const input = shadow.querySelector("[data-seatalk-webhook]");
+    const value = String(input?.value || "").trim();
+
+    state.delivery.seatalkMessage = "";
+    state.delivery.seatalkError = "";
+
+    if (!value) {
+      seatalkClearWebhook();
+      return;
+    }
+
+    if (!seatalkValidWebhook(value)) {
+      state.delivery.seatalkError =
+        "Webhook không hợp lệ. Chỉ chấp nhận https://openapi.seatalk.io/webhook/group/...";
+      render();
+      return;
+    }
+
+    chrome.storage.local.set({seatalkWebhook: value}, () => {
+      if (chrome.runtime.lastError) {
+        state.delivery.seatalkError = chrome.runtime.lastError.message;
+      } else {
+        state.delivery.seatalkWebhook = value;
+        state.delivery.seatalkMessage = "✓ Đã lưu SeaTalk Webhook trên thiết bị này.";
+      }
+      render();
+    });
+  }
+
+  function seatalkClearWebhook() {
+    chrome.storage.local.remove("seatalkWebhook", () => {
+      state.delivery.seatalkWebhook = "";
+      state.delivery.seatalkError = "";
+      state.delivery.seatalkMessage = "Đã xóa SeaTalk Webhook khỏi bộ nhớ local.";
+      render();
+    });
+  }
+
+  function seatalkSendDeliveryImage() {
+    const d = state.delivery;
+    if (d.seatalkSending) return;
+
+    d.seatalkMessage = "";
+    d.seatalkError = "";
+
+    if (!seatalkValidWebhook(d.seatalkWebhook)) {
+      d.seatalkError = "Hãy nhập và lưu SeaTalk Webhook trước khi gửi.";
+      render();
+      return;
+    }
+
+    const dataUrl = d.previewDataUrl || createDeliveryJpegPreview();
+    if (!dataUrl) {
+      d.seatalkError = "Chưa có Delivery Performance report để gửi.";
+      render();
+      return;
+    }
+
+    const base64 = String(dataUrl).split(",", 2)[1] || "";
+    const encodedBytes = new TextEncoder().encode(base64).length;
+
+    if (!base64 || encodedBytes > 5 * 1024 * 1024) {
+      d.seatalkError = "Ảnh report vượt giới hạn 5MB Base64 của SeaTalk.";
+      render();
+      return;
+    }
+
+    d.previewDataUrl = dataUrl;
+    d.seatalkSending = true;
+    d.seatalkMessage = "Đang gửi ảnh report vào SeaTalk...";
+    render();
+
+    chrome.runtime.sendMessage({
+      type: "SEATALK_SEND_IMAGE",
+      webhook: d.seatalkWebhook,
+      imageBase64: base64
+    }, response => {
+      d.seatalkSending = false;
+
+      if (chrome.runtime.lastError) {
+        d.seatalkMessage = "";
+        d.seatalkError = chrome.runtime.lastError.message;
+        render();
+        return;
+      }
+
+      if (!response?.ok) {
+        d.seatalkMessage = "";
+        d.seatalkError = String(response?.error || "SeaTalk webhook gửi thất bại.");
+        render();
+        return;
+      }
+
+      d.seatalkError = "";
+      d.seatalkMessage = "✓ Đã gửi ảnh Delivery Performance vào SeaTalk.";
+      render();
+    });
+  }
+
+  function seatalkEnsureStyles() {
+    if (shadow.querySelector("#seatalk-addon-style")) return;
+
+    const extraStyle = document.createElement("style");
+    extraStyle.id = "seatalk-addon-style";
+    extraStyle.textContent = [
+      ".seatalk-config{margin:0 14px 14px;padding:12px;border:1px solid #dfe4e9;border-radius:11px;background:#f8fafb;display:grid;gap:8px}",
+      ".seatalk-config-head{display:flex;align-items:center;justify-content:space-between;gap:10px}",
+      ".seatalk-config-title{font-size:10.5px;font-weight:900;color:#374151}",
+      ".seatalk-local{font-size:9px;color:#76808b}",
+      ".seatalk-row{display:grid;grid-template-columns:minmax(360px,1fr) auto auto;gap:8px;align-items:center}",
+      ".seatalk-message{font-size:9.5px;font-weight:800;color:#167653}",
+      ".seatalk-error{font-size:9.5px;font-weight:800;color:#a52b49}",
+      ".seatalk-send{border-color:#bfd4f3!important;background:#eef5ff!important;color:#2459a9!important}",
+      ".seatalk-send:disabled{opacity:.5;cursor:not-allowed}",
+      "@media(max-width:900px){.seatalk-row{grid-template-columns:1fr}.seatalk-config-head{align-items:flex-start;flex-direction:column}}"
+    ].join("");
+
+    shadow.appendChild(extraStyle);
+  }
+
+  function seatalkEnhanceUI() {
+    seatalkEnsureStyles();
+
+    if (!state.open || state.activeTab !== "delivery") return;
+
+    const form = shadow.querySelector(".delivery-form");
+    if (form && !shadow.querySelector("[data-seatalk-config]")) {
+      const config = document.createElement("div");
+      config.className = "seatalk-config";
+      config.setAttribute("data-seatalk-config", "");
+
+      config.innerHTML = `
+        <div class="seatalk-config-head">
+          <div class="seatalk-config-title">SeaTalk Webhook</div>
+          <div class="seatalk-local">Lưu bằng chrome.storage.local · chỉ trên extension này</div>
+        </div>
+        <div class="seatalk-row">
+          <input
+            class="input"
+            type="password"
+            autocomplete="off"
+            spellcheck="false"
+            data-seatalk-webhook
+            placeholder="https://openapi.seatalk.io/webhook/group/..."
+            value="${esc(state.delivery.seatalkWebhook)}"
+          >
+          <button class="ghostbtn" data-seatalk-save>Lưu webhook</button>
+          <button class="ghostbtn" data-seatalk-clear ${state.delivery.seatalkWebhook ? "" : "disabled"}>Xóa</button>
+        </div>
+        ${state.delivery.seatalkMessage ? `<div class="seatalk-message">${esc(state.delivery.seatalkMessage)}</div>` : ""}
+        ${state.delivery.seatalkError ? `<div class="seatalk-error">${esc(state.delivery.seatalkError)}</div>` : ""}
+      `;
+
+      form.insertAdjacentElement("afterend", config);
+    }
+
+    const previewButton = shadow.querySelector("[data-delivery-preview]");
+    if (previewButton && !shadow.querySelector("[data-delivery-seatalk]")) {
+      const sendButton = document.createElement("button");
+      sendButton.className = "ghostbtn seatalk-send";
+      sendButton.setAttribute("data-delivery-seatalk", "");
+      sendButton.disabled = !state.delivery.seatalkWebhook || state.delivery.seatalkSending;
+      sendButton.textContent = state.delivery.seatalkSending ? "Đang gửi..." : "↗ Gửi SeaTalk";
+      previewButton.insertAdjacentElement("afterend", sendButton);
+    }
+  }
+
+  const seatalkBaseRender = render;
+  render = function () {
+    seatalkBaseRender();
+    seatalkEnhanceUI();
+  };
+
+  shadow.addEventListener("click", event => {
+    const target = event.target.closest(
+      "[data-seatalk-save],[data-seatalk-clear],[data-delivery-seatalk]"
+    );
+
+    if (!target) return;
+
+    if (target.matches("[data-seatalk-save]")) {
+      seatalkSaveWebhook();
+      return;
+    }
+
+    if (target.matches("[data-seatalk-clear]")) {
+      seatalkClearWebhook();
+      return;
+    }
+
+    if (target.matches("[data-delivery-seatalk]")) {
+      seatalkSendDeliveryImage();
+    }
+  });
+
   render();
+  seatalkLoadWebhook();
   post("SPX_FMS_PING");
 })();
