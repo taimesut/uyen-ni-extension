@@ -14,6 +14,7 @@
   const DETAIL_BATCH_DELAY_MS = 450;
 
   let activeController = null;
+  let deliveryController = null;
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -367,6 +368,184 @@
     }
   }
 
+  async function fetchDeliveryJson(url, options = {}) {
+    const response = await fetch(url, {
+      ...options,
+      credentials: "include",
+      headers: {
+        Accept: "application/json, text/plain, */*",
+        ...(options.headers || {})
+      },
+      signal: deliveryController ? deliveryController.signal : undefined
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        "SPX từ chối quyền truy cập Delivery Performance. Hãy kiểm tra tài khoản đang đăng nhập."
+      );
+    }
+
+    if (!response.ok) {
+      throw new Error(`Delivery Performance API lỗi HTTP ${response.status}.`);
+    }
+
+    let json;
+    try {
+      json = await response.json();
+    } catch (_) {
+      throw new Error("Delivery Performance API trả về dữ liệu không phải JSON.");
+    }
+
+    if (
+      json &&
+      typeof json.retcode !== "undefined" &&
+      Number(json.retcode) !== 0
+    ) {
+      throw new Error(json.message || `Delivery Performance retcode ${json.retcode}.`);
+    }
+
+    return json;
+  }
+
+  async function findDeliveryExportTask(taskId, requestId) {
+    const startTime = Math.floor(Date.now() / 1000) - 86400;
+    const maxAttempts = 60;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      for (let page = 1; page <= 3; page += 1) {
+        const listUrl =
+          "/spxdata/api/export_platform/export_task/list_for_portal" +
+          `?start_time=${startTime}&count=100&pageno=${page}`;
+
+        const json = await fetchDeliveryJson(listUrl, { method: "GET" });
+        const data = json?.data || {};
+        const tasks = Array.isArray(data.task_list) ? data.task_list : [];
+        const task = tasks.find((item) => Number(item?.task_id) === Number(taskId));
+
+        if (task) {
+          if (task.failed_reason) {
+            throw new Error(`Export thất bại: ${task.failed_reason}`);
+          }
+
+          const fileName = String(task.file_name || "").trim();
+          const ready = Number(task.export_status) === 2 && /^\/?downloads\//.test(fileName);
+
+          if (ready) return task;
+
+          break;
+        }
+
+        const total = Number(data.total || 0);
+        if (page * 100 >= total) break;
+      }
+
+      post("SPX_DELIVERY_EXPORT_PROGRESS", {
+        requestId,
+        stage: "poll",
+        attempt,
+        maxAttempts,
+        taskId
+      });
+
+      await sleep(1500);
+    }
+
+    throw new Error("Quá thời gian chờ file Delivery Performance được tạo.");
+  }
+
+  async function downloadDeliveryCsv(task, requestId) {
+    const fileName = String(task?.file_name || "").trim();
+    if (!fileName) throw new Error("Export task chưa có file_name.");
+
+    const normalizedPath = "/" + fileName.replace(/^\/+/, "");
+
+    post("SPX_DELIVERY_EXPORT_PROGRESS", {
+      requestId,
+      stage: "download",
+      taskId: Number(task.task_id || 0),
+      fileName
+    });
+
+    const response = await fetch(normalizedPath, {
+      method: "GET",
+      credentials: "include",
+      signal: deliveryController ? deliveryController.signal : undefined
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      throw new Error("Không có quyền tải file Delivery Performance.");
+    }
+
+    if (!response.ok) {
+      throw new Error(`Tải CSV thất bại (HTTP ${response.status}).`);
+    }
+
+    return await response.text();
+  }
+
+  async function runDeliveryExport(requestId, rawDate) {
+    deliveryController?.abort();
+    deliveryController = new AbortController();
+
+    try {
+      const startDate = String(rawDate || "").trim();
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+        throw new Error("Ngày export không hợp lệ. Định dạng yêu cầu: YYYY-MM-DD.");
+      }
+
+      post("SPX_DELIVERY_EXPORT_PROGRESS", {
+        requestId,
+        stage: "create",
+        startDate
+      });
+
+      const createUrl =
+        "/api/driverservice/admin/performance/delivery/export/list" +
+        `?function_type=0&frequency=1&start_date=${encodeURIComponent(startDate)}`;
+
+      const created = await fetchDeliveryJson(createUrl, { method: "GET" });
+      const taskId = Number(created?.data?.task_id || created?.data?.fms_task_id || 0);
+
+      if (!taskId) {
+        throw new Error("SPX không trả về task_id cho Delivery Performance.");
+      }
+
+      post("SPX_DELIVERY_EXPORT_PROGRESS", {
+        requestId,
+        stage: "task-created",
+        taskId,
+        startDate
+      });
+
+      const task = await findDeliveryExportTask(taskId, requestId);
+      const csvText = await downloadDeliveryCsv(task, requestId);
+
+      post("SPX_DELIVERY_EXPORT_RESULT", {
+        requestId,
+        result: {
+          task_id: taskId,
+          station_id: Number(task.station_id || 0),
+          station_name: String(task.station_name || ""),
+          file_name: String(task.file_name || ""),
+          start_date: startDate,
+          csv_text: csvText
+        }
+      });
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        post("SPX_DELIVERY_EXPORT_CANCELLED", { requestId });
+      } else {
+        post("SPX_DELIVERY_EXPORT_ERROR", {
+          requestId,
+          message: String(error?.message || error || "Không thể export Delivery Performance.")
+        });
+      }
+    } finally {
+      deliveryController = null;
+    }
+  }
+
   window.addEventListener("message", (event) => {
     if (event.source !== window) return;
 
@@ -385,6 +564,16 @@
 
     if (data.type === "SPX_FMS_CANCEL") {
       activeController?.abort();
+      return;
+    }
+
+    if (data.type === "SPX_DELIVERY_EXPORT_RUN") {
+      runDeliveryExport(data.requestId, data.startDate);
+      return;
+    }
+
+    if (data.type === "SPX_DELIVERY_EXPORT_CANCEL") {
+      deliveryController?.abort();
     }
   });
 
