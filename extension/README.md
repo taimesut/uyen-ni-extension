@@ -34,3 +34,14 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 3. Load unpacked thư mục `extension`.
 4. Refresh `https://spx.shopee.vn/`.
 5. Nhấn nút **SPX Tools**.
+
+
+## v1.4.0 - SeaTalk Delivery Report
+
+- Thêm cấu hình SeaTalk System Account Webhook trong tab Export Delivery Performance.
+- Webhook được lưu bằng `chrome.storage.local` trên thiết bị hiện tại.
+- Nút **Gửi SeaTalk** nằm cạnh **Preview JPG**.
+- Extension tự tạo JPG từ report và gửi ảnh Base64 qua webhook.
+- Không tự gửi; chỉ gửi khi người dùng bấm nút.
+- Chỉ chấp nhận webhook dạng `https://openapi.seatalk.io/webhook/group/...`.
+- Ảnh Base64 được kiểm tra giới hạn 5MB trước khi gửi.
