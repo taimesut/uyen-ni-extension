@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SPX Operations Tools",
-  "version": "1.4.0",
-  "description": "FMS Audit, Export Delivery Performance và gửi report JPG qua SeaTalk webhook trực tiếp trên spx.shopee.vn.",
+  "version": "1.5.0",
+  "description": "SPX Operations Tools với FMS Audit, Delivery Performance, SeaTalk và giao diện operations dashboard responsive.",
   "content_scripts": [
     {
       "matches": [
