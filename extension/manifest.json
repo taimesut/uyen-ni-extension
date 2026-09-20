@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "SPX FMS Audit Pro Fullscreen",
+  "version": "1.2.0",
+  "description": "FMS audit toàn màn hình trên spx.shopee.vn, tối ưu không gian bảng và filter theo Order Status.",
+  "content_scripts": [
+    {
+      "matches": ["https://spx.shopee.vn/*"],
+      "js": ["bridge.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://spx.shopee.vn/*"],
+      "js": ["status-data.js", "ui.js"],
+      "run_at": "document_idle",
+      "world": "ISOLATED"
+    }
+  ]
+}
