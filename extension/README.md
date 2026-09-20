@@ -45,3 +45,16 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Không tự gửi; chỉ gửi khi người dùng bấm nút.
 - Chỉ chấp nhận webhook dạng `https://openapi.seatalk.io/webhook/group/...`.
 - Ảnh Base64 được kiểm tra giới hạn 5MB trước khi gửi.
+
+
+## v1.5.0 - Modern Operations UI
+
+- Remake giao diện theo phong cách operations dashboard hiện đại.
+- Full-screen responsive cho desktop / tablet / mobile.
+- Header glassmorphism + gradient accent + trạng thái SPX Connected.
+- Navigation tabs mới, hover/press animation.
+- KPI cards cho FMS Audit và Delivery Performance.
+- Card, form, button, dropdown, table và modal preview được thiết kế lại.
+- Sticky table header, zebra rows và hover highlight.
+- Loading/progress shimmer và hiệu ứng chuyển động nhẹ.
+- Giữ nguyên toàn bộ logic FMS, Delivery Performance và SeaTalk.
