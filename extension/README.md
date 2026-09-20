@@ -65,3 +65,11 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Không đưa driver vào report nếu toàn bộ KPI đều bằng 0.
 - Driver vẫn được giữ nếu ít nhất một KPI lớn hơn 0.
 - Áp dụng cho bảng report, xếp hạng, total, preview JPG và ảnh gửi SeaTalk.
+
+
+## v1.5.2 - Tab Layout Fix
+
+- Fix thanh tab FMS Audit / Delivery Performance bị stretch thành khối cao trên màn hình nhỏ.
+- Khóa chiều cao tab bar về 48px.
+- `.main` không còn stretch các grid row theo chiều cao viewport.
+- Giữ 2 tab nằm cùng một hàng trên mobile.
