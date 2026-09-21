@@ -48,6 +48,33 @@
     .replace(/&/g,"&amp;").replace(/</g,"&lt;")
     .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 
+  function icon(name, size=18) {
+    const icons = {
+      app:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+      menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+      close:'<path d="M6 6l12 12M18 6L6 18"/>',
+      fms:'<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="9"/>',
+      delivery:'<path d="M4 20V11M10 20V5M16 20v-8M22 20H2"/>',
+      image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 15l-5-5L5 20"/>',
+      download:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+      send:'<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/>',
+      refresh:'<path d="M20 11a8 8 0 10-2.34 5.66"/><path d="M20 4v7h-7"/>',
+      chevronDown:'<path d="M6 9l6 6 6-6"/>',
+      chevronLeft:'<path d="M15 18l-6-6 6-6"/>',
+      chevronRight:'<path d="M9 18l6-6-6-6"/>',
+      arrowRight:'<path d="M5 12h14M14 7l5 5-5 5"/>',
+      save:'<path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/>',
+      trash:'<path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14"/><path d="M10 11v6M14 11v6"/>',
+      link:'<path d="M10 13a5 5 0 007.07 0l2.12-2.12a5 5 0 00-7.07-7.07L11 4.93"/><path d="M14 11a5 5 0 00-7.07 0L4.8 13.12a5 5 0 007.07 7.07L13 19.07"/>',
+      calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+      check:'<path d="M20 6L9 17l-5-5"/>'
+    };
+
+    const body = icons[name] || icons.app;
+
+    return '<svg class="ui-icon" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + body + '</svg>';
+  }
+
   const stationName = id =>
     id === "1030" ? "1030 - Pleiku SOC" : "1812 - Pleiku 03 Hub";
 
@@ -148,7 +175,7 @@
 
   const style = document.createElement("style");
   style.textContent = `
-    :host{all:initial;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#26292e}
+    :host{all:initial;font-family:"Segoe UI Variable Text","Segoe UI Variable","Segoe UI",Roboto,Arial,sans-serif;color:#26292e}
     *{box-sizing:border-box}button,input,select{font:inherit}button{cursor:pointer}
     .launch{height:50px;padding:0 18px;border:0;border-radius:14px;background:#ee4d2d;color:#fff;font-weight:900;box-shadow:0 12px 30px #0003}
     .app{position:fixed;inset:0;width:100vw;height:100vh;background:#f5f6f8;display:flex;flex-direction:column;z-index:2147483647}
@@ -603,12 +630,18 @@
       --ops-amber:#b36b08;
       --ops-red:#b42348;
       --ops-shadow:0 1px 2px rgba(15,23,42,.04);
-      font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif!important;
+      font-family:"Segoe UI Variable Text","Segoe UI Variable","Segoe UI",Roboto,Arial,sans-serif!important;
       color:var(--ops-text)!important;
     }
 
     *{box-sizing:border-box}
     button,a,input,select,textarea{touch-action:manipulation}
+    .ui-icon{display:inline-block;vertical-align:middle;flex:0 0 auto}
+    .icon-label{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+    .menu-btn,.close,.drawer-close,.page-icon,.logo,.drawer-logo,.nav-icon{line-height:0}
+    .primary,.ghostbtn,.launch,.pager button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+    .pick{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .title,.page-title,.cardtitle,.drawer-title{font-family:"Segoe UI Variable Display","Segoe UI Variable Text","Segoe UI",sans-serif!important}
     button:focus-visible,input:focus-visible,select:focus-visible{
       outline:3px solid rgba(245,61,45,.24)!important;
       outline-offset:2px;
@@ -647,7 +680,7 @@
       background:rgba(245,61,45,.10)!important;color:var(--ops-primary)!important;
       box-shadow:none!important;transform:none!important;font-size:15px!important;
     }
-    .title{font-size:15px!important;font-weight:900!important;color:#20262e!important;letter-spacing:-.02em!important}
+    .title{font-size:15px!important;font-weight:750!important;color:#20262e!important;letter-spacing:-.015em!important}
     .sub{font-size:9.5px!important;color:#7a8490!important;margin-top:1px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .header-actions{gap:5px!important}
     .session-pill{
@@ -683,8 +716,8 @@
       display:grid;place-items:center;font-size:18px;font-weight:900;
     }
     .page-title{
-      margin:0;font-size:24px;line-height:1.15;font-weight:900;
-      letter-spacing:-.025em;color:#20262e;overflow-wrap:anywhere;
+      margin:0;font-size:24px;line-height:1.15;font-weight:750;
+      letter-spacing:-.02em;color:#20262e;overflow-wrap:anywhere;
     }
     .page-description{
       max-width:760px;margin-top:5px;font-size:12px;line-height:1.5;color:#6f7884;
@@ -710,7 +743,7 @@
       width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,var(--ops-primary),var(--ops-secondary));
       color:#fff;display:grid;place-items:center;font-weight:900;box-shadow:0 8px 18px rgba(245,61,45,.18);
     }
-    .drawer-title{font-size:14px;font-weight:900;color:#252b33}
+    .drawer-title{font-size:14px;font-weight:750;color:#252b33}
     .drawer-sub{font-size:10px;color:#7a8490;margin-top:2px}
     .drawer-close{width:44px;height:44px;border:0;border-radius:50%;background:transparent;font-size:20px;color:#66707b}
     .drawer-close:hover{background:#f3f4f6}
@@ -872,9 +905,9 @@
 
   function appHeaderHtml() {
     return `<header class="header">
-      <button class="menu-btn" data-menu-open aria-label="Mở menu">☰</button>
+      <button class="menu-btn" data-menu-open aria-label="Mở menu">${icon("menu",21)}</button>
       <div class="brand">
-        <div class="logo">▣</div>
+        <div class="logo">${icon("app",17)}</div>
         <div style="min-width:0">
           <div class="title"><span style="color:#F53D2D">SPX</span> Operations Tools</div>
           <div class="sub">Pleiku 03 · dùng session SPX hiện tại</div>
@@ -882,7 +915,7 @@
       </div>
       <div class="header-actions">
         <div class="session-pill"><span class="session-dot"></span><span>${state.bridgeReady ? "Connected" : "Connecting"}</span></div>
-        <button class="close" data-close aria-label="Đóng SPX Tools">×</button>
+        <button class="close" data-close aria-label="Đóng SPX Tools">${icon("close",20)}</button>
       </div>
     </header>`;
   }
@@ -892,20 +925,20 @@
       <aside class="drawer-panel" aria-label="SPX Operations navigation">
         <div class="drawer-head">
           <div class="drawer-brand">
-            <div class="drawer-logo">▣</div>
+            <div class="drawer-logo">${icon("app",19)}</div>
             <div>
               <div class="drawer-title">SPX Operations Tools</div>
               <div class="drawer-sub">Pleiku 03 workspace</div>
             </div>
           </div>
-          <button class="drawer-close" data-menu-close aria-label="Đóng menu">×</button>
+          <button class="drawer-close" data-menu-close aria-label="Đóng menu">${icon("close",20)}</button>
         </div>
         <nav class="drawer-nav">
           <button class="nav-item ${state.activeTab === "fms" ? "active" : ""}" data-nav="fms">
-            <span class="nav-icon">⌁</span><span>FMS Audit</span>
+            <span class="nav-icon">${icon("fms",16)}</span><span>FMS Audit</span>
           </button>
           <button class="nav-item ${state.activeTab === "delivery" ? "active" : ""}" data-nav="delivery">
-            <span class="nav-icon">◫</span><span>Delivery Performance</span>
+            <span class="nav-icon">${icon("delivery",16)}</span><span>Delivery Performance</span>
           </button>
         </nav>
         <div class="drawer-footer">
@@ -921,7 +954,7 @@
     if (type === "delivery") {
       return `<header class="page-header">
         <div class="page-heading">
-          <div class="page-icon">◫</div>
+          <div class="page-icon">${icon("delivery",20)}</div>
           <div>
             <h1 class="page-title">Delivery Performance</h1>
             <div class="page-description">Export CSV từ SPX, xử lý hiệu suất giao hàng, preview JPG và gửi report qua SeaTalk.</div>
@@ -932,7 +965,7 @@
 
     return `<header class="page-header">
       <div class="page-heading">
-        <div class="page-icon">⌁</div>
+        <div class="page-icon">${icon("fms",20)}</div>
         <div>
           <h1 class="page-title">FMS Audit</h1>
           <div class="page-description">Kiểm tra shipment và tracking theo tuyến, Order Status và nhóm thời gian. Chỉ tải khi bạn chủ động nhấn Tải dữ liệu.</div>
@@ -1133,7 +1166,7 @@
   
     if (!d.rows.length) {
       return `<div class="delivery-empty">
-        <div class="delivery-empty-icon">⇩</div>
+        <div class="delivery-empty-icon">${icon("download",24)}</div>
         <b>Chưa có Delivery Performance</b>
         <div>Chọn ngày rồi nhấn <strong>Export & xử lý báo cáo</strong>.</div>
       </div>`;
@@ -1171,8 +1204,8 @@
           <div class="hint">${esc(d.stationName || "Station")} · ${esc(formatVietnameseReportDate(d.startDate))}</div>
         </div>
         <div class="delivery-actions">
-          <button class="ghostbtn" data-delivery-preview>▣ Preview JPG</button>
-          <button class="ghostbtn" data-delivery-download-jpg>↓ Tải JPG</button>
+          <button class="ghostbtn" data-delivery-preview>${icon("image",16)}<span>Preview JPG</span></button>
+          <button class="ghostbtn" data-delivery-download-jpg>${icon("download",16)}<span>Tải JPG</span></button>
         </div>
       </div>
       <div class="delivery-table-wrap">
@@ -1219,16 +1252,16 @@
           </div>
   
           <div class="delivery-flow">
-            <span>1. Create task</span><b>→</b>
-            <span>2. Wait export</span><b>→</b>
-            <span>3. Download CSV</span><b>→</b>
+            <span>1. Create task</span><b>${icon("arrowRight",14)}</b>
+            <span>2. Wait export</span><b>${icon("arrowRight",14)}</b>
+            <span>3. Download CSV</span><b>${icon("arrowRight",14)}</b>
             <span>4. Build report</span>
           </div>
   
           <div class="delivery-form-actions">
             ${d.loading ? `<button class="ghostbtn" data-delivery-cancel>Hủy</button>` : ""}
             <button class="primary delivery-run" data-delivery-run ${d.loading || !state.bridgeReady ? "disabled" : ""}>
-              ${d.loading ? "Đang xử lý..." : "⇩ Export & xử lý báo cáo"}
+              ${d.loading ? "Đang xử lý..." : icon("download",16) + "<span>Export & xử lý báo cáo</span>"}
             </button>
           </div>
         </div>
@@ -1352,7 +1385,7 @@
             <b>Preview Delivery Performance JPG</b>
             <div class="hint">${esc(d.stationName)} · ${esc(d.startDate)}</div>
           </div>
-          <button class="close" data-preview-close>×</button>
+          <button class="close" data-preview-close>${icon("close",20)}</button>
         </div>
         <div class="preview-scroll">
           <img src="${d.previewDataUrl}" alt="Delivery Performance Preview">
@@ -1442,13 +1475,13 @@
         <td><span class="badge">${esc(row.latest?.status||"—")}</span><div class="small">${esc(row.latest?.message||"—")}</div></td>
         <td>${esc(dateTime(row.latest?.timestamp))}</td><td><b>${esc(elapsed(row.latest?.timestamp))}</b></td><td><span class="age">${esc(aging(row.latest?.timestamp))}</span></td>
       </tr>`).join("")}</tbody></table></div>
-      <div class="pager"><span>${rows.length?start+1:0}-${Math.min(start+PAGE_SIZE,rows.length)} / ${rows.length}</span><span><button data-prev>← Trước</button> &nbsp; Trang ${state.page}/${pages} &nbsp; <button data-next>Sau →</button></span></div>
+      <div class="pager"><span>${rows.length?start+1:0}-${Math.min(start+PAGE_SIZE,rows.length)} / ${rows.length}</span><span><button data-prev>${icon("chevronLeft",14)}<span>Trước</span></button> &nbsp; Trang ${state.page}/${pages} &nbsp; <button data-next><span>Sau</span>${icon("chevronRight",14)}</button></span></div>
     </section>`;
   }
 
   function render() {
     if (!state.open) {
-      root.innerHTML = `<button class="launch" data-open>▣ &nbsp; SPX Tools</button>`;
+      root.innerHTML = `<button class="launch" data-open>${icon("app",17)}<span>SPX Tools</span></button>`;
       return;
     }
 
@@ -1477,10 +1510,10 @@
             <div class="cardhead"><div><div class="cardtitle">Điều kiện tải dữ liệu</div><div class="hint">Đổi station hoặc status sẽ không tự request FMS.</div></div><span>${state.selectedStatuses.length?state.selectedStatuses.length+" status":"Tất cả status"}</span></div>
             <div class="query">
               <div class="field"><label class="label">Current Station</label><select class="select" data-current><option value="1030" ${state.currentStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.currentStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
-              <div class="arrow">→</div>
+              <div class="arrow">${icon("arrowRight",18)}</div>
               <div class="field"><label class="label">Next Station</label><select class="select" data-next><option value="1030" ${state.nextStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.nextStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
-              <div class="field"><label class="label">Order Status cần lấy</label><button class="pick" data-picker>${state.selectedStatuses.length?state.selectedStatuses.length+" trạng thái đã chọn":"Tất cả trạng thái"} ▾</button>${pickerHtml()}</div>
-              <button class="primary" data-load ${state.loading||!state.bridgeReady?"disabled":""}>${state.loading?"Đang tải...":"↻ Tải dữ liệu"}</button>
+              <div class="field"><label class="label">Order Status cần lấy</label><button class="pick" data-picker><span>${state.selectedStatuses.length?state.selectedStatuses.length+" trạng thái đã chọn":"Tất cả trạng thái"}</span>${icon("chevronDown",16)}</button>${pickerHtml()}</div>
+              <button class="primary" data-load ${state.loading||!state.bridgeReady?"disabled":""}>${state.loading?"Đang tải...":icon("refresh",16)+"<span>Tải dữ liệu</span>"}</button>
             </div>
           </section>
           ${state.progress?`<div class="progress" style="margin-top:12px">${esc(state.progress)}</div>`:""}
@@ -1826,7 +1859,7 @@
 
       config.innerHTML = `
         <div class="seatalk-config-head">
-          <div class="seatalk-config-title">SeaTalk Webhook</div>
+          <div class="seatalk-config-title icon-label">${icon("link",15)}<span>SeaTalk Webhook</span></div>
           <div class="seatalk-local">Lưu bằng chrome.storage.local · chỉ trên extension này</div>
         </div>
         <div class="seatalk-row">
@@ -1839,8 +1872,8 @@
             placeholder="https://openapi.seatalk.io/webhook/group/..."
             value="${esc(state.delivery.seatalkWebhook)}"
           >
-          <button class="ghostbtn" data-seatalk-save>Lưu webhook</button>
-          <button class="ghostbtn" data-seatalk-clear ${state.delivery.seatalkWebhook ? "" : "disabled"}>Xóa</button>
+          <button class="ghostbtn" data-seatalk-save>${icon("save",15)}<span>Lưu webhook</span></button>
+          <button class="ghostbtn" data-seatalk-clear ${state.delivery.seatalkWebhook ? "" : "disabled"}>${icon("trash",15)}<span>Xóa</span></button>
         </div>
         ${state.delivery.seatalkMessage ? `<div class="seatalk-message">${esc(state.delivery.seatalkMessage)}</div>` : ""}
         ${state.delivery.seatalkError ? `<div class="seatalk-error">${esc(state.delivery.seatalkError)}</div>` : ""}
@@ -1855,7 +1888,7 @@
       sendButton.className = "ghostbtn seatalk-send";
       sendButton.setAttribute("data-delivery-seatalk", "");
       sendButton.disabled = !state.delivery.seatalkWebhook || state.delivery.seatalkSending;
-      sendButton.textContent = state.delivery.seatalkSending ? "Đang gửi..." : "↗ Gửi SeaTalk";
+      sendButton.innerHTML = state.delivery.seatalkSending ? "Đang gửi..." : icon("send",15) + "<span>Gửi SeaTalk</span>";
       previewButton.insertAdjacentElement("afterend", sendButton);
     }
   }
