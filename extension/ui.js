@@ -1601,11 +1601,45 @@
   });
 
   shadow.addEventListener("click", e => {
-    const t=e.target;
-    if (t.matches("[data-open]")) { state.open=true; state.drawerOpen=false; render(); return; }
-    if (t.matches("[data-menu-open]")) { state.drawerOpen=true; render(); return; }
-    if (t.matches("[data-menu-close]")) { state.drawerOpen=false; render(); return; }
-    if (t.matches("[data-menu-overlay]") && !t.closest(".drawer-panel")) { state.drawerOpen=false; render(); return; }
+    const t = e.target instanceof Element ? e.target : null;
+    if (!t) return;
+
+    // IMPORTANT:
+    // Sau khi UI dùng inline SVG, event.target thường là <svg>, <path> hoặc <span>.
+    // Vì vậy mọi button/action phải resolve bằng closest() thay vì matches() trực tiếp.
+    const openButton = t.closest("[data-open]");
+    if (openButton) {
+      state.open = true;
+      state.drawerOpen = false;
+      render();
+      return;
+    }
+
+    const menuOpenButton = t.closest("[data-menu-open]");
+    if (menuOpenButton) {
+      state.drawerOpen = true;
+      render();
+      return;
+    }
+
+    const menuCloseButton = t.closest("[data-menu-close]");
+    if (menuCloseButton) {
+      state.drawerOpen = false;
+      render();
+      return;
+    }
+
+    // Chỉ click trực tiếp vào vùng backdrop mới đóng drawer.
+    // Click bên trong drawer-panel không được bubble thành hành động close.
+    if (
+      t.matches("[data-menu-overlay]") &&
+      !t.closest(".drawer-panel")
+    ) {
+      state.drawerOpen = false;
+      render();
+      return;
+    }
+
     const navTarget = t.closest("[data-nav]");
     if (navTarget) {
       state.activeTab = navTarget.dataset.nav || "fms";
@@ -1614,42 +1648,110 @@
       render();
       return;
     }
-    if (t.matches("[data-tab]")) { state.activeTab=t.dataset.tab || "fms"; state.picker=false; render(); return; }
-    if (t.matches("[data-close]")) { state.open=false; render(); return; }
-    if (t.matches("[data-picker]")) { state.picker=!state.picker; render(); return; }
-    if (t.matches("[data-load]")) { state.picker=false; load(); return; }
-    if (t.matches("[data-prev]")) { state.page=Math.max(1,state.page-1); render(); return; }
-    if (t.matches("[data-next]")) { state.page++; render(); return; }
 
-    if (t.matches("[data-delivery-run]")) { requestDeliveryExport(); return; }
-    if (t.matches("[data-delivery-cancel]")) { cancelDeliveryExport(); return; }
+    const legacyTab = t.closest("[data-tab]");
+    if (legacyTab) {
+      state.activeTab = legacyTab.dataset.tab || "fms";
+      state.picker = false;
+      render();
+      return;
+    }
 
-    if (t.matches("[data-delivery-preview]")) {
+    const closeButton = t.closest("[data-close]");
+    if (closeButton) {
+      state.drawerOpen = false;
+      state.picker = false;
+      state.delivery.previewOpen = false;
+      state.open = false;
+      render();
+      return;
+    }
+
+    const pickerButton = t.closest("[data-picker]");
+    if (pickerButton) {
+      state.picker = !state.picker;
+      render();
+      return;
+    }
+
+    const loadButton = t.closest("[data-load]");
+    if (loadButton) {
+      state.picker = false;
+      load();
+      return;
+    }
+
+    const prevButton = t.closest("[data-prev]");
+    if (prevButton) {
+      state.page = Math.max(1, state.page - 1);
+      render();
+      return;
+    }
+
+    const nextButton = t.closest("[data-next]");
+    if (nextButton) {
+      state.page += 1;
+      render();
+      return;
+    }
+
+    const deliveryRunButton = t.closest("[data-delivery-run]");
+    if (deliveryRunButton) {
+      requestDeliveryExport();
+      return;
+    }
+
+    const deliveryCancelButton = t.closest("[data-delivery-cancel]");
+    if (deliveryCancelButton) {
+      cancelDeliveryExport();
+      return;
+    }
+
+    const deliveryPreviewButton = t.closest("[data-delivery-preview]");
+    if (deliveryPreviewButton) {
       state.delivery.previewDataUrl = createDeliveryJpegPreview();
       state.delivery.previewOpen = Boolean(state.delivery.previewDataUrl);
       render();
       return;
     }
 
-    if (t.matches("[data-delivery-download-jpg]")) {
-      const dataUrl = state.delivery.previewDataUrl || createDeliveryJpegPreview();
+    const deliveryDownloadButton = t.closest("[data-delivery-download-jpg]");
+    if (deliveryDownloadButton) {
+      const dataUrl =
+        state.delivery.previewDataUrl ||
+        createDeliveryJpegPreview();
+
       if (!dataUrl) return;
 
       state.delivery.previewDataUrl = dataUrl;
+
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = "delivery_performance_" + state.delivery.startDate + ".jpg";
+      a.download =
+        "delivery_performance_" +
+        state.delivery.startDate +
+        ".jpg";
+
       a.click();
       return;
     }
 
-    if (t.matches("[data-preview-close]") && !t.closest("[data-preview-panel]")) {
+    // Modal preview:
+    // - click nút X => đóng
+    // - click trực tiếp backdrop => đóng
+    // - click nội dung bên trong modal => KHÔNG đóng
+    const previewCloseButton =
+      t.closest("button[data-preview-close]");
+
+    if (previewCloseButton) {
       state.delivery.previewOpen = false;
       render();
       return;
     }
 
-    if (t.matches("[data-preview-close]")) {
+    if (
+      t.matches(".preview-backdrop[data-preview-close]")
+    ) {
       state.delivery.previewOpen = false;
       render();
     }
