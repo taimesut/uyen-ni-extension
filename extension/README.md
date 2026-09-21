@@ -95,3 +95,12 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Cập nhật icon cho launcher, header, drawer, FMS, Delivery, Preview, Download, SeaTalk và pagination.
 - Không dùng CDN hoặc icon library ngoài; icon đi cùng source extension.
 - Giữ nguyên toàn bộ logic FMS, Delivery Performance và SeaTalk.
+
+
+## v1.6.2 - Button Interaction Fix
+
+- Fix button không phản hồi sau khi chuyển sang inline SVG icon.
+- Toàn bộ click action dùng event delegation với `closest()` thay vì kiểm tra trực tiếp `event.target`.
+- Fix Open/Close tool, drawer, navigation, picker, FMS load, pagination, Delivery actions và preview modal.
+- Backdrop modal/drawer được xử lý riêng để không đóng nhầm khi click nội dung bên trong.
+- SeaTalk actions tiếp tục dùng `closest()` và không bị ảnh hưởng.
