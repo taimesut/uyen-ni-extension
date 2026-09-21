@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SPX Operations Tools",
-  "version": "1.6.1",
-  "description": "SPX Operations Tools với giao diện đồng bộ OPS-FTE, typography mới và bộ SVG icon thống nhất.",
+  "version": "1.6.2",
+  "description": "SPX Operations Tools với OPS-FTE UI, SVG icon và event handling ổn định cho toàn bộ button/modal/drawer.",
   "content_scripts": [
     {
       "matches": [
