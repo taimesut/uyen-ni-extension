@@ -73,3 +73,16 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Khóa chiều cao tab bar về 48px.
 - `.main` không còn stretch các grid row theo chiều cao viewport.
 - Giữ 2 tab nằm cùng một hàng trên mobile.
+
+
+## v1.6.0 - OPS-FTE UI Alignment
+
+- Thay tab ngang bằng sticky navbar + drawer navigation giống OPS-FTE.
+- Đồng bộ SPX orange, spacing, surface/card, typography scale và touch target.
+- Thêm page header riêng cho FMS Audit và Delivery Performance.
+- FMS mobile chuyển từ bảng ngang sang card list.
+- Multi-select Order Status có ô tìm kiếm theo tên/mã status.
+- Giữ desktop table, sticky header, KPI cards và pagination.
+- Delivery Performance giữ nguyên export / ranking / JPG / SeaTalk.
+- Responsive theo mobile / tablet / desktop và hỗ trợ safe-area.
+- Giữ Shadow DOM để không ảnh hưởng CSS của spx.shopee.vn.
