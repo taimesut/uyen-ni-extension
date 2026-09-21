@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         SPX Operations Tools - Safari
 // @namespace    https://github.com/taimesut/uyen-ni-extension
-// @version      1.6.2.1
+// @version      1.6.2.2
 // @description  FMS Audit, Delivery Performance, JPG Preview và SeaTalk trực tiếp trên SPX cho Safari Userscripts.
 // @author       taimesut
 // @match        https://spx.shopee.vn/*
-// @run-at       document-start
+// @run-at       document-idle
 // @noframes
 // @inject-into  content
 // @grant        GM.getValue
@@ -13,6 +13,7 @@
 // @grant        GM.deleteValue
 // @grant        GM.xmlHttpRequest
 // @connect      openapi.seatalk.io
+// @connect      spx.shopee.vn
 // ==/UserScript==
 
 
@@ -713,10 +714,121 @@
     }
   }
 
-  async function fetchDeliveryJson(url, options = {}) {
-    const response = await fetch(url, {
+  function absoluteSpxUrl(url) {
+    return new URL(String(url || ""), window.location.origin).href;
+  }
+
+  function safariXhrRequest(url, options = {}) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const method = String(options.method || "GET").toUpperCase();
+
+      xhr.open(method, absoluteSpxUrl(url), true);
+      xhr.withCredentials = true;
+      xhr.timeout = Number(options.timeout || 30000);
+
+      Object.entries(options.headers || {}).forEach(([key, value]) => {
+        try {
+          xhr.setRequestHeader(key, String(value));
+        } catch (_) {}
+      });
+
+      xhr.onload = () => {
+        resolve({
+          ok: xhr.status >= 200 && xhr.status < 300,
+          status: xhr.status,
+          text: () => Promise.resolve(xhr.responseText || "")
+        });
+      };
+
+      xhr.onerror = () => reject(new Error("Safari XHR network error."));
+      xhr.ontimeout = () => reject(new Error("Safari XHR timeout."));
+
+      if (options.signal) {
+        if (options.signal.aborted) {
+          xhr.abort();
+          reject(new DOMException("Aborted", "AbortError"));
+          return;
+        }
+
+        options.signal.addEventListener("abort", () => xhr.abort(), { once: true });
+      }
+
+      xhr.send(options.body == null ? null : options.body);
+    });
+  }
+
+  async function safariGmRequest(url, options = {}) {
+    const gm = globalThis.GM;
+
+    if (!gm || typeof gm.xmlHttpRequest !== "function") {
+      throw new Error("GM.xmlHttpRequest không khả dụng.");
+    }
+
+    const response = await gm.xmlHttpRequest({
+      method: String(options.method || "GET").toUpperCase(),
+      url: absoluteSpxUrl(url),
+      headers: options.headers || {},
+      data: options.body == null ? undefined : options.body,
+      timeout: Number(options.timeout || 30000),
+      responseType: "text"
+    });
+
+    return {
+      ok: Number(response.status) >= 200 && Number(response.status) < 300,
+      status: Number(response.status || 0),
+      text: () => Promise.resolve(String(response.responseText || response.response || ""))
+    };
+  }
+
+  async function safariSameOriginRequest(url, options = {}) {
+    const requestOptions = {
       ...options,
       credentials: "include",
+      signal: options.signal || (deliveryController ? deliveryController.signal : undefined)
+    };
+
+    let firstError = null;
+
+    try {
+      const response = await fetch(url, requestOptions);
+
+      if (
+        response.ok ||
+        ![0, 401, 403, 419].includes(Number(response.status))
+      ) {
+        return response;
+      }
+
+      firstError = new Error("fetch HTTP " + response.status);
+    } catch (error) {
+      if (error?.name === "AbortError") throw error;
+      firstError = error;
+    }
+
+    try {
+      return await safariXhrRequest(url, requestOptions);
+    } catch (xhrError) {
+      if (xhrError?.name === "AbortError") throw xhrError;
+
+      try {
+        return await safariGmRequest(url, requestOptions);
+      } catch (gmError) {
+        throw new Error(
+          "Safari không thể gọi SPX API. fetch: " +
+          String(firstError?.message || firstError || "unknown") +
+          " · XHR: " +
+          String(xhrError?.message || xhrError || "unknown") +
+          " · GM: " +
+          String(gmError?.message || gmError || "unknown")
+        );
+      }
+    }
+  }
+
+  async function fetchDeliveryJson(url, options = {}) {
+    const response = await safariSameOriginRequest(url, {
+      ...options,
       headers: {
         Accept: "application/json, text/plain, */*",
         ...(options.headers || {})
@@ -736,7 +848,8 @@
 
     let json;
     try {
-      json = await response.json();
+      const text = await response.text();
+      json = JSON.parse(text);
     } catch (_) {
       throw new Error("Delivery Performance API trả về dữ liệu không phải JSON.");
     }
@@ -811,9 +924,11 @@
       fileName
     });
 
-    const response = await fetch(normalizedPath, {
+    const response = await safariSameOriginRequest(normalizedPath, {
       method: "GET",
-      credentials: "include",
+      headers: {
+        Accept: "text/csv,text/plain,*/*"
+      },
       signal: deliveryController ? deliveryController.signal : undefined
     });
 
@@ -1878,7 +1993,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
         <div class="drawer-footer">
           <div class="drawer-status"><span class="drawer-status-dot"></span>${state.bridgeReady ? "SPX session ready" : "Đang kết nối SPX"}</div>
           <div>Extension chạy trực tiếp trên spx.shopee.vn.</div>
-          <div style="margin-top:5px">v1.6.0 · OPS-FTE UI</div>
+          <div style="margin-top:5px">v1.6.2.2 · Safari</div>
         </div>
       </aside>
     </div>`;
@@ -2485,6 +2600,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
 
       if (d.type === "SPX_DELIVERY_EXPORT_RESULT") {
         const result = d.result || {};
+        state.delivery.progress = "Đã tải CSV · đang dựng báo cáo...";
         const report = buildDeliveryReport(result.csv_text || "");
 
         state.delivery.loading = false;
@@ -2498,6 +2614,13 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
         state.delivery.totals = report.totals;
         state.delivery.previewDataUrl = "";
         state.delivery.previewOpen = false;
+
+        if (!report.rows.length) {
+          state.delivery.error =
+            "CSV đã tải nhưng không có driver hợp lệ để dựng report. " +
+            "Hãy kiểm tra ngày export hoặc dữ liệu SPX.";
+        }
+
         render();
         return;
       }
