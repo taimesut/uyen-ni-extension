@@ -1573,7 +1573,14 @@
     if (t.matches("[data-menu-open]")) { state.drawerOpen=true; render(); return; }
     if (t.matches("[data-menu-close]")) { state.drawerOpen=false; render(); return; }
     if (t.matches("[data-menu-overlay]") && !t.closest(".drawer-panel")) { state.drawerOpen=false; render(); return; }
-    if (t.matches("[data-nav]")) { state.activeTab=t.dataset.nav || "fms"; state.drawerOpen=false; state.picker=false; render(); return; }
+    const navTarget = t.closest("[data-nav]");
+    if (navTarget) {
+      state.activeTab = navTarget.dataset.nav || "fms";
+      state.drawerOpen = false;
+      state.picker = false;
+      render();
+      return;
+    }
     if (t.matches("[data-tab]")) { state.activeTab=t.dataset.tab || "fms"; state.picker=false; render(); return; }
     if (t.matches("[data-close]")) { state.open=false; render(); return; }
     if (t.matches("[data-picker]")) { state.picker=!state.picker; render(); return; }
