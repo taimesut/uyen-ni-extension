@@ -86,3 +86,12 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Delivery Performance giữ nguyên export / ranking / JPG / SeaTalk.
 - Responsive theo mobile / tablet / desktop và hỗ trợ safe-area.
 - Giữ Shadow DOM để không ảnh hưởng CSS của spx.shopee.vn.
+
+
+## v1.6.1 - Typography & Icon Refresh
+
+- Đổi font UI sang Segoe UI Variable / system font để hiển thị ổn định và hiện đại.
+- Thay các icon ký tự cũ bằng inline SVG đồng nhất.
+- Cập nhật icon cho launcher, header, drawer, FMS, Delivery, Preview, Download, SeaTalk và pagination.
+- Không dùng CDN hoặc icon library ngoài; icon đi cùng source extension.
+- Giữ nguyên toàn bộ logic FMS, Delivery Performance và SeaTalk.
