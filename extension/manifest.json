@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SPX Operations Tools",
-  "version": "1.5.2",
-  "description": "SPX Operations Tools với FMS Audit, Delivery Performance, SeaTalk và giao diện operations dashboard responsive.",
+  "version": "1.6.0",
+  "description": "SPX Operations Tools với giao diện đồng bộ OPS-FTE, FMS Audit, Delivery Performance và SeaTalk.",
   "content_scripts": [
     {
       "matches": [
