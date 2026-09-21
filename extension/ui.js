@@ -20,7 +20,7 @@
   }
 
   const state = {
-    open:false, activeTab:"fms",
+    open:false, activeTab:"fms", drawerOpen:false, statusSearch:"",
     loading:false, bridgeReady:false, requestId:"",
     currentStation:"1030", nextStation:"1812",
     selectedStatuses:DEFAULT_STATUSES.slice(),
@@ -586,31 +586,359 @@
   `;
   shadow.appendChild(layoutFixStyle);
 
+  const opsFteStyle = document.createElement("style");
+  opsFteStyle.id = "uyen-ni-ops-fte-ui-v160";
+  opsFteStyle.textContent = `
+    :host{
+      --ops-primary:#F53D2D;
+      --ops-primary-hover:#D73223;
+      --ops-secondary:#FF6A00;
+      --ops-bg:#f5f6f8;
+      --ops-surface:#ffffff;
+      --ops-surface-2:#fafbfc;
+      --ops-text:#1f2937;
+      --ops-muted:#6b7280;
+      --ops-line:rgba(15,23,42,.10);
+      --ops-green:#169b68;
+      --ops-amber:#b36b08;
+      --ops-red:#b42348;
+      --ops-shadow:0 1px 2px rgba(15,23,42,.04);
+      font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif!important;
+      color:var(--ops-text)!important;
+    }
+
+    *{box-sizing:border-box}
+    button,a,input,select,textarea{touch-action:manipulation}
+    button:focus-visible,input:focus-visible,select:focus-visible{
+      outline:3px solid rgba(245,61,45,.24)!important;
+      outline-offset:2px;
+    }
+
+    .app{
+      background:var(--ops-bg)!important;
+      color:var(--ops-text)!important;
+    }
+
+    .header{
+      height:56px!important;
+      flex:0 0 56px!important;
+      padding:0 10px 0 8px!important;
+      background:rgba(255,255,255,.96)!important;
+      border-bottom:1px solid var(--ops-line)!important;
+      box-shadow:none!important;
+      backdrop-filter:blur(14px)!important;
+      -webkit-backdrop-filter:blur(14px)!important;
+      position:sticky!important;
+      top:0;
+      z-index:80!important;
+    }
+    .header::before{display:none!important}
+    .brand{min-width:0;gap:8px!important;flex:1}
+    .menu-btn{
+      width:44px;height:44px;flex:0 0 44px;
+      border:0;border-radius:12px;background:transparent;color:#374151;
+      display:grid;place-items:center;font-size:21px;font-weight:800;
+      transition:background .14s ease,transform .14s ease;
+    }
+    .menu-btn:hover{background:#f1f3f5}
+    .menu-btn:active{transform:scale(.96)}
+    .logo{
+      width:36px!important;height:36px!important;border-radius:12px!important;
+      background:rgba(245,61,45,.10)!important;color:var(--ops-primary)!important;
+      box-shadow:none!important;transform:none!important;font-size:15px!important;
+    }
+    .title{font-size:15px!important;font-weight:900!important;color:#20262e!important;letter-spacing:-.02em!important}
+    .sub{font-size:9.5px!important;color:#7a8490!important;margin-top:1px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .header-actions{gap:5px!important}
+    .session-pill{
+      height:30px!important;padding:0 9px!important;background:#eefbf5!important;
+      border:1px solid #d5eee3!important;color:#17734f!important;font-size:9px!important;
+    }
+    .session-dot{width:7px!important;height:7px!important;background:#1da86f!important;animation:none!important}
+    .version-pill{display:none!important}
+    .close{
+      width:44px!important;height:44px!important;min-width:44px!important;
+      border:0!important;background:transparent!important;border-radius:12px!important;
+      color:#4b5563!important;font-size:20px!important;
+    }
+    .close:hover{background:#fff0ec!important;color:var(--ops-primary)!important;transform:none!important}
+
+    .ops-main{
+      flex:1;min-width:0;min-height:0;overflow:auto;
+      background:rgba(229,231,235,.34);
+      padding-bottom:max(24px,env(safe-area-inset-bottom));
+    }
+    .ops-page{
+      width:100%;max-width:1280px;min-width:0;margin:0 auto;
+      padding:18px 12px 28px;
+    }
+    .page-header{
+      display:flex;align-items:flex-start;justify-content:space-between;gap:14px;
+      padding:0 0 16px;margin-bottom:14px;border-bottom:1px solid var(--ops-line);
+    }
+    .page-heading{display:flex;align-items:flex-start;gap:10px;min-width:0}
+    .page-icon{
+      width:40px;height:40px;flex:0 0 40px;border-radius:14px;
+      background:rgba(245,61,45,.10);color:var(--ops-primary);
+      display:grid;place-items:center;font-size:18px;font-weight:900;
+    }
+    .page-title{
+      margin:0;font-size:24px;line-height:1.15;font-weight:900;
+      letter-spacing:-.025em;color:#20262e;overflow-wrap:anywhere;
+    }
+    .page-description{
+      max-width:760px;margin-top:5px;font-size:12px;line-height:1.5;color:#6f7884;
+    }
+    .page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+
+    .drawer-overlay{
+      position:fixed;inset:0;z-index:110;background:rgba(17,24,39,.36);
+      opacity:0;pointer-events:none;transition:opacity .18s ease;
+      backdrop-filter:blur(2px);
+    }
+    .drawer-overlay.open{opacity:1;pointer-events:auto}
+    .drawer-panel{
+      position:absolute;inset:0 auto 0 0;width:min(86vw,320px);
+      background:#fff;box-shadow:18px 0 52px rgba(15,23,42,.18);
+      transform:translateX(-102%);transition:transform .22s ease;
+      display:flex;flex-direction:column;padding:16px;
+    }
+    .drawer-overlay.open .drawer-panel{transform:translateX(0)}
+    .drawer-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:15px;border-bottom:1px solid var(--ops-line)}
+    .drawer-brand{display:flex;align-items:center;gap:10px;min-width:0}
+    .drawer-logo{
+      width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,var(--ops-primary),var(--ops-secondary));
+      color:#fff;display:grid;place-items:center;font-weight:900;box-shadow:0 8px 18px rgba(245,61,45,.18);
+    }
+    .drawer-title{font-size:14px;font-weight:900;color:#252b33}
+    .drawer-sub{font-size:10px;color:#7a8490;margin-top:2px}
+    .drawer-close{width:44px;height:44px;border:0;border-radius:50%;background:transparent;font-size:20px;color:#66707b}
+    .drawer-close:hover{background:#f3f4f6}
+    .drawer-nav{display:grid;gap:7px;margin-top:18px}
+    .nav-item{
+      width:100%;min-height:48px;border:0;border-radius:12px;background:transparent;color:#4c5663;
+      display:flex;align-items:center;gap:11px;padding:0 13px;text-align:left;font-size:12px;font-weight:800;
+      transition:background .14s ease,color .14s ease,transform .14s ease;
+    }
+    .nav-item:hover{background:#f3f4f6;transform:translateX(1px)}
+    .nav-item.active{background:var(--ops-primary);color:#fff;box-shadow:0 8px 18px rgba(245,61,45,.18)}
+    .nav-icon{width:28px;height:28px;border-radius:9px;background:rgba(127,127,127,.08);display:grid;place-items:center;font-size:14px}
+    .nav-item.active .nav-icon{background:rgba(255,255,255,.16)}
+    .drawer-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--ops-line);font-size:10px;color:#7b8490;line-height:1.55}
+    .drawer-status{display:flex;align-items:center;gap:7px;color:#17734f;font-weight:800;margin-bottom:5px}
+    .drawer-status-dot{width:7px;height:7px;border-radius:50%;background:#20a86f}
+
+    .tabs{display:none!important}
+    .main{display:block!important;padding:0!important;overflow:visible!important}
+
+    .card,.delivery-result{
+      background:#fff!important;border:1px solid var(--ops-line)!important;
+      border-radius:16px!important;box-shadow:var(--ops-shadow)!important;
+      backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+      animation:none!important;
+    }
+    .cardhead,.delivery-result-head{
+      min-height:58px!important;padding:13px 15px!important;background:#fff!important;
+      border-bottom:1px solid var(--ops-line)!important;border-radius:16px 16px 0 0!important;
+    }
+    .cardtitle{font-size:15px!important;font-weight:900!important;color:#2b323b!important}
+    .hint{font-size:11px!important;line-height:1.45!important;color:#78828d!important}
+    .label{font-size:11px!important;text-transform:none!important;letter-spacing:0!important;color:#4f5965!important;font-weight:700!important}
+    .input,.select,.pick{
+      height:44px!important;border-radius:12px!important;background:#fff!important;
+      border:1px solid #d9dee5!important;color:#303740!important;font-size:13px!important;
+      box-shadow:none!important;
+    }
+    .input:hover,.select:hover,.pick:hover{border-color:#bdc5cf!important}
+    .input:focus,.select:focus,.pick:focus{border-color:#f38976!important;box-shadow:0 0 0 3px rgba(245,61,45,.09)!important}
+    .primary{
+      min-height:44px!important;border-radius:12px!important;background:var(--ops-primary)!important;
+      box-shadow:none!important;font-size:12px!important;font-weight:800!important;
+    }
+    .primary:hover:not(:disabled){background:var(--ops-primary-hover)!important;transform:none!important;box-shadow:none!important}
+    .ghostbtn{min-height:44px!important;height:44px!important;border-radius:12px!important;font-size:11px!important;box-shadow:none!important}
+    .ghostbtn:hover:not(:disabled){transform:none!important;background:#f8f9fa!important;border-color:#cfd5dc!important;color:#38414b!important;box-shadow:none!important}
+
+    .query{
+      padding:15px!important;
+      grid-template-columns:minmax(210px,1fr) 28px minmax(210px,1fr) minmax(300px,1.3fr) 150px!important;
+      gap:10px!important;
+    }
+    .tools{padding:12px!important;background:#fff!important}
+    .meta{background:#fafbfc!important;font-size:11px!important;padding:9px 12px!important}
+    .pop{top:68px!important;border-radius:14px!important;box-shadow:0 18px 45px rgba(15,23,42,.16)!important}
+    .opt{min-height:38px!important;font-size:11px!important}
+    .status-search-wrap{position:sticky;top:-6px;z-index:2;background:#fff;padding:6px 0 8px;border-bottom:1px solid #edf0f2;margin-bottom:4px}
+    .status-search{height:40px!important}
+
+    .stat-strip,.delivery-kpis{padding:12px!important;gap:8px!important;background:#fafbfc}
+    .stat-card{min-height:76px!important;padding:12px!important;border-radius:14px!important;border:1px solid var(--ops-line)!important;background:#fff!important;box-shadow:none!important}
+    .stat-card::after{display:none!important}
+    .stat-label{font-size:10px!important;color:#7a8490!important}
+    .stat-value{font-size:21px!important;color:#242b33!important}
+    .stat-note{font-size:10px!important;color:#89929d!important}
+
+    .tablewrap,.delivery-table-wrap{overflow:auto!important}
+    th{background:#f8f9fb!important;color:#65717e!important;font-size:10px!important}
+    td{font-size:12px!important;color:#4a5562!important}
+    tbody tr:nth-child(even) td{background:#fbfcfd!important}
+    tbody tr:hover td{background:#fff7f4!important}
+    .badge{background:#fff0ec!important;border:0!important;color:#c6462a!important}
+    .small{font-size:10px!important;color:#7e8894!important}
+    .pager{height:50px!important;font-size:11px!important}
+
+    .fms-mobile-list{display:none}
+    .fms-mobile-card{
+      border:1px solid var(--ops-line);border-radius:14px;background:#fff;padding:12px;
+      display:grid;gap:10px;box-shadow:var(--ops-shadow);
+    }
+    .fms-mobile-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+    .fms-mobile-spx{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:900;color:#252c34;overflow-wrap:anywhere}
+    .fms-mobile-to{font-size:10px;color:#7b8490;margin-top:3px;overflow-wrap:anywhere}
+    .fms-mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+    .fms-mobile-item{min-width:0;padding:9px;border-radius:10px;background:#f8f9fb}
+    .fms-mobile-label{font-size:9px;text-transform:uppercase;color:#8a939d;font-weight:800;letter-spacing:.04em}
+    .fms-mobile-value{margin-top:4px;font-size:11px;color:#3e4751;font-weight:700;overflow-wrap:anywhere}
+
+    .delivery-form{padding:15px!important;grid-template-columns:220px minmax(360px,1fr) auto!important;gap:12px!important}
+    .delivery-flow{background:#fafbfc!important;border-color:#dce1e7!important;color:#66717d!important}
+    .delivery-result-head{flex-wrap:wrap}
+    .delivery-table tr.rank-first td{background:#fff8d6!important}
+    .delivery-table tr.rank-second td{background:#fafbfc!important}
+    .delivery-table tr.rank-third td{background:#fff4ed!important}
+    .delivery-table tr.rank-zero td{background:#fff!important}
+    .delivery-table thead th{background:#169b68!important;color:#fff!important}
+
+    .progress,.error{font-size:11px!important;box-shadow:none!important}
+    .progress{animation:none!important;background:#fff8e8!important}
+
+    .preview-backdrop{background:rgba(15,23,42,.58)!important;backdrop-filter:blur(8px)!important}
+    .preview-modal{border-radius:18px!important;box-shadow:0 24px 70px rgba(15,23,42,.26)!important}
+
+    @media(min-width:768px){
+      .ops-page{padding:24px 24px 32px}
+      .page-title{font-size:30px}
+      .header{padding:0 18px!important}
+      .menu-btn{margin-right:2px}
+    }
+    @media(max-width:1023px){
+      .query{grid-template-columns:1fr 24px 1fr!important}
+      .query .field:nth-of-type(3){grid-column:1/-1}
+      .query .primary{grid-column:1/-1;width:100%}
+      .delivery-form{grid-template-columns:1fr!important}
+      .delivery-form-actions{justify-content:flex-end}
+    }
+    @media(max-width:767px){
+      .session-pill{display:none!important}
+      .ops-page{padding:14px 12px calc(88px + env(safe-area-inset-bottom))}
+      .page-header{align-items:flex-start}
+      .page-title{font-size:23px}
+      .page-description{font-size:11px}
+      .page-actions{width:100%}
+      .page-actions .primary{width:100%}
+      .query{grid-template-columns:1fr!important;padding:12px!important}
+      .query .field:nth-of-type(3),.query .primary{grid-column:auto}
+      .arrow{height:18px!important;transform:rotate(90deg)}
+      .tools{grid-template-columns:1fr!important}
+      .tablewrap{display:none!important}
+      .fms-mobile-list{display:grid;gap:10px;padding:10px;background:#f7f8fa}
+      .stat-strip,.delivery-kpis{grid-template-columns:1fr 1fr!important}
+      .delivery-actions{width:100%;display:grid!important;grid-template-columns:1fr 1fr}
+      .delivery-actions .ghostbtn{width:100%}
+      .delivery-form-actions{
+        position:sticky;bottom:8px;z-index:25;padding:8px;
+        border:1px solid var(--ops-line);border-radius:14px;
+        background:rgba(255,255,255,.94);backdrop-filter:blur(14px);
+        box-shadow:0 14px 32px rgba(15,23,42,.14);
+      }
+      .delivery-form-actions>*{flex:1}
+      .delivery-table{min-width:760px!important}
+    }
+    @media(max-width:460px){
+      .brand .logo{display:none!important}
+      .title{font-size:14px!important}
+      .stat-strip,.delivery-kpis{grid-template-columns:1fr!important}
+      .fms-mobile-grid{grid-template-columns:1fr}
+      .delivery-actions{grid-template-columns:1fr}
+    }
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+    }
+  `;
+  shadow.appendChild(opsFteStyle);
+
   const root = document.createElement("div");
   shadow.appendChild(root);
 
   function appHeaderHtml() {
     return `<header class="header">
+      <button class="menu-btn" data-menu-open aria-label="Mở menu">☰</button>
       <div class="brand">
-        <div class="logo">▦</div>
-        <div>
-          <div class="title">SPX Operations Tools</div>
-          <div class="sub">Workspace vận hành · chạy trực tiếp bằng session SPX hiện tại</div>
+        <div class="logo">▣</div>
+        <div style="min-width:0">
+          <div class="title"><span style="color:#F53D2D">SPX</span> Operations Tools</div>
+          <div class="sub">Pleiku 03 · dùng session SPX hiện tại</div>
         </div>
       </div>
       <div class="header-actions">
-        <div class="session-pill"><span class="session-dot"></span><span>${state.bridgeReady ? "SPX Connected" : "Connecting..."}</span></div>
-        <div class="version-pill">v1.5.0</div>
-        <button class="close" data-close title="Đóng SPX Tools">×</button>
+        <div class="session-pill"><span class="session-dot"></span><span>${state.bridgeReady ? "Connected" : "Connecting"}</span></div>
+        <button class="close" data-close aria-label="Đóng SPX Tools">×</button>
       </div>
     </header>`;
   }
 
-  function tabsHtml() {
-    return `<nav class="tabs" aria-label="SPX Operations Tools">
-      <button class="tab ${state.activeTab === "fms" ? "active" : ""}" data-tab="fms">⌁ &nbsp; FMS Audit</button>
-      <button class="tab ${state.activeTab === "delivery" ? "active" : ""}" data-tab="delivery">◫ &nbsp; Delivery Performance</button>
-    </nav>`;
+  function drawerHtml() {
+    return `<div class="drawer-overlay ${state.drawerOpen ? "open" : ""}" data-menu-overlay>
+      <aside class="drawer-panel" aria-label="SPX Operations navigation">
+        <div class="drawer-head">
+          <div class="drawer-brand">
+            <div class="drawer-logo">▣</div>
+            <div>
+              <div class="drawer-title">SPX Operations Tools</div>
+              <div class="drawer-sub">Pleiku 03 workspace</div>
+            </div>
+          </div>
+          <button class="drawer-close" data-menu-close aria-label="Đóng menu">×</button>
+        </div>
+        <nav class="drawer-nav">
+          <button class="nav-item ${state.activeTab === "fms" ? "active" : ""}" data-nav="fms">
+            <span class="nav-icon">⌁</span><span>FMS Audit</span>
+          </button>
+          <button class="nav-item ${state.activeTab === "delivery" ? "active" : ""}" data-nav="delivery">
+            <span class="nav-icon">◫</span><span>Delivery Performance</span>
+          </button>
+        </nav>
+        <div class="drawer-footer">
+          <div class="drawer-status"><span class="drawer-status-dot"></span>${state.bridgeReady ? "SPX session ready" : "Đang kết nối SPX"}</div>
+          <div>Extension chạy trực tiếp trên spx.shopee.vn.</div>
+          <div style="margin-top:5px">v1.6.0 · OPS-FTE UI</div>
+        </div>
+      </aside>
+    </div>`;
+  }
+
+  function pageHeaderHtml(type) {
+    if (type === "delivery") {
+      return `<header class="page-header">
+        <div class="page-heading">
+          <div class="page-icon">◫</div>
+          <div>
+            <h1 class="page-title">Delivery Performance</h1>
+            <div class="page-description">Export CSV từ SPX, xử lý hiệu suất giao hàng, preview JPG và gửi report qua SeaTalk.</div>
+          </div>
+        </div>
+      </header>`;
+    }
+
+    return `<header class="page-header">
+      <div class="page-heading">
+        <div class="page-icon">⌁</div>
+        <div>
+          <h1 class="page-title">FMS Audit</h1>
+          <div class="page-description">Kiểm tra shipment và tracking theo tuyến, Order Status và nhóm thời gian. Chỉ tải khi bạn chủ động nhấn Tải dữ liệu.</div>
+        </div>
+      </div>
+    </header>`;
   }
 
   function parseCsv(text) {
@@ -1035,9 +1363,21 @@
 
   function pickerHtml() {
     if (!state.picker) return "";
+
+    const keyword = state.statusSearch.trim().toLowerCase();
+    const visibleStatuses = STATUSES.filter(x => {
+      if (!keyword) return true;
+      return String(x.code).toLowerCase().includes(keyword) ||
+        String(x.name || "").toLowerCase().includes(keyword);
+    });
+
     return `<div class="pop">
+      <div class="status-search-wrap">
+        <input class="input status-search" data-status-search type="search" autocomplete="off" placeholder="Tìm tên hoặc mã status..." value="${esc(state.statusSearch)}">
+      </div>
       <label class="opt"><input type="checkbox" data-all ${state.selectedStatuses.length===0?"checked":""}><span>Tất cả trạng thái</span></label>
-      ${STATUSES.map(x => `<label class="opt"><input type="checkbox" data-status="${esc(x.code)}" ${state.selectedStatuses.includes(String(x.code))?"checked":""}><span>${esc(x.name)}</span><b>${esc(x.code)}</b></label>`).join("")}
+      ${visibleStatuses.map(x => `<label class="opt"><input type="checkbox" data-status="${esc(x.code)}" ${state.selectedStatuses.includes(String(x.code))?"checked":""}><span>${esc(x.name)}</span><b>${esc(x.code)}</b></label>`).join("")}
+      ${visibleStatuses.length ? "" : `<div class="empty" style="padding:24px 12px">Không tìm thấy trạng thái.</div>`}
     </div>`;
   }
 
@@ -1048,6 +1388,25 @@
     state.page = Math.min(Math.max(1,state.page),pages);
     const start = (state.page-1)*PAGE_SIZE;
     const view = rows.slice(start,start+PAGE_SIZE);
+    const mobileCards = view.map(row => `
+      <article class="fms-mobile-card">
+        <div class="fms-mobile-top">
+          <div>
+            <div class="fms-mobile-spx">${esc(row.shipmentId)}</div>
+            <div class="fms-mobile-to">${esc(row.to || "Không có TO")}</div>
+          </div>
+          <span class="age">${esc(aging(row.latest?.timestamp))}</span>
+        </div>
+        <div class="fms-mobile-grid">
+          <div class="fms-mobile-item"><div class="fms-mobile-label">Order Status</div><div class="fms-mobile-value">${esc(row.orderStatus || "—")} · ${esc(statusName(row.orderStatus))}</div></div>
+          <div class="fms-mobile-item"><div class="fms-mobile-label">Đã qua</div><div class="fms-mobile-value">${esc(elapsed(row.latest?.timestamp))}</div></div>
+          <div class="fms-mobile-item"><div class="fms-mobile-label">Current Station</div><div class="fms-mobile-value">${esc(row.current || "—")}</div></div>
+          <div class="fms-mobile-item"><div class="fms-mobile-label">Next Station</div><div class="fms-mobile-value">${esc(row.next || "—")}</div></div>
+          <div class="fms-mobile-item"><div class="fms-mobile-label">Tracking cuối</div><div class="fms-mobile-value">${esc(row.latest?.status || "—")} · ${esc(row.latest?.message || "—")}</div></div>
+          <div class="fms-mobile-item"><div class="fms-mobile-label">Cập nhật</div><div class="fms-mobile-value">${esc(dateTime(row.latest?.timestamp))}</div></div>
+        </div>
+      </article>
+    `).join("");
     const agingUnder24 = rows.filter(row => aging(row.latest?.timestamp) === "< 24H").length;
     const aging24to36 = rows.filter(row => aging(row.latest?.timestamp) === "24H → 36H").length;
     const agingOver36 = rows.filter(row => aging(row.latest?.timestamp) === "> 36H").length;
@@ -1074,6 +1433,7 @@
         </select>
       </div>
       <div class="meta"><span>${esc(state.applied?.current||"")} → ${esc(state.applied?.next||"")}</span><span>${state.applied?.statuses?.length||"Tất cả"} Order Status</span></div>
+      <div class="fms-mobile-list">${mobileCards}</div>
       <div class="tablewrap"><table><thead><tr><th>SPX Tracking Number</th><th>TO Number</th><th>Order Status</th><th>Current Station</th><th>Next Station</th><th>Tracking cuối</th><th>Cập nhật cuối</th><th>Đã qua</th><th>Aging</th></tr></thead>
       <tbody>${view.map(row=>`<tr>
         <td class="mono">${esc(row.shipmentId)}</td><td class="mono">${esc(row.to||"—")}</td>
@@ -1088,15 +1448,19 @@
 
   function render() {
     if (!state.open) {
-      root.innerHTML = `<button class="launch" data-open>✦ &nbsp; SPX Tools</button>`;
+      root.innerHTML = `<button class="launch" data-open>▣ &nbsp; SPX Tools</button>`;
       return;
     }
+
     if (state.activeTab === "delivery") {
       root.innerHTML = `<div class="app">
         ${appHeaderHtml()}
-        <main class="main">
-          ${tabsHtml()}
-          ${renderDeliveryTab()}
+        ${drawerHtml()}
+        <main class="ops-main">
+          <section class="ops-page">
+            ${pageHeaderHtml("delivery")}
+            ${renderDeliveryTab()}
+          </section>
         </main>
         ${renderDeliveryPreviewModal()}
       </div>`;
@@ -1105,21 +1469,24 @@
 
     root.innerHTML = `<div class="app">
       ${appHeaderHtml()}
-      <main class="main">
-        ${tabsHtml()}
-        <section class="card">
-          <div class="cardhead"><div><div class="cardtitle">Điều kiện tải dữ liệu</div><div class="hint">Đổi filter không tự request.</div></div><span>${state.selectedStatuses.length?state.selectedStatuses.length+" status":"Tất cả status"}</span></div>
-          <div class="query">
-            <div class="field"><label class="label">Current Station</label><select class="select" data-current><option value="1030" ${state.currentStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.currentStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
-            <div class="arrow">→</div>
-            <div class="field"><label class="label">Next Station</label><select class="select" data-next><option value="1030" ${state.nextStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.nextStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
-            <div class="field"><label class="label">Order Status cần lấy</label><button class="pick" data-picker>${state.selectedStatuses.length?state.selectedStatuses.length+" trạng thái đã chọn":"Tất cả trạng thái"} ▾</button>${pickerHtml()}</div>
-            <button class="primary" data-load ${state.loading||!state.bridgeReady?"disabled":""}>${state.loading?"Đang tải...":"↻ Tải dữ liệu"}</button>
-          </div>
+      ${drawerHtml()}
+      <main class="ops-main">
+        <section class="ops-page">
+          ${pageHeaderHtml("fms")}
+          <section class="card">
+            <div class="cardhead"><div><div class="cardtitle">Điều kiện tải dữ liệu</div><div class="hint">Đổi station hoặc status sẽ không tự request FMS.</div></div><span>${state.selectedStatuses.length?state.selectedStatuses.length+" status":"Tất cả status"}</span></div>
+            <div class="query">
+              <div class="field"><label class="label">Current Station</label><select class="select" data-current><option value="1030" ${state.currentStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.currentStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
+              <div class="arrow">→</div>
+              <div class="field"><label class="label">Next Station</label><select class="select" data-next><option value="1030" ${state.nextStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.nextStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
+              <div class="field"><label class="label">Order Status cần lấy</label><button class="pick" data-picker>${state.selectedStatuses.length?state.selectedStatuses.length+" trạng thái đã chọn":"Tất cả trạng thái"} ▾</button>${pickerHtml()}</div>
+              <button class="primary" data-load ${state.loading||!state.bridgeReady?"disabled":""}>${state.loading?"Đang tải...":"↻ Tải dữ liệu"}</button>
+            </div>
+          </section>
+          ${state.progress?`<div class="progress" style="margin-top:12px">${esc(state.progress)}</div>`:""}
+          ${state.error?`<div class="error" style="margin-top:12px">${esc(state.error)}</div>`:""}
+          <div style="margin-top:12px">${tableHtml()}</div>
         </section>
-        ${state.progress?`<div class="progress">${esc(state.progress)}</div>`:""}
-        ${state.error?`<div class="error">${esc(state.error)}</div>`:""}
-        ${tableHtml()}
       </main>
     </div>`;
   }
@@ -1202,7 +1569,11 @@
 
   shadow.addEventListener("click", e => {
     const t=e.target;
-    if (t.matches("[data-open]")) { state.open=true; render(); return; }
+    if (t.matches("[data-open]")) { state.open=true; state.drawerOpen=false; render(); return; }
+    if (t.matches("[data-menu-open]")) { state.drawerOpen=true; render(); return; }
+    if (t.matches("[data-menu-close]")) { state.drawerOpen=false; render(); return; }
+    if (t.matches("[data-menu-overlay]") && !t.closest(".drawer-panel")) { state.drawerOpen=false; render(); return; }
+    if (t.matches("[data-nav]")) { state.activeTab=t.dataset.nav || "fms"; state.drawerOpen=false; state.picker=false; render(); return; }
     if (t.matches("[data-tab]")) { state.activeTab=t.dataset.tab || "fms"; state.picker=false; render(); return; }
     if (t.matches("[data-close]")) { state.open=false; render(); return; }
     if (t.matches("[data-picker]")) { state.picker=!state.picker; render(); return; }
@@ -1261,10 +1632,24 @@
   });
 
   shadow.addEventListener("input", e => {
-    if (!e.target.matches("[data-search]")) return;
-    state.search=e.target.value; state.page=1;
-    const pos=e.target.selectionStart; render();
-    const n=shadow.querySelector("[data-search]"); if(n){n.focus();n.setSelectionRange(pos,pos);}
+    const target = e.target;
+
+    if (target.matches("[data-status-search]")) {
+      state.statusSearch = target.value;
+      const pos = target.selectionStart;
+      render();
+      const next = shadow.querySelector("[data-status-search]");
+      if (next) { next.focus(); next.setSelectionRange(pos, pos); }
+      return;
+    }
+
+    if (!target.matches("[data-search]")) return;
+    state.search = target.value;
+    state.page = 1;
+    const pos = target.selectionStart;
+    render();
+    const next = shadow.querySelector("[data-search]");
+    if (next) { next.focus(); next.setSelectionRange(pos, pos); }
   });
 
   // SeaTalk delivery-report integration (v1.4.0)
