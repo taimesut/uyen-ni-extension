@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SPX Operations Tools",
-  "version": "1.8.0",
-  "description": "SPX Operations Tools responsive design system cho desktop, tablet và mobile.",
+  "version": "1.8.1",
+  "description": "SPX Operations Tools responsive UI với FMS, Delivery Performance và Pickup Assignment.",
   "content_scripts": [
     {
       "matches": [

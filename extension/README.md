@@ -145,3 +145,11 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - KPI, table, pagination, drawer và preview modal dùng cùng một hệ UI.
 - Mobile không còn phụ thuộc vào bảng ngang cho Pickup và Delivery.
 - Hỗ trợ coarse pointer, reduced motion và increased contrast.
+
+## v1.8.1 - FMS Interaction & Launcher Fix
+
+- Fix **Next Station** bị đóng ngay khi mở do xung đột `data-next` với nút phân trang.
+- Đổi Next Station sang `data-next-station` và giới hạn pagination selector vào đúng button.
+- Fix dropdown **Order Status cần lấy** bị card cắt mất; filter card cho phép dropdown overflow và có z-index riêng.
+- Launcher góc phải chỉ còn favicon, bỏ chữ **SPX** và nền pill.
+- Header bỏ favicon, chỉ giữ menu và tên **SPX Operations Tools**.

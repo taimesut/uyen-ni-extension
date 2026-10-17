@@ -11,7 +11,7 @@
   const DEFAULT_STATUSES = ["880", "36", "15"];
   const PAGE_SIZE = 25;
   const APP_ICON_URL = globalThis.chrome?.runtime?.getURL
-    ? chrome.runtime.getURL("icons/icon-32.png")
+    ? chrome.runtime.getURL("icons/icon-48.png")
     : "";
 
   function localDateInputValue(date) {
@@ -198,8 +198,8 @@
   style.textContent = `
     :host{all:initial;font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;color:#26292e}
     *{box-sizing:border-box}button,input,select{font:inherit}button{cursor:pointer}
-    .launch{height:40px;padding:0 12px;border:0;border-radius:11px;background:#ee4d2d;color:#fff;font-weight:900;box-shadow:0 8px 22px #0002;display:inline-flex;align-items:center;gap:7px}
-    .launch-icon{width:22px;height:22px;border-radius:5px;display:block;object-fit:cover;flex:0 0 auto}
+    .launch{width:42px;height:42px;padding:0;border:0;border-radius:12px;background:transparent;color:#fff;box-shadow:0 8px 22px #0002;display:grid;place-items:center}
+    .launch-icon{width:42px;height:42px;border-radius:12px;display:block;object-fit:cover}
     .app{position:fixed;inset:0;width:100vw;height:100vh;background:#f5f6f8;display:flex;flex-direction:column;z-index:2147483647}
     .header{height:68px;flex:0 0 68px;padding:0 22px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between}
     .brand{display:flex;align-items:center;gap:12px}.logo{width:40px;height:40px;border-radius:12px;background:#ee4d2d;color:#fff;display:grid;place-items:center;font-weight:950}
@@ -288,28 +288,18 @@
     }
 
     .launch{
-      min-width:0;
-      height:40px;
-      padding:0 12px;
-      border-radius:11px;
-      background:linear-gradient(135deg,var(--spx-primary),#ff8a5c 55%,#ffb052);
-      box-shadow:0 16px 38px rgba(238,77,45,.34);
+      width:42px;
+      min-width:42px;
+      height:42px;
+      padding:0;
+      border-radius:12px;
+      background:transparent;
+      box-shadow:0 12px 30px rgba(31,41,55,.20);
       transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
       position:relative;
       overflow:hidden;
-      letter-spacing:.01em;
-    }
-    .launch::after{
-      content:"";
-      position:absolute;
-      inset:-40% auto -40% -35%;
-      width:38%;
-      transform:rotate(18deg);
-      background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);
-      transition:left .45s ease;
     }
     .launch:hover{transform:translateY(-2px) scale(1.015);box-shadow:0 20px 48px rgba(238,77,45,.42)}
-    .launch:hover::after{left:110%}
     .launch:active{transform:translateY(0) scale(.985)}
 
     .app{
@@ -981,11 +971,13 @@
       --ds-control-h:44px;--ds-shadow-sm:0 1px 2px rgba(15,23,42,.05);--ds-shadow-md:0 10px 30px rgba(15,23,42,.08);--ds-shadow-lg:0 24px 70px rgba(15,23,42,.20);
       font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif!important;
     }
+    .launch{width:42px!important;min-width:42px!important;height:42px!important;padding:0!important;border-radius:12px!important;background:transparent!important;box-shadow:0 10px 26px rgba(15,23,42,.18)!important}
+    .launch-icon{width:42px!important;height:42px!important;border-radius:12px!important}
     .app{background:var(--ds-color-canvas)!important}
     .header{height:60px!important;flex-basis:60px!important;padding-left:max(10px,env(safe-area-inset-left))!important;padding-right:max(10px,env(safe-area-inset-right))!important;background:rgba(255,255,255,.96)!important;border-bottom:1px solid var(--ds-color-border)!important}
     .app-brand-icon{width:100%;height:100%;display:block;object-fit:cover;border-radius:inherit}
-    .logo,.drawer-logo{overflow:hidden!important;background:transparent!important;padding:0!important;box-shadow:none!important}
-    .logo{width:36px!important;height:36px!important}.drawer-logo{width:40px!important;height:40px!important}
+    .drawer-logo{overflow:hidden!important;background:transparent!important;padding:0!important;box-shadow:none!important}
+    .drawer-logo{width:40px!important;height:40px!important}
     .title{font-size:15px!important;font-weight:800!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .menu-btn,.close,.drawer-close{min-width:44px!important;min-height:44px!important}
     .ops-main{overscroll-behavior:contain;scrollbar-gutter:stable;padding-bottom:max(var(--ds-space-6),env(safe-area-inset-bottom))!important}
@@ -995,6 +987,10 @@
     .drawer-panel{width:min(320px,calc(100vw - 24px))!important;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))!important}
     .nav-item{min-height:48px!important;border-radius:var(--ds-radius-md)!important;font-size:13px!important}.drawer-footer{font-size:11px!important}
     .card,.delivery-result{border:1px solid var(--ds-color-border)!important;border-radius:var(--ds-radius-lg)!important;box-shadow:var(--ds-shadow-sm)!important;overflow:hidden}
+    .fms-filter-card{overflow:visible!important;position:relative;z-index:30}
+    .fms-filter-card .query{overflow:visible!important}
+    .fms-filter-card .field:has([data-picker]){z-index:35}
+    .fms-filter-card .pop{z-index:1000!important}
     .cardhead,.delivery-result-head,.pickup-result-head{min-height:56px!important;padding:var(--ds-space-3) var(--ds-space-4)!important;border-bottom:1px solid var(--ds-color-border)!important;background:var(--ds-color-surface)!important}
     .cardtitle{font-size:14px!important;font-weight:800!important}.hint{font-size:11px!important}.field{gap:6px!important}.label{font-size:11px!important;font-weight:700!important}
     .input,.select,.pick,.pickup-driver-filter{min-height:var(--ds-control-h)!important;height:var(--ds-control-h)!important;border:1px solid #d8dde4!important;border-radius:12px!important;background:#fff!important;color:var(--ds-color-text)!important;font-size:13px!important;box-shadow:none!important}
@@ -1019,8 +1015,8 @@
     .mobile-detail{margin-top:8px}.pickup-mobile-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--ds-color-border);font-size:10px;color:var(--ds-color-muted)}
     .preview-backdrop{padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important}.preview-modal{width:min(1500px,100%)!important;height:min(94dvh,1000px)!important}.preview-head{min-height:56px!important;height:auto!important;padding:10px 12px!important}.preview-scroll{padding:clamp(8px,2vw,20px)!important}
     @media(max-width:1199px){.query{grid-template-columns:1fr 28px 1fr!important}.query .field:nth-of-type(3){grid-column:1/-1}.query .primary{grid-column:1/-1;width:100%}.delivery-form,.pickup-controls{grid-template-columns:1fr 1fr!important}.delivery-form>div:nth-child(2),.pickup-controls>div:nth-child(3){display:none}.delivery-form-actions,.pickup-actions{grid-column:1/-1;justify-content:flex-end}.tools{grid-template-columns:minmax(220px,1fr) minmax(150px,180px)!important}.tools .select:last-child{grid-column:1/-1}}
-    @media(max-width:767px){:host{--ds-control-h:46px}.header{height:58px!important;flex-basis:58px!important}.brand{gap:7px!important}.logo{width:34px!important;height:34px!important}.title{font-size:14px!important}.ops-page{padding:12px 10px calc(20px + env(safe-area-inset-bottom))!important}.page-header{margin-bottom:12px!important;padding-bottom:12px!important}.page-icon{width:34px!important;height:34px!important;flex-basis:34px!important}.page-title{font-size:21px!important}.card,.delivery-result{border-radius:15px!important}.cardhead,.delivery-result-head,.pickup-result-head{padding:11px 12px!important}.query,.tools,.delivery-form,.pickup-controls{grid-template-columns:1fr!important;padding:12px!important}.query .field:nth-of-type(3),.query .primary,.delivery-form-actions,.pickup-actions{grid-column:auto!important}.arrow{height:16px!important;transform:rotate(90deg)}.delivery-form>div:nth-child(2),.pickup-controls>div:nth-child(3){display:none}.delivery-form-actions,.pickup-actions{justify-content:stretch!important}.delivery-form-actions>*,.pickup-actions>*{flex:1 1 0}.tools .select:last-child{grid-column:auto}.meta{display:grid!important;grid-template-columns:1fr!important}.stat-strip,.delivery-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;padding:10px!important}.stat-card{min-height:70px!important;padding:10px!important}.stat-value{font-size:19px!important}.tablewrap,.delivery-table-wrap,.pickup-table-wrap{display:none!important}.fms-mobile-list,.pickup-mobile-list,.delivery-mobile-list{display:grid!important;grid-template-columns:1fr;gap:10px;padding:10px;background:#f7f8fa}.pickup-mobile-card,.delivery-mobile-card{border:1px solid var(--ds-color-border);border-radius:14px;background:#fff;padding:12px;box-shadow:var(--ds-shadow-sm)}.delivery-mobile-card.rank-first{border-color:#ecd45a;background:#fffdf0}.delivery-mobile-card.rank-second{background:#fbfcfd}.delivery-mobile-card.rank-third{background:#fff7f2}.delivery-mobile-card.rank-zero{background:#fbfef9}.pickup-driver-filter{width:100%!important}.delivery-actions{width:100%;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}.delivery-actions .ghostbtn{width:100%}.pager,.pickup-pager{align-items:stretch!important}.pager>span:last-child,.pickup-pager>span:last-child{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}.preview-backdrop{padding:0!important}.preview-modal{width:100%!important;height:100dvh!important;max-height:none!important;border-radius:0!important;border:0!important}.preview-head{padding-top:max(10px,env(safe-area-inset-top))!important;padding-left:max(12px,env(safe-area-inset-left))!important;padding-right:max(12px,env(safe-area-inset-right))!important}.preview-scroll{padding:8px!important}}
-    @media(max-width:420px){.brand .logo{display:block!important}.title{font-size:13px!important}.menu-btn,.close{min-width:40px!important;width:40px!important}.stat-strip,.delivery-kpis{grid-template-columns:1fr 1fr!important;gap:7px!important}.stat-card{min-height:66px!important}.stat-label{font-size:9px!important}.stat-value{font-size:18px!important}.delivery-actions{grid-template-columns:1fr!important}.pager,.pickup-pager{font-size:10px!important}}
+    @media(max-width:767px){:host{--ds-control-h:46px}.header{height:58px!important;flex-basis:58px!important}.brand{gap:7px!important}.title{font-size:14px!important}.ops-page{padding:12px 10px calc(20px + env(safe-area-inset-bottom))!important}.page-header{margin-bottom:12px!important;padding-bottom:12px!important}.page-icon{width:34px!important;height:34px!important;flex-basis:34px!important}.page-title{font-size:21px!important}.card,.delivery-result{border-radius:15px!important}.cardhead,.delivery-result-head,.pickup-result-head{padding:11px 12px!important}.query,.tools,.delivery-form,.pickup-controls{grid-template-columns:1fr!important;padding:12px!important}.query .field:nth-of-type(3),.query .primary,.delivery-form-actions,.pickup-actions{grid-column:auto!important}.arrow{height:16px!important;transform:rotate(90deg)}.delivery-form>div:nth-child(2),.pickup-controls>div:nth-child(3){display:none}.delivery-form-actions,.pickup-actions{justify-content:stretch!important}.delivery-form-actions>*,.pickup-actions>*{flex:1 1 0}.tools .select:last-child{grid-column:auto}.meta{display:grid!important;grid-template-columns:1fr!important}.stat-strip,.delivery-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;padding:10px!important}.stat-card{min-height:70px!important;padding:10px!important}.stat-value{font-size:19px!important}.tablewrap,.delivery-table-wrap,.pickup-table-wrap{display:none!important}.fms-mobile-list,.pickup-mobile-list,.delivery-mobile-list{display:grid!important;grid-template-columns:1fr;gap:10px;padding:10px;background:#f7f8fa}.pickup-mobile-card,.delivery-mobile-card{border:1px solid var(--ds-color-border);border-radius:14px;background:#fff;padding:12px;box-shadow:var(--ds-shadow-sm)}.delivery-mobile-card.rank-first{border-color:#ecd45a;background:#fffdf0}.delivery-mobile-card.rank-second{background:#fbfcfd}.delivery-mobile-card.rank-third{background:#fff7f2}.delivery-mobile-card.rank-zero{background:#fbfef9}.pickup-driver-filter{width:100%!important}.delivery-actions{width:100%;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}.delivery-actions .ghostbtn{width:100%}.pager,.pickup-pager{align-items:stretch!important}.pager>span:last-child,.pickup-pager>span:last-child{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}.preview-backdrop{padding:0!important}.preview-modal{width:100%!important;height:100dvh!important;max-height:none!important;border-radius:0!important;border:0!important}.preview-head{padding-top:max(10px,env(safe-area-inset-top))!important;padding-left:max(12px,env(safe-area-inset-left))!important;padding-right:max(12px,env(safe-area-inset-right))!important}.preview-scroll{padding:8px!important}}
+    @media(max-width:420px){.title{font-size:13px!important}.menu-btn,.close{min-width:40px!important;width:40px!important}.stat-strip,.delivery-kpis{grid-template-columns:1fr 1fr!important;gap:7px!important}.stat-card{min-height:66px!important}.stat-label{font-size:9px!important}.stat-value{font-size:18px!important}.delivery-actions{grid-template-columns:1fr!important}.pager,.pickup-pager{font-size:10px!important}}
     @media(min-width:1600px){.ops-page{max-width:1500px!important}.query{grid-template-columns:260px 28px 260px minmax(360px,1fr) 160px!important}}
     @media(pointer:coarse){.nav-item,.primary,.ghostbtn,.input,.select,.pick,.pickup-driver-filter{min-height:48px!important}.opt{min-height:44px!important}}
     @media(hover:none){.nav-item:hover,.primary:hover,.ghostbtn:hover,tbody tr:hover td{transform:none!important}}
@@ -1036,7 +1032,6 @@
     return `<header class="header">
       <button class="menu-btn" data-menu-open aria-label="Mở menu">${icon("menu",21)}</button>
       <div class="brand">
-        <div class="logo">${APP_ICON_URL ? `<img class="app-brand-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",17)}</div>
         <div class="title"><span style="color:#F53D2D">SPX</span> Operations Tools</div>
       </div>
       <div class="header-actions">
@@ -1066,7 +1061,7 @@
             <span class="nav-icon">${icon("pickup",16)}</span><span>Pickup Assignment</span>
           </button>
         </nav>
-        <div class="drawer-footer">v1.8.0</div>
+        <div class="drawer-footer">v1.8.1</div>
       </aside>
     </div>`;
   }
@@ -1804,7 +1799,7 @@
 
   function render() {
     if (!state.open) {
-      root.innerHTML = `<button class="launch" data-open aria-label="Mở SPX Operations Tools">${APP_ICON_URL ? `<img class="launch-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",16)}<span>SPX</span></button>`;
+      root.innerHTML = `<button class="launch" data-open aria-label="Mở SPX Operations Tools" title="SPX Operations Tools">${APP_ICON_URL ? `<img class="launch-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",20)}</button>`;
       return;
     }
 
@@ -1843,12 +1838,12 @@
       <main class="ops-main">
         <section class="ops-page">
           ${pageHeaderHtml("fms")}
-          <section class="card">
+          <section class="card fms-filter-card">
             <div class="cardhead"><div class="cardtitle">Bộ lọc</div><span>${state.selectedStatuses.length?state.selectedStatuses.length+" status":"Tất cả status"}</span></div>
             <div class="query">
               <div class="field"><label class="label">Current Station</label><select class="select" data-current><option value="1030" ${state.currentStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.currentStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
               <div class="arrow">${icon("arrowRight",18)}</div>
-              <div class="field"><label class="label">Next Station</label><select class="select" data-next><option value="1030" ${state.nextStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.nextStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
+              <div class="field"><label class="label">Next Station</label><select class="select" data-next-station><option value="1030" ${state.nextStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.nextStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
               <div class="field"><label class="label">Order Status cần lấy</label><button class="pick" data-picker><span>${state.selectedStatuses.length?state.selectedStatuses.length+" trạng thái đã chọn":"Tất cả trạng thái"}</span>${icon("chevronDown",16)}</button>${pickerHtml()}</div>
               <button class="primary" data-load ${state.loading||!state.bridgeReady?"disabled":""}>${state.loading?"Đang tải...":icon("refresh",16)+"<span>Tải dữ liệu</span>"}</button>
             </div>
@@ -2058,14 +2053,14 @@
       return;
     }
 
-    const prevButton = t.closest("[data-prev]");
+    const prevButton = t.closest("button[data-prev]");
     if (prevButton) {
       state.page = Math.max(1, state.page - 1);
       render();
       return;
     }
 
-    const nextButton = t.closest("[data-next]");
+    const nextButton = t.closest("button[data-next]");
     if (nextButton) {
       state.page += 1;
       render();
@@ -2167,7 +2162,7 @@
     if (t.matches("[data-pickup-driver-filter]")) { state.pickup.driverFilter=t.value || "ALL"; state.pickup.page=1; render(); return; }
     if (t.matches("[data-delivery-date]")) { state.delivery.startDate=t.value; return; }
     if (t.matches("[data-current]")) { state.currentStation=t.value; render(); return; }
-    if (t.matches("[data-next]")) { state.nextStation=t.value; render(); return; }
+    if (t.matches("[data-next-station]")) { state.nextStation=t.value; render(); return; }
     if (t.matches("[data-all]")) { state.selectedStatuses=[]; render(); return; }
     if (t.matches("[data-status]")) {
       const c=String(t.dataset.status); const i=state.selectedStatuses.indexOf(c);
