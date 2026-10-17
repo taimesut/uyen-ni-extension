@@ -114,3 +114,11 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Tài xế lấy từ `pickup_info`, ưu tiên `pickup_driver_name` có `ctime` mới nhất.
 - Có filter riêng cho từng cột và phân trang 25 dòng.
 - Detail được lấy theo batch nhỏ, retry khi SPX trả 429/503; lỗi detail của một shipment không làm hỏng toàn bộ bảng.
+
+## v1.7.1 - Compact UI
+
+- Chuyển nút mở extension lên góc phải trên cùng và thu gọn thành nút **SPX**.
+- Bỏ các mô tả kỹ thuật/trạng thái không cần thiết trong header, drawer và các màn hình.
+- Bỏ **Connected**, **SPX session ready**, dòng session SPX, dòng chạy trực tiếp trên spx.shopee.vn và chữ **OPS-FTE UI**.
+- Pickup Assignment chỉ còn một bộ lọc **Tài xế** dạng select.
+- Bỏ hàng filter theo từng cột và các mô tả kỹ thuật của Pickup Assignment.

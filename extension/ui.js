@@ -37,17 +37,7 @@
       rows:[],
       total:0,
       page:1,
-      filters:{
-        shipmentId:"",
-        eta:"",
-        attempts:"",
-        type:"",
-        point:"",
-        address:"",
-        driver:"",
-        updated:"",
-        reason:""
-      }
+      driverFilter:"ALL"
     },
     delivery:{
       startDate:localDateInputValue(new Date()),
@@ -192,7 +182,7 @@
   }
 
   const host = document.createElement("div");
-  host.style.cssText = "position:fixed;left:18px;top:18px;z-index:2147483646";
+  host.style.cssText = "position:fixed;right:12px;top:12px;z-index:2147483646";
   const shadow = host.attachShadow({mode:"open"});
   document.documentElement.appendChild(host);
 
@@ -200,7 +190,7 @@
   style.textContent = `
     :host{all:initial;font-family:"Segoe UI Variable Text","Segoe UI Variable","Segoe UI",Roboto,Arial,sans-serif;color:#26292e}
     *{box-sizing:border-box}button,input,select{font:inherit}button{cursor:pointer}
-    .launch{height:50px;padding:0 18px;border:0;border-radius:14px;background:#ee4d2d;color:#fff;font-weight:900;box-shadow:0 12px 30px #0003}
+    .launch{height:40px;padding:0 12px;border:0;border-radius:11px;background:#ee4d2d;color:#fff;font-weight:900;box-shadow:0 8px 22px #0002}
     .app{position:fixed;inset:0;width:100vw;height:100vh;background:#f5f6f8;display:flex;flex-direction:column;z-index:2147483647}
     .header{height:68px;flex:0 0 68px;padding:0 22px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between}
     .brand{display:flex;align-items:center;gap:12px}.logo{width:40px;height:40px;border-radius:12px;background:#ee4d2d;color:#fff;display:grid;place-items:center;font-weight:950}
@@ -289,9 +279,10 @@
     }
 
     .launch{
-      min-width:148px;
-      height:52px;
-      border-radius:16px;
+      min-width:0;
+      height:40px;
+      padding:0 12px;
+      border-radius:11px;
       background:linear-gradient(135deg,var(--spx-primary),#ff8a5c 55%,#ffb052);
       box-shadow:0 16px 38px rgba(238,77,45,.34);
       transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
@@ -927,7 +918,7 @@
   pickupStyle.id = "spx-pickup-assignment-style";
   pickupStyle.textContent = `
     .pickup-layout{display:grid;gap:14px}
-    .pickup-controls{padding:14px;display:grid;grid-template-columns:minmax(180px,220px) minmax(180px,220px) minmax(260px,1fr) auto;gap:12px;align-items:end}
+    .pickup-controls{padding:14px;display:grid;grid-template-columns:minmax(180px,220px) minmax(180px,220px) 1fr auto;gap:12px;align-items:end}
     .pickup-control-note{font-size:10px;color:#7b8490;line-height:1.55;padding:2px 0 3px}
     .pickup-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end}
     .pickup-result{overflow:hidden}
@@ -935,10 +926,9 @@
     .pickup-table-wrap{overflow:auto;max-height:calc(100vh - 340px);min-height:260px}
     .pickup-table{width:100%;min-width:1520px;border-collapse:separate;border-spacing:0}
     .pickup-table th,.pickup-table td{padding:9px 10px;border-bottom:1px solid #edf0f2;vertical-align:top}
-    .pickup-table thead tr:first-child th{top:0;z-index:4;height:38px}
-    .pickup-table thead tr.pickup-filter-row th{top:38px;z-index:3;padding:6px 7px;background:#fff!important}
-    .pickup-filter{width:100%;height:30px;border:1px solid #dfe3e8;border-radius:7px;background:#fff;padding:0 8px;font-size:9.5px;color:#3f4853;outline:0}
-    .pickup-filter:focus{border-color:#f58b75;box-shadow:0 0 0 2px rgba(245,61,45,.10)}
+    .pickup-table thead th{top:0;z-index:4;height:38px}
+    .pickup-driver-filter{width:min(260px,100%);height:36px;border:1px solid #dfe3e8;border-radius:9px;background:#fff;padding:0 10px;font-size:10px;color:#3f4853;outline:0}
+    .pickup-driver-filter:focus{border-color:#f58b75;box-shadow:0 0 0 2px rgba(245,61,45,.10)}
     .pickup-id{font-family:ui-monospace,Consolas,monospace;font-weight:850;color:#30363d;white-space:nowrap}
     .pickup-address{min-width:300px;line-height:1.45}
     .pickup-point{min-width:170px;font-weight:750;color:#374151}
@@ -951,7 +941,6 @@
     .pickup-pager button{height:30px;border:1px solid #e0e3e7;border-radius:8px;background:#fff;display:inline-flex;align-items:center;gap:5px}
     .pickup-pager button:disabled{opacity:.45;cursor:not-allowed}
     .pickup-empty{padding:64px 20px;text-align:center;color:#7a838e;font-size:11px}
-    .pickup-filter-summary{font-size:9.5px;color:#7a838e}
     @media(max-width:1023px){
       .pickup-controls{grid-template-columns:1fr 1fr}
       .pickup-controls .pickup-control-note{grid-column:1/-1}
@@ -976,13 +965,9 @@
       <button class="menu-btn" data-menu-open aria-label="Mở menu">${icon("menu",21)}</button>
       <div class="brand">
         <div class="logo">${icon("app",17)}</div>
-        <div style="min-width:0">
-          <div class="title"><span style="color:#F53D2D">SPX</span> Operations Tools</div>
-          <div class="sub">Pleiku 03 · dùng session SPX hiện tại</div>
-        </div>
+        <div class="title"><span style="color:#F53D2D">SPX</span> Operations Tools</div>
       </div>
       <div class="header-actions">
-        <div class="session-pill"><span class="session-dot"></span><span>${state.bridgeReady ? "Connected" : "Connecting"}</span></div>
         <button class="close" data-close aria-label="Đóng SPX Tools">${icon("close",20)}</button>
       </div>
     </header>`;
@@ -994,10 +979,7 @@
         <div class="drawer-head">
           <div class="drawer-brand">
             <div class="drawer-logo">${icon("app",19)}</div>
-            <div>
-              <div class="drawer-title">SPX Operations Tools</div>
-              <div class="drawer-sub">Pleiku 03 workspace</div>
-            </div>
+            <div class="drawer-title">SPX Operations Tools</div>
           </div>
           <button class="drawer-close" data-menu-close aria-label="Đóng menu">${icon("close",20)}</button>
         </div>
@@ -1012,47 +994,22 @@
             <span class="nav-icon">${icon("pickup",16)}</span><span>Pickup Assignment</span>
           </button>
         </nav>
-        <div class="drawer-footer">
-          <div class="drawer-status"><span class="drawer-status-dot"></span>${state.bridgeReady ? "SPX session ready" : "Đang kết nối SPX"}</div>
-          <div>Extension chạy trực tiếp trên spx.shopee.vn.</div>
-          <div style="margin-top:5px">v1.7.0 · OPS-FTE UI</div>
-        </div>
+        <div class="drawer-footer">v1.7.1</div>
       </aside>
     </div>`;
   }
 
   function pageHeaderHtml(type) {
-    if (type === "pickup") {
-      return `<header class="page-header">
-        <div class="page-heading">
-          <div class="page-icon">${icon("pickup",20)}</div>
-          <div>
-            <h1 class="page-title">Pickup Assignment</h1>
-            <div class="page-description">Danh sách đơn pickup đang Assigned, kèm ETA, số lần pickup, địa chỉ và tài xế xử lý gần nhất.</div>
-          </div>
-        </div>
-      </header>`;
-    }
-
-    if (type === "delivery") {
-      return `<header class="page-header">
-        <div class="page-heading">
-          <div class="page-icon">${icon("delivery",20)}</div>
-          <div>
-            <h1 class="page-title">Delivery Performance</h1>
-            <div class="page-description">Export CSV từ SPX, xử lý hiệu suất giao hàng, preview JPG và gửi report qua SeaTalk.</div>
-          </div>
-        </div>
-      </header>`;
-    }
+    const config = type === "pickup"
+      ? {icon:"pickup", title:"Pickup Assignment"}
+      : type === "delivery"
+        ? {icon:"delivery", title:"Delivery Performance"}
+        : {icon:"fms", title:"FMS Audit"};
 
     return `<header class="page-header">
       <div class="page-heading">
-        <div class="page-icon">${icon("fms",20)}</div>
-        <div>
-          <h1 class="page-title">FMS Audit</h1>
-          <div class="page-description">Kiểm tra shipment và tracking theo tuyến, Order Status và nhóm thời gian. Chỉ tải khi bạn chủ động nhấn Tải dữ liệu.</div>
-        </div>
+        <div class="page-icon">${icon(config.icon,20)}</div>
+        <h1 class="page-title">${config.title}</h1>
       </div>
     </header>`;
   }
@@ -1276,15 +1233,15 @@
   
     return `<section class="delivery-result">
       <div class="delivery-kpis">
-        <div class="stat-card stat-orange"><div class="stat-label">Drivers</div><div class="stat-value">${d.rows.length.toLocaleString("en-US")}</div><div class="stat-note">Nhân sự trong report</div></div>
-        <div class="stat-card stat-purple"><div class="stat-label">Đơn Nhận</div><div class="stat-value">${t.assigned.toLocaleString("en-US")}</div><div class="stat-note">Assigned parcels</div></div>
-        <div class="stat-card stat-green"><div class="stat-label">Giao Thành Công</div><div class="stat-value">${t.delivered.toLocaleString("en-US")}</div><div class="stat-note">${t.rate.toFixed(2)}% success rate</div></div>
-        <div class="stat-card stat-amber"><div class="stat-label">Delay</div><div class="stat-value">${t.delay.toLocaleString("en-US")}</div><div class="stat-note">On-hold parcels</div></div>
+        <div class="stat-card stat-orange"><div class="stat-label">Drivers</div><div class="stat-value">${d.rows.length.toLocaleString("en-US")}</div></div>
+        <div class="stat-card stat-purple"><div class="stat-label">Đơn Nhận</div><div class="stat-value">${t.assigned.toLocaleString("en-US")}</div></div>
+        <div class="stat-card stat-green"><div class="stat-label">Giao Thành Công</div><div class="stat-value">${t.delivered.toLocaleString("en-US")}</div></div>
+        <div class="stat-card stat-amber"><div class="stat-label">Delay</div><div class="stat-value">${t.delay.toLocaleString("en-US")}</div></div>
       </div>
       <div class="delivery-result-head">
         <div>
           <div class="cardtitle">Delivery Performance Report</div>
-          <div class="hint">${esc(d.stationName || "Station")} · ${esc(formatVietnameseReportDate(d.startDate))}</div>
+          <div class="hint">${esc(formatVietnameseReportDate(d.startDate))}</div>
         </div>
         <div class="delivery-actions">
           <button class="ghostbtn" data-delivery-preview>${icon("image",16)}<span>Preview JPG</span></button>
@@ -1322,8 +1279,7 @@
       <section class="card delivery-control">
         <div class="cardhead">
           <div>
-            <div class="cardtitle">Export Delivery Performance</div>
-            <div class="hint">Tạo task → dò task_id → tải CSV → xử lý report trong RAM.</div>
+            <div class="cardtitle">Delivery Performance</div>
           </div>
           ${d.taskId ? `<span class="task-chip">Task #${d.taskId}</span>` : ""}
         </div>
@@ -1334,12 +1290,7 @@
             <input class="input" type="date" data-delivery-date value="${esc(d.startDate)}" ${d.loading ? "disabled" : ""}>
           </div>
   
-          <div class="delivery-flow">
-            <span>1. Create task</span><b>${icon("arrowRight",14)}</b>
-            <span>2. Wait export</span><b>${icon("arrowRight",14)}</b>
-            <span>3. Download CSV</span><b>${icon("arrowRight",14)}</b>
-            <span>4. Build report</span>
-          </div>
+          <div></div>
   
           <div class="delivery-form-actions">
             ${d.loading ? `<button class="ghostbtn" data-delivery-cancel>Hủy</button>` : ""}
@@ -1529,12 +1480,12 @@
 
     return `<section class="card">
       <div class="stat-strip">
-        <div class="stat-card stat-orange"><div class="stat-label">Kết quả</div><div class="stat-value">${rows.length}</div><div class="stat-note">Đơn sau bộ lọc</div></div>
-        <div class="stat-card stat-green"><div class="stat-label">&lt; 24H</div><div class="stat-value">${agingUnder24}</div><div class="stat-note">Trong ngưỡng mới</div></div>
-        <div class="stat-card stat-amber"><div class="stat-label">24H → 36H</div><div class="stat-value">${aging24to36}</div><div class="stat-note">Cần theo dõi</div></div>
-        <div class="stat-card stat-purple"><div class="stat-label">&gt; 36H</div><div class="stat-value">${agingOver36}</div><div class="stat-note">Ưu tiên xử lý</div></div>
+        <div class="stat-card stat-orange"><div class="stat-label">Kết quả</div><div class="stat-value">${rows.length}</div></div>
+        <div class="stat-card stat-green"><div class="stat-label">&lt; 24H</div><div class="stat-value">${agingUnder24}</div></div>
+        <div class="stat-card stat-amber"><div class="stat-label">24H → 36H</div><div class="stat-value">${aging24to36}</div></div>
+        <div class="stat-card stat-purple"><div class="stat-label">&gt; 36H</div><div class="stat-value">${agingOver36}</div></div>
       </div>
-      <div class="cardhead"><div><div class="cardtitle">Kết quả đã tải</div><div class="hint">Bộ lọc dưới đây không gọi lại API.</div></div><b>${rows.length} kết quả</b></div>
+      <div class="cardhead"><div class="cardtitle">Kết quả</div><b>${rows.length}</b></div>
       <div class="tools">
         <input class="input" data-search placeholder="Tìm SPX, TO, Order Status, Station..." value="${esc(state.search)}">
         <select class="select" data-aging>
@@ -1587,37 +1538,26 @@
     })).filter((row) => row.shipmentId);
   }
 
-  function pickupColumnValue(row, key) {
-    if (key === "shipmentId") return row.shipmentId;
-    if (key === "eta") return dateTime(row.eta);
-    if (key === "attempts") return String(row.attempts);
-    if (key === "type") return [pickupTypeName(row.pickupOrderType), row.pickupOrderType, row.serviceName].join(" ");
-    if (key === "point") return row.pointName;
-    if (key === "address") return row.address;
-    if (key === "driver") return row.driverName;
-    if (key === "updated") return [dateTime(row.driverCtime), row.driverRemark, row.driverStatus].join(" ");
-    if (key === "reason") return row.reason;
-    return "";
+  function pickupDriverOptions() {
+    return [...new Set(
+      state.pickup.rows
+        .map((row) => String(row.driverName || "").trim())
+        .filter(Boolean)
+    )].sort((a,b) => a.localeCompare(b, "vi"));
   }
 
   function pickupFilteredRows() {
-    const filters = state.pickup.filters || {};
-    const keys = Object.keys(filters);
-
-    return state.pickup.rows.filter((row) => keys.every((key) => {
-      const query = String(filters[key] || "").trim().toLowerCase();
-      if (!query) return true;
-      return pickupColumnValue(row, key).toLowerCase().includes(query);
-    })).sort((a, b) =>
+    const driver = String(state.pickup.driverFilter || "ALL");
+    return state.pickup.rows.filter((row) =>
+      driver === "ALL" || row.driverName === driver
+    ).sort((a, b) =>
       Number(a.eta || 0) - Number(b.eta || 0) ||
       a.shipmentId.localeCompare(b.shipmentId)
     );
   }
 
-  function resetPickupFilters() {
-    Object.keys(state.pickup.filters).forEach((key) => {
-      state.pickup.filters[key] = "";
-    });
+  function resetPickupFilter() {
+    state.pickup.driverFilter = "ALL";
     state.pickup.page = 1;
   }
 
@@ -1632,7 +1572,7 @@
     p.rows = [];
     p.total = 0;
     p.page = 1;
-    resetPickupFilters();
+    resetPickupFilter();
     render();
 
     post("SPX_PICKUP_ASSIGNMENT_FETCH", {
@@ -1651,10 +1591,6 @@
     });
   }
 
-  function pickupFilterInput(key, placeholder) {
-    return `<input class="pickup-filter" data-pickup-filter="${esc(key)}" placeholder="${esc(placeholder || "Lọc...")}" value="${esc(state.pickup.filters[key] || "")}">`;
-  }
-
   function pickupTableHtml() {
     const p = state.pickup;
     const rows = pickupFilteredRows();
@@ -1662,108 +1598,73 @@
     p.page = Math.min(Math.max(1, p.page), pages);
     const start = (p.page - 1) * PAGE_SIZE;
     const view = rows.slice(start, start + PAGE_SIZE);
-
     const reverseCount = p.rows.filter((row) => Number(row.pickupOrderType) === 5).length;
     const withDriver = p.rows.filter((row) => row.driverName).length;
-    const activeFilterCount = Object.values(p.filters).filter((value) => String(value || "").trim()).length;
+    const driverOptions = pickupDriverOptions();
 
     const body = view.map((row) => {
       const typeClass = Number(row.pickupOrderType) === 5 ? "pickup-type reverse" : "pickup-type";
-      const detailError = row.addressError || row.driverError;
       return `<tr>
         <td class="pickup-id">${esc(row.shipmentId)}</td>
-        <td><b>${esc(dateTime(row.eta))}</b><div class="pickup-sub">ETA</div></td>
+        <td><b>${esc(dateTime(row.eta))}</b></td>
         <td><b>${row.attempts}</b></td>
-        <td><span class="${typeClass}">${esc(pickupTypeName(row.pickupOrderType))}</span><div class="pickup-sub">${esc(row.serviceName || "—")} · type ${row.pickupOrderType}</div></td>
-        <td class="pickup-point">${esc(row.pointName || "—")}<div class="pickup-sub">${esc(row.stationName || "")}</div></td>
-        <td class="pickup-address">${esc(row.address || "—")}${row.addressError ? `<div class="pickup-sub">${esc(row.addressError)}</div>` : ""}</td>
-        <td class="pickup-driver">${esc(row.driverName || "Chưa có")}${row.driverError ? `<div class="pickup-sub">${esc(row.driverError)}</div>` : ""}</td>
-        <td><b>${esc(dateTime(row.driverCtime))}</b><div class="pickup-sub">${esc(row.driverRemark || row.driverStatus || "—")}</div></td>
-        <td class="pickup-reason">${esc(row.reason || "—")}${detailError ? `<div class="pickup-sub">Một phần detail không tải được</div>` : ""}</td>
+        <td><span class="${typeClass}">${esc(pickupTypeName(row.pickupOrderType))}</span></td>
+        <td class="pickup-point">${esc(row.pointName || "—")}</td>
+        <td class="pickup-address">${esc(row.address || "—")}</td>
+        <td class="pickup-driver">${esc(row.driverName || "Chưa có")}</td>
+        <td><b>${esc(dateTime(row.driverCtime))}</b>${row.driverRemark ? `<div class="pickup-sub">${esc(row.driverRemark)}</div>` : ""}</td>
+        <td class="pickup-reason">${esc(row.reason || "—")}</td>
       </tr>`;
     }).join("");
 
     return `<section class="card pickup-result">
       <div class="stat-strip">
-        <div class="stat-card stat-orange"><div class="stat-label">Assigned</div><div class="stat-value">${p.total.toLocaleString("en-US")}</div><div class="stat-note">Số đơn SPX trả về</div></div>
-        <div class="stat-card stat-green"><div class="stat-label">Đang hiển thị</div><div class="stat-value">${rows.length.toLocaleString("en-US")}</div><div class="stat-note">${activeFilterCount ? activeFilterCount + " bộ lọc đang dùng" : "Chưa lọc"}</div></div>
-        <div class="stat-card stat-purple"><div class="stat-label">Có tài xế</div><div class="stat-value">${withDriver.toLocaleString("en-US")}</div><div class="stat-note">Có pickup tracking</div></div>
-        <div class="stat-card stat-amber"><div class="stat-label">Reverse</div><div class="stat-value">${reverseCount.toLocaleString("en-US")}</div><div class="stat-note">pickup_order_type = 5</div></div>
+        <div class="stat-card stat-orange"><div class="stat-label">Assigned</div><div class="stat-value">${p.total.toLocaleString("en-US")}</div></div>
+        <div class="stat-card stat-green"><div class="stat-label">Hiển thị</div><div class="stat-value">${rows.length.toLocaleString("en-US")}</div></div>
+        <div class="stat-card stat-purple"><div class="stat-label">Có tài xế</div><div class="stat-value">${withDriver.toLocaleString("en-US")}</div></div>
+        <div class="stat-card stat-amber"><div class="stat-label">Reverse</div><div class="stat-value">${reverseCount.toLocaleString("en-US")}</div></div>
       </div>
       <div class="pickup-result-head">
-        <div>
-          <div class="cardtitle">Pickup Assignment</div>
-          <div class="hint">Filter riêng theo từng cột · dữ liệu detail được lấy theo từng shipment.</div>
-        </div>
-        <button class="ghostbtn" data-pickup-reset-filter ${activeFilterCount ? "" : "disabled"}>${icon("refresh",15)}<span>Xóa bộ lọc</span></button>
+        <div class="cardtitle">Danh sách</div>
+        <select class="pickup-driver-filter" data-pickup-driver-filter>
+          <option value="ALL">Tất cả tài xế</option>
+          ${driverOptions.map((name) => `<option value="${esc(name)}" ${p.driverFilter === name ? "selected" : ""}>${esc(name)}</option>`).join("")}
+        </select>
       </div>
       ${p.rows.length ? `<div class="pickup-table-wrap">
         <table class="pickup-table">
-          <thead>
-            <tr>
-              <th>Mã đơn</th>
-              <th>ETA</th>
-              <th>Lần pickup</th>
-              <th>Loại</th>
-              <th>Điểm pickup</th>
-              <th>Địa chỉ</th>
-              <th>Tài xế</th>
-              <th>Cập nhật gần nhất</th>
-              <th>Trạng thái / lý do</th>
-            </tr>
-            <tr class="pickup-filter-row">
-              <th>${pickupFilterInput("shipmentId","Mã SPX...")}</th>
-              <th>${pickupFilterInput("eta","Ngày / giờ...")}</th>
-              <th>${pickupFilterInput("attempts","Số lần...")}</th>
-              <th>${pickupFilterInput("type","Pickup / Reverse...")}</th>
-              <th>${pickupFilterInput("point","Tên điểm...")}</th>
-              <th>${pickupFilterInput("address","Địa chỉ...")}</th>
-              <th>${pickupFilterInput("driver","Tên tài xế...")}</th>
-              <th>${pickupFilterInput("updated","Thời gian / ghi chú...")}</th>
-              <th>${pickupFilterInput("reason","Lý do...")}</th>
-            </tr>
-          </thead>
-          <tbody>${body || `<tr><td colspan="9"><div class="pickup-empty">Không có đơn phù hợp với bộ lọc hiện tại.</div></td></tr>`}</tbody>
+          <thead><tr>
+            <th>Mã đơn</th><th>ETA</th><th>Lần pickup</th><th>Loại</th><th>Điểm pickup</th><th>Địa chỉ</th><th>Tài xế</th><th>Cập nhật gần nhất</th><th>Trạng thái / lý do</th>
+          </tr></thead>
+          <tbody>${body || `<tr><td colspan="9"><div class="pickup-empty">Không có dữ liệu.</div></td></tr>`}</tbody>
         </table>
       </div>
       <div class="pickup-pager">
         <span>${rows.length ? start + 1 : 0}-${Math.min(start + PAGE_SIZE, rows.length)} / ${rows.length}</span>
         <span>
           <button data-pickup-prev ${p.page <= 1 ? "disabled" : ""}>${icon("chevronLeft",14)}<span>Trước</span></button>
-          <b>Trang ${p.page}/${pages}</b>
+          <b>${p.page}/${pages}</b>
           <button data-pickup-next ${p.page >= pages ? "disabled" : ""}><span>Sau</span>${icon("chevronRight",14)}</button>
         </span>
-      </div>` : `<div class="pickup-empty"><b>Chưa có dữ liệu Pickup Assignment</b><div>Chọn khoảng ngày rồi nhấn <strong>Tải dữ liệu</strong>.</div></div>`}
+      </div>` : `<div class="pickup-empty">Chưa có dữ liệu.</div>`}
     </section>`;
   }
 
   function renderPickupTab() {
     const p = state.pickup;
-
     return `<section class="pickup-layout">
       <section class="card">
         <div class="cardhead">
-          <div>
-            <div class="cardtitle">Điều kiện tải dữ liệu</div>
-            <div class="hint">SPX status = 2 (Assigned) · mặc định lấy 92 ngày gần nhất giống request mẫu.</div>
-          </div>
-          ${p.total ? `<b>${p.total.toLocaleString("en-US")} assigned</b>` : ""}
+          <div class="cardtitle">Khoảng thời gian</div>
+          ${p.total ? `<b>${p.total.toLocaleString("en-US")} đơn</b>` : ""}
         </div>
         <div class="pickup-controls">
-          <div class="field">
-            <label class="label">Từ ngày</label>
-            <input class="input" type="date" data-pickup-start-date value="${esc(p.startDate)}" ${p.loading ? "disabled" : ""}>
-          </div>
-          <div class="field">
-            <label class="label">Đến ngày</label>
-            <input class="input" type="date" data-pickup-end-date value="${esc(p.endDate)}" ${p.loading ? "disabled" : ""}>
-          </div>
-          <div class="pickup-control-note">Mỗi đơn sẽ lấy thêm địa chỉ theo <b>pickup_order_type</b> và lấy <b>pickup_driver_name</b> có ctime mới nhất.</div>
+          <div class="field"><label class="label">Từ ngày</label><input class="input" type="date" data-pickup-start-date value="${esc(p.startDate)}" ${p.loading ? "disabled" : ""}></div>
+          <div class="field"><label class="label">Đến ngày</label><input class="input" type="date" data-pickup-end-date value="${esc(p.endDate)}" ${p.loading ? "disabled" : ""}></div>
+          <div></div>
           <div class="pickup-actions">
             ${p.loading ? `<button class="ghostbtn" data-pickup-cancel>Hủy</button>` : ""}
-            <button class="primary" data-pickup-load ${p.loading || !state.bridgeReady ? "disabled" : ""}>
-              ${p.loading ? "Đang xử lý..." : icon("refresh",16) + "<span>Tải dữ liệu</span>"}
-            </button>
+            <button class="primary" data-pickup-load ${p.loading || !state.bridgeReady ? "disabled" : ""}>${p.loading ? "Đang xử lý..." : icon("refresh",16) + "<span>Tải dữ liệu</span>"}</button>
           </div>
         </div>
       </section>
@@ -1775,7 +1676,7 @@
 
   function render() {
     if (!state.open) {
-      root.innerHTML = `<button class="launch" data-open>${icon("app",17)}<span>SPX Tools</span></button>`;
+      root.innerHTML = `<button class="launch" data-open aria-label="Mở SPX Operations Tools">${icon("app",16)}<span>SPX</span></button>`;
       return;
     }
 
@@ -1815,7 +1716,7 @@
         <section class="ops-page">
           ${pageHeaderHtml("fms")}
           <section class="card">
-            <div class="cardhead"><div><div class="cardtitle">Điều kiện tải dữ liệu</div><div class="hint">Đổi station hoặc status sẽ không tự request FMS.</div></div><span>${state.selectedStatuses.length?state.selectedStatuses.length+" status":"Tất cả status"}</span></div>
+            <div class="cardhead"><div class="cardtitle">Bộ lọc</div><span>${state.selectedStatuses.length?state.selectedStatuses.length+" status":"Tất cả status"}</span></div>
             <div class="query">
               <div class="field"><label class="label">Current Station</label><select class="select" data-current><option value="1030" ${state.currentStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.currentStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
               <div class="arrow">${icon("arrowRight",18)}</div>
@@ -2055,13 +1956,6 @@
       return;
     }
 
-    const pickupResetFilterButton = t.closest("[data-pickup-reset-filter]");
-    if (pickupResetFilterButton) {
-      resetPickupFilters();
-      render();
-      return;
-    }
-
     const pickupPrevButton = t.closest("[data-pickup-prev]");
     if (pickupPrevButton && !pickupPrevButton.disabled) {
       state.pickup.page = Math.max(1, state.pickup.page - 1);
@@ -2142,6 +2036,7 @@
     const t=e.target;
     if (t.matches("[data-pickup-start-date]")) { state.pickup.startDate=t.value; return; }
     if (t.matches("[data-pickup-end-date]")) { state.pickup.endDate=t.value; return; }
+    if (t.matches("[data-pickup-driver-filter]")) { state.pickup.driverFilter=t.value || "ALL"; state.pickup.page=1; render(); return; }
     if (t.matches("[data-delivery-date]")) { state.delivery.startDate=t.value; return; }
     if (t.matches("[data-current]")) { state.currentStation=t.value; render(); return; }
     if (t.matches("[data-next]")) { state.nextStation=t.value; render(); return; }
@@ -2158,22 +2053,6 @@
 
   shadow.addEventListener("input", e => {
     const target = e.target;
-
-    if (target.matches("[data-pickup-filter]")) {
-      const key = String(target.dataset.pickupFilter || "");
-      if (Object.prototype.hasOwnProperty.call(state.pickup.filters, key)) {
-        state.pickup.filters[key] = target.value;
-        state.pickup.page = 1;
-        const pos = target.selectionStart;
-        render();
-        const next = shadow.querySelector('[data-pickup-filter="' + CSS.escape(key) + '"]');
-        if (next) {
-          next.focus();
-          if (typeof pos === "number") next.setSelectionRange(pos, pos);
-        }
-      }
-      return;
-    }
 
     if (target.matches("[data-status-search]")) {
       state.statusSearch = target.value;
@@ -2361,7 +2240,6 @@
       config.innerHTML = `
         <div class="seatalk-config-head">
           <div class="seatalk-config-title icon-label">${icon("link",15)}<span>SeaTalk Webhook</span></div>
-          <div class="seatalk-local">Lưu bằng chrome.storage.local · chỉ trên extension này</div>
         </div>
         <div class="seatalk-row">
           <input
