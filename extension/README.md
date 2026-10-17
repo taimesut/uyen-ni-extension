@@ -122,3 +122,10 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Bỏ **Connected**, **SPX session ready**, dòng session SPX, dòng chạy trực tiếp trên spx.shopee.vn và chữ **OPS-FTE UI**.
 - Pickup Assignment chỉ còn một bộ lọc **Tài xế** dạng select.
 - Bỏ hàng filter theo từng cột và các mô tả kỹ thuật của Pickup Assignment.
+
+## v1.7.2 - Pickup Table & Typography
+
+- Đổi toàn bộ UI sang **Be Vietnam Pro** với fallback hệ thống.
+- Bảng Pickup ưu tiên 5 cột chính nằm liền nhau: **Mã đơn → Tài xế → Attempt → Địa chỉ → ETA**.
+- Thu hẹp padding/cột và dùng fixed column width để bảng dễ quét mắt hơn.
+- Đổi **Lần pickup** thành **Attempt**.

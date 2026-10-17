@@ -186,9 +186,14 @@
   const shadow = host.attachShadow({mode:"open"});
   document.documentElement.appendChild(host);
 
+  const fontLink = document.createElement("link");
+  fontLink.rel = "stylesheet";
+  fontLink.href = "https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap";
+  shadow.appendChild(fontLink);
+
   const style = document.createElement("style");
   style.textContent = `
-    :host{all:initial;font-family:"Segoe UI Variable Text","Segoe UI Variable","Segoe UI",Roboto,Arial,sans-serif;color:#26292e}
+    :host{all:initial;font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;color:#26292e}
     *{box-sizing:border-box}button,input,select{font:inherit}button{cursor:pointer}
     .launch{height:40px;padding:0 12px;border:0;border-radius:11px;background:#ee4d2d;color:#fff;font-weight:900;box-shadow:0 8px 22px #0002}
     .app{position:fixed;inset:0;width:100vw;height:100vh;background:#f5f6f8;display:flex;flex-direction:column;z-index:2147483647}
@@ -212,7 +217,7 @@
     .meta{padding:8px 12px;background:#fbfcfd;border-bottom:1px solid #e7e9ed;font-size:9.5px;color:#727b86;display:flex;justify-content:space-between;gap:10px}
     .tablewrap{overflow:auto;max-height:calc(100vh - 305px);min-height:300px}table{width:100%;border-collapse:separate;border-spacing:0;min-width:1450px}
     th,td{padding:10px 11px;border-bottom:1px solid #edf0f2;text-align:left;vertical-align:top}th{position:sticky;top:0;z-index:2;background:#f8f9fa;font-size:9px;text-transform:uppercase;color:#646d78}td{font-size:10.5px;color:#505861}
-    tbody tr:hover td{background:#fffaf8}.mono{font-family:ui-monospace,Consolas,monospace;font-weight:850;color:#30363d}.badge{display:inline-block;padding:3px 6px;border-radius:7px;background:#fff0ec;color:#c54429;font-size:9px;font-weight:900}.small{font-size:9px;color:#7b8490;margin-top:3px}
+    tbody tr:hover td{background:#fffaf8}.mono{font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;font-weight:800;color:#30363d}.badge{display:inline-block;padding:3px 6px;border-radius:7px;background:#fff0ec;color:#c54429;font-size:9px;font-weight:900}.small{font-size:9px;color:#7b8490;margin-top:3px}
     .age{font-size:9px;font-weight:900;padding:4px 7px;border-radius:8px;background:#f5f6f8}.pager{height:46px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;font-size:9.5px;color:#727b86}.pager button{height:30px;border:1px solid #e0e3e7;border-radius:8px;background:#fff}
     .empty{padding:60px;text-align:center;color:#818a95;font-size:11px}
 
@@ -644,7 +649,7 @@
       --ops-amber:#b36b08;
       --ops-red:#b42348;
       --ops-shadow:0 1px 2px rgba(15,23,42,.04);
-      font-family:"Segoe UI Variable Text","Segoe UI Variable","Segoe UI",Roboto,Arial,sans-serif!important;
+      font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif!important;
       color:var(--ops-text)!important;
     }
 
@@ -655,7 +660,7 @@
     .menu-btn,.close,.drawer-close,.page-icon,.logo,.drawer-logo,.nav-icon{line-height:0}
     .primary,.ghostbtn,.launch,.pager button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
     .pick{display:flex;align-items:center;justify-content:space-between;gap:8px}
-    .title,.page-title,.cardtitle,.drawer-title{font-family:"Segoe UI Variable Display","Segoe UI Variable Text","Segoe UI",sans-serif!important}
+    .title,.page-title,.cardtitle,.drawer-title{font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif!important}
     button:focus-visible,input:focus-visible,select:focus-visible{
       outline:3px solid rgba(245,61,45,.24)!important;
       outline-offset:2px;
@@ -840,7 +845,7 @@
       display:grid;gap:10px;box-shadow:var(--ops-shadow);
     }
     .fms-mobile-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-    .fms-mobile-spx{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:900;color:#252c34;overflow-wrap:anywhere}
+    .fms-mobile-spx{font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;font-size:12px;font-weight:800;color:#252c34;overflow-wrap:anywhere}
     .fms-mobile-to{font-size:10px;color:#7b8490;margin-top:3px;overflow-wrap:anywhere}
     .fms-mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
     .fms-mobile-item{min-width:0;padding:9px;border-radius:10px;background:#f8f9fb}
@@ -924,15 +929,17 @@
     .pickup-result{overflow:hidden}
     .pickup-result-head{padding:12px 14px;border-bottom:1px solid #e7e9ed;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff}
     .pickup-table-wrap{overflow:auto;max-height:calc(100vh - 340px);min-height:260px}
-    .pickup-table{width:100%;min-width:1520px;border-collapse:separate;border-spacing:0}
-    .pickup-table th,.pickup-table td{padding:9px 10px;border-bottom:1px solid #edf0f2;vertical-align:top}
+    .pickup-table{width:100%;min-width:1320px;border-collapse:separate;border-spacing:0;table-layout:fixed}
+    .pickup-table th,.pickup-table td{padding:8px 7px;border-bottom:1px solid #edf0f2;vertical-align:top}
     .pickup-table thead th{top:0;z-index:4;height:38px}
     .pickup-driver-filter{width:min(260px,100%);height:36px;border:1px solid #dfe3e8;border-radius:9px;background:#fff;padding:0 10px;font-size:10px;color:#3f4853;outline:0}
     .pickup-driver-filter:focus{border-color:#f58b75;box-shadow:0 0 0 2px rgba(245,61,45,.10)}
-    .pickup-id{font-family:ui-monospace,Consolas,monospace;font-weight:850;color:#30363d;white-space:nowrap}
-    .pickup-address{min-width:300px;line-height:1.45}
-    .pickup-point{min-width:170px;font-weight:750;color:#374151}
-    .pickup-driver{min-width:175px;font-weight:850;color:#374151}
+    .pickup-id{font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;font-weight:800;color:#30363d;white-space:nowrap}
+    .pickup-address{line-height:1.4;overflow-wrap:anywhere}
+    .pickup-point{font-weight:700;color:#374151;overflow-wrap:anywhere}
+    .pickup-driver{font-weight:800;color:#374151;overflow-wrap:anywhere}
+    .pickup-attempt{text-align:center;font-weight:800}
+    .pickup-eta{white-space:nowrap;font-weight:700}
     .pickup-sub{margin-top:3px;font-size:9px;color:#8a929c;line-height:1.35}
     .pickup-type{display:inline-flex;padding:3px 7px;border-radius:999px;background:#fff1ed;color:#c7482d;font-size:9px;font-weight:900;white-space:nowrap}
     .pickup-type.reverse{background:#f2edff;color:#6c4ccf}
@@ -1339,7 +1346,7 @@
       ctx.strokeRect(x1 + .5, y + .5, x2 - x1 - 1, h - 1);
   
       ctx.fillStyle = "#111827";
-      ctx.font = (bold ? "700 " : "500 ") + (size || 22) + "px Arial";
+      ctx.font = (bold ? "700 " : "500 ") + (size || 22) + 'px "Be Vietnam Pro", Arial';
       ctx.textAlign = align || "center";
   
       const pad = 14;
@@ -1606,12 +1613,12 @@
       const typeClass = Number(row.pickupOrderType) === 5 ? "pickup-type reverse" : "pickup-type";
       return `<tr>
         <td class="pickup-id">${esc(row.shipmentId)}</td>
-        <td><b>${esc(dateTime(row.eta))}</b></td>
-        <td><b>${row.attempts}</b></td>
+        <td class="pickup-driver">${esc(row.driverName || "Chưa có")}</td>
+        <td class="pickup-attempt">${row.attempts}</td>
+        <td class="pickup-address">${esc(row.address || "—")}</td>
+        <td class="pickup-eta">${esc(dateTime(row.eta))}</td>
         <td><span class="${typeClass}">${esc(pickupTypeName(row.pickupOrderType))}</span></td>
         <td class="pickup-point">${esc(row.pointName || "—")}</td>
-        <td class="pickup-address">${esc(row.address || "—")}</td>
-        <td class="pickup-driver">${esc(row.driverName || "Chưa có")}</td>
         <td><b>${esc(dateTime(row.driverCtime))}</b>${row.driverRemark ? `<div class="pickup-sub">${esc(row.driverRemark)}</div>` : ""}</td>
         <td class="pickup-reason">${esc(row.reason || "—")}</td>
       </tr>`;
@@ -1633,8 +1640,19 @@
       </div>
       ${p.rows.length ? `<div class="pickup-table-wrap">
         <table class="pickup-table">
+          <colgroup>
+            <col style="width:165px">
+            <col style="width:155px">
+            <col style="width:74px">
+            <col style="width:300px">
+            <col style="width:155px">
+            <col style="width:90px">
+            <col style="width:150px">
+            <col style="width:165px">
+            <col style="width:210px">
+          </colgroup>
           <thead><tr>
-            <th>Mã đơn</th><th>ETA</th><th>Lần pickup</th><th>Loại</th><th>Điểm pickup</th><th>Địa chỉ</th><th>Tài xế</th><th>Cập nhật gần nhất</th><th>Trạng thái / lý do</th>
+            <th>Mã đơn</th><th>Tài xế</th><th>Attempt</th><th>Địa chỉ</th><th>ETA</th><th>Loại</th><th>Điểm pickup</th><th>Cập nhật gần nhất</th><th>Trạng thái / lý do</th>
           </tr></thead>
           <tbody>${body || `<tr><td colspan="9"><div class="pickup-empty">Không có dữ liệu.</div></td></tr>`}</tbody>
         </table>
