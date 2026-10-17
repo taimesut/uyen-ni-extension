@@ -104,3 +104,13 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Fix Open/Close tool, drawer, navigation, picker, FMS load, pagination, Delivery actions và preview modal.
 - Backdrop modal/drawer được xử lý riêng để không đóng nhầm khi click nội dung bên trong.
 - SeaTalk actions tiếp tục dùng `closest()` và không bị ảnh hưởng.
+
+## v1.7.0 - Pickup Assignment
+
+- Thêm mục **Pickup Assignment** trong drawer navigation.
+- Lấy danh sách đơn từ `/api/admin/pickup/fm_hub/pickup_order/search` với `status=2` và dùng `assigned_count` làm số đơn thực tế.
+- Mỗi đơn hiển thị mã SPX, ETA, số lần pickup, loại đơn, điểm pickup, địa chỉ, tài xế, thời gian xử lý gần nhất và lý do/trạng thái.
+- `pickup_order_type=0` lấy `seller_addr`; `pickup_order_type=5` lấy `buyer_addr`.
+- Tài xế lấy từ `pickup_info`, ưu tiên `pickup_driver_name` có `ctime` mới nhất.
+- Có filter riêng cho từng cột và phân trang 25 dòng.
+- Detail được lấy theo batch nhỏ, retry khi SPX trả 429/503; lỗi detail của một shipment không làm hỏng toàn bộ bảng.

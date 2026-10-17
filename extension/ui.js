@@ -27,6 +27,28 @@
     rows:[], total:0, applied:null,
     search:"", aging:"ALL", orderStatus:"ALL", page:1,
     picker:false, error:"", progress:"",
+    pickup:{
+      startDate:localDateInputValue(new Date(Date.now() - 92 * 86400000)),
+      endDate:localDateInputValue(new Date()),
+      loading:false,
+      requestId:"",
+      progress:"",
+      error:"",
+      rows:[],
+      total:0,
+      page:1,
+      filters:{
+        shipmentId:"",
+        eta:"",
+        attempts:"",
+        type:"",
+        point:"",
+        address:"",
+        driver:"",
+        updated:"",
+        reason:""
+      }
+    },
     delivery:{
       startDate:localDateInputValue(new Date()),
       loading:false,
@@ -55,6 +77,7 @@
       close:'<path d="M6 6l12 12M18 6L6 18"/>',
       fms:'<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="9"/>',
       delivery:'<path d="M4 20V11M10 20V5M16 20v-8M22 20H2"/>',
+      pickup:'<path d="M3 6h11v10H3z"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M5 10h5"/>',
       image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 15l-5-5L5 20"/>',
       download:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
       send:'<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/>',
@@ -900,6 +923,51 @@
   `;
   shadow.appendChild(opsFteStyle);
 
+  const pickupStyle = document.createElement("style");
+  pickupStyle.id = "spx-pickup-assignment-style";
+  pickupStyle.textContent = `
+    .pickup-layout{display:grid;gap:14px}
+    .pickup-controls{padding:14px;display:grid;grid-template-columns:minmax(180px,220px) minmax(180px,220px) minmax(260px,1fr) auto;gap:12px;align-items:end}
+    .pickup-control-note{font-size:10px;color:#7b8490;line-height:1.55;padding:2px 0 3px}
+    .pickup-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+    .pickup-result{overflow:hidden}
+    .pickup-result-head{padding:12px 14px;border-bottom:1px solid #e7e9ed;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff}
+    .pickup-table-wrap{overflow:auto;max-height:calc(100vh - 340px);min-height:260px}
+    .pickup-table{width:100%;min-width:1520px;border-collapse:separate;border-spacing:0}
+    .pickup-table th,.pickup-table td{padding:9px 10px;border-bottom:1px solid #edf0f2;vertical-align:top}
+    .pickup-table thead tr:first-child th{top:0;z-index:4;height:38px}
+    .pickup-table thead tr.pickup-filter-row th{top:38px;z-index:3;padding:6px 7px;background:#fff!important}
+    .pickup-filter{width:100%;height:30px;border:1px solid #dfe3e8;border-radius:7px;background:#fff;padding:0 8px;font-size:9.5px;color:#3f4853;outline:0}
+    .pickup-filter:focus{border-color:#f58b75;box-shadow:0 0 0 2px rgba(245,61,45,.10)}
+    .pickup-id{font-family:ui-monospace,Consolas,monospace;font-weight:850;color:#30363d;white-space:nowrap}
+    .pickup-address{min-width:300px;line-height:1.45}
+    .pickup-point{min-width:170px;font-weight:750;color:#374151}
+    .pickup-driver{min-width:175px;font-weight:850;color:#374151}
+    .pickup-sub{margin-top:3px;font-size:9px;color:#8a929c;line-height:1.35}
+    .pickup-type{display:inline-flex;padding:3px 7px;border-radius:999px;background:#fff1ed;color:#c7482d;font-size:9px;font-weight:900;white-space:nowrap}
+    .pickup-type.reverse{background:#f2edff;color:#6c4ccf}
+    .pickup-reason{min-width:220px;line-height:1.4}
+    .pickup-pager{height:50px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;font-size:9.5px;color:#727b86;background:#fff}
+    .pickup-pager button{height:30px;border:1px solid #e0e3e7;border-radius:8px;background:#fff;display:inline-flex;align-items:center;gap:5px}
+    .pickup-pager button:disabled{opacity:.45;cursor:not-allowed}
+    .pickup-empty{padding:64px 20px;text-align:center;color:#7a838e;font-size:11px}
+    .pickup-filter-summary{font-size:9.5px;color:#7a838e}
+    @media(max-width:1023px){
+      .pickup-controls{grid-template-columns:1fr 1fr}
+      .pickup-controls .pickup-control-note{grid-column:1/-1}
+      .pickup-actions{justify-content:stretch}
+      .pickup-actions>*{flex:1}
+      .pickup-table-wrap{max-height:none}
+    }
+    @media(max-width:640px){
+      .pickup-controls{grid-template-columns:1fr}
+      .pickup-result-head{align-items:flex-start;flex-direction:column}
+      .pickup-pager{height:auto;min-height:50px;padding:10px;gap:8px;flex-direction:column;align-items:stretch}
+      .pickup-pager>span:last-child{display:flex;align-items:center;justify-content:space-between}
+    }
+  `;
+  shadow.appendChild(pickupStyle);
+
   const root = document.createElement("div");
   shadow.appendChild(root);
 
@@ -940,17 +1008,32 @@
           <button class="nav-item ${state.activeTab === "delivery" ? "active" : ""}" data-nav="delivery">
             <span class="nav-icon">${icon("delivery",16)}</span><span>Delivery Performance</span>
           </button>
+          <button class="nav-item ${state.activeTab === "pickup" ? "active" : ""}" data-nav="pickup">
+            <span class="nav-icon">${icon("pickup",16)}</span><span>Pickup Assignment</span>
+          </button>
         </nav>
         <div class="drawer-footer">
           <div class="drawer-status"><span class="drawer-status-dot"></span>${state.bridgeReady ? "SPX session ready" : "Đang kết nối SPX"}</div>
           <div>Extension chạy trực tiếp trên spx.shopee.vn.</div>
-          <div style="margin-top:5px">v1.6.0 · OPS-FTE UI</div>
+          <div style="margin-top:5px">v1.7.0 · OPS-FTE UI</div>
         </div>
       </aside>
     </div>`;
   }
 
   function pageHeaderHtml(type) {
+    if (type === "pickup") {
+      return `<header class="page-header">
+        <div class="page-heading">
+          <div class="page-icon">${icon("pickup",20)}</div>
+          <div>
+            <h1 class="page-title">Pickup Assignment</h1>
+            <div class="page-description">Danh sách đơn pickup đang Assigned, kèm ETA, số lần pickup, địa chỉ và tài xế xử lý gần nhất.</div>
+          </div>
+        </div>
+      </header>`;
+    }
+
     if (type === "delivery") {
       return `<header class="page-header">
         <div class="page-heading">
@@ -1479,9 +1562,234 @@
     </section>`;
   }
 
+
+  function pickupTypeName(type) {
+    return Number(type) === 5 ? "Reverse" : "Pickup";
+  }
+
+  function normalizePickupRows(rows) {
+    return (Array.isArray(rows) ? rows : []).map((row) => ({
+      shipmentId:String(row?.pickup_order_id || ""),
+      eta:Number(row?.eta || 0),
+      attempts:Number(row?.pickup_attempts || 0),
+      pickupOrderType:Number(row?.pickup_order_type || 0),
+      pointName:String(row?.pickup_point_name || ""),
+      stationName:String(row?.pickup_station_name || ""),
+      serviceName:String(row?.fo_service_type_name || ""),
+      address:String(row?.address || ""),
+      driverName:String(row?.driver_name || ""),
+      driverCtime:Number(row?.driver_ctime || 0),
+      driverRemark:String(row?.driver_remark || ""),
+      driverStatus:String(row?.driver_status || ""),
+      reason:String(row?.driver_reason || row?.on_hold_reason_name || ""),
+      addressError:String(row?.address_error || ""),
+      driverError:String(row?.driver_error || "")
+    })).filter((row) => row.shipmentId);
+  }
+
+  function pickupColumnValue(row, key) {
+    if (key === "shipmentId") return row.shipmentId;
+    if (key === "eta") return dateTime(row.eta);
+    if (key === "attempts") return String(row.attempts);
+    if (key === "type") return [pickupTypeName(row.pickupOrderType), row.pickupOrderType, row.serviceName].join(" ");
+    if (key === "point") return row.pointName;
+    if (key === "address") return row.address;
+    if (key === "driver") return row.driverName;
+    if (key === "updated") return [dateTime(row.driverCtime), row.driverRemark, row.driverStatus].join(" ");
+    if (key === "reason") return row.reason;
+    return "";
+  }
+
+  function pickupFilteredRows() {
+    const filters = state.pickup.filters || {};
+    const keys = Object.keys(filters);
+
+    return state.pickup.rows.filter((row) => keys.every((key) => {
+      const query = String(filters[key] || "").trim().toLowerCase();
+      if (!query) return true;
+      return pickupColumnValue(row, key).toLowerCase().includes(query);
+    })).sort((a, b) =>
+      Number(a.eta || 0) - Number(b.eta || 0) ||
+      a.shipmentId.localeCompare(b.shipmentId)
+    );
+  }
+
+  function resetPickupFilters() {
+    Object.keys(state.pickup.filters).forEach((key) => {
+      state.pickup.filters[key] = "";
+    });
+    state.pickup.page = 1;
+  }
+
+  function requestPickupAssignment() {
+    const p = state.pickup;
+    if (p.loading) return;
+
+    p.loading = true;
+    p.error = "";
+    p.progress = "Đang tải danh sách Pickup Assignment...";
+    p.requestId = Date.now() + "_pickup_" + Math.random().toString(36).slice(2);
+    p.rows = [];
+    p.total = 0;
+    p.page = 1;
+    resetPickupFilters();
+    render();
+
+    post("SPX_PICKUP_ASSIGNMENT_FETCH", {
+      requestId:p.requestId,
+      range:{
+        startDate:p.startDate,
+        endDate:p.endDate
+      }
+    });
+  }
+
+  function cancelPickupAssignment() {
+    if (!state.pickup.loading) return;
+    post("SPX_PICKUP_ASSIGNMENT_CANCEL", {
+      requestId:state.pickup.requestId
+    });
+  }
+
+  function pickupFilterInput(key, placeholder) {
+    return `<input class="pickup-filter" data-pickup-filter="${esc(key)}" placeholder="${esc(placeholder || "Lọc...")}" value="${esc(state.pickup.filters[key] || "")}">`;
+  }
+
+  function pickupTableHtml() {
+    const p = state.pickup;
+    const rows = pickupFilteredRows();
+    const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    p.page = Math.min(Math.max(1, p.page), pages);
+    const start = (p.page - 1) * PAGE_SIZE;
+    const view = rows.slice(start, start + PAGE_SIZE);
+
+    const reverseCount = p.rows.filter((row) => Number(row.pickupOrderType) === 5).length;
+    const withDriver = p.rows.filter((row) => row.driverName).length;
+    const activeFilterCount = Object.values(p.filters).filter((value) => String(value || "").trim()).length;
+
+    const body = view.map((row) => {
+      const typeClass = Number(row.pickupOrderType) === 5 ? "pickup-type reverse" : "pickup-type";
+      const detailError = row.addressError || row.driverError;
+      return `<tr>
+        <td class="pickup-id">${esc(row.shipmentId)}</td>
+        <td><b>${esc(dateTime(row.eta))}</b><div class="pickup-sub">ETA</div></td>
+        <td><b>${row.attempts}</b></td>
+        <td><span class="${typeClass}">${esc(pickupTypeName(row.pickupOrderType))}</span><div class="pickup-sub">${esc(row.serviceName || "—")} · type ${row.pickupOrderType}</div></td>
+        <td class="pickup-point">${esc(row.pointName || "—")}<div class="pickup-sub">${esc(row.stationName || "")}</div></td>
+        <td class="pickup-address">${esc(row.address || "—")}${row.addressError ? `<div class="pickup-sub">${esc(row.addressError)}</div>` : ""}</td>
+        <td class="pickup-driver">${esc(row.driverName || "Chưa có")}${row.driverError ? `<div class="pickup-sub">${esc(row.driverError)}</div>` : ""}</td>
+        <td><b>${esc(dateTime(row.driverCtime))}</b><div class="pickup-sub">${esc(row.driverRemark || row.driverStatus || "—")}</div></td>
+        <td class="pickup-reason">${esc(row.reason || "—")}${detailError ? `<div class="pickup-sub">Một phần detail không tải được</div>` : ""}</td>
+      </tr>`;
+    }).join("");
+
+    return `<section class="card pickup-result">
+      <div class="stat-strip">
+        <div class="stat-card stat-orange"><div class="stat-label">Assigned</div><div class="stat-value">${p.total.toLocaleString("en-US")}</div><div class="stat-note">Số đơn SPX trả về</div></div>
+        <div class="stat-card stat-green"><div class="stat-label">Đang hiển thị</div><div class="stat-value">${rows.length.toLocaleString("en-US")}</div><div class="stat-note">${activeFilterCount ? activeFilterCount + " bộ lọc đang dùng" : "Chưa lọc"}</div></div>
+        <div class="stat-card stat-purple"><div class="stat-label">Có tài xế</div><div class="stat-value">${withDriver.toLocaleString("en-US")}</div><div class="stat-note">Có pickup tracking</div></div>
+        <div class="stat-card stat-amber"><div class="stat-label">Reverse</div><div class="stat-value">${reverseCount.toLocaleString("en-US")}</div><div class="stat-note">pickup_order_type = 5</div></div>
+      </div>
+      <div class="pickup-result-head">
+        <div>
+          <div class="cardtitle">Pickup Assignment</div>
+          <div class="hint">Filter riêng theo từng cột · dữ liệu detail được lấy theo từng shipment.</div>
+        </div>
+        <button class="ghostbtn" data-pickup-reset-filter ${activeFilterCount ? "" : "disabled"}>${icon("refresh",15)}<span>Xóa bộ lọc</span></button>
+      </div>
+      ${p.rows.length ? `<div class="pickup-table-wrap">
+        <table class="pickup-table">
+          <thead>
+            <tr>
+              <th>Mã đơn</th>
+              <th>ETA</th>
+              <th>Lần pickup</th>
+              <th>Loại</th>
+              <th>Điểm pickup</th>
+              <th>Địa chỉ</th>
+              <th>Tài xế</th>
+              <th>Cập nhật gần nhất</th>
+              <th>Trạng thái / lý do</th>
+            </tr>
+            <tr class="pickup-filter-row">
+              <th>${pickupFilterInput("shipmentId","Mã SPX...")}</th>
+              <th>${pickupFilterInput("eta","Ngày / giờ...")}</th>
+              <th>${pickupFilterInput("attempts","Số lần...")}</th>
+              <th>${pickupFilterInput("type","Pickup / Reverse...")}</th>
+              <th>${pickupFilterInput("point","Tên điểm...")}</th>
+              <th>${pickupFilterInput("address","Địa chỉ...")}</th>
+              <th>${pickupFilterInput("driver","Tên tài xế...")}</th>
+              <th>${pickupFilterInput("updated","Thời gian / ghi chú...")}</th>
+              <th>${pickupFilterInput("reason","Lý do...")}</th>
+            </tr>
+          </thead>
+          <tbody>${body || `<tr><td colspan="9"><div class="pickup-empty">Không có đơn phù hợp với bộ lọc hiện tại.</div></td></tr>`}</tbody>
+        </table>
+      </div>
+      <div class="pickup-pager">
+        <span>${rows.length ? start + 1 : 0}-${Math.min(start + PAGE_SIZE, rows.length)} / ${rows.length}</span>
+        <span>
+          <button data-pickup-prev ${p.page <= 1 ? "disabled" : ""}>${icon("chevronLeft",14)}<span>Trước</span></button>
+          <b>Trang ${p.page}/${pages}</b>
+          <button data-pickup-next ${p.page >= pages ? "disabled" : ""}><span>Sau</span>${icon("chevronRight",14)}</button>
+        </span>
+      </div>` : `<div class="pickup-empty"><b>Chưa có dữ liệu Pickup Assignment</b><div>Chọn khoảng ngày rồi nhấn <strong>Tải dữ liệu</strong>.</div></div>`}
+    </section>`;
+  }
+
+  function renderPickupTab() {
+    const p = state.pickup;
+
+    return `<section class="pickup-layout">
+      <section class="card">
+        <div class="cardhead">
+          <div>
+            <div class="cardtitle">Điều kiện tải dữ liệu</div>
+            <div class="hint">SPX status = 2 (Assigned) · mặc định lấy 92 ngày gần nhất giống request mẫu.</div>
+          </div>
+          ${p.total ? `<b>${p.total.toLocaleString("en-US")} assigned</b>` : ""}
+        </div>
+        <div class="pickup-controls">
+          <div class="field">
+            <label class="label">Từ ngày</label>
+            <input class="input" type="date" data-pickup-start-date value="${esc(p.startDate)}" ${p.loading ? "disabled" : ""}>
+          </div>
+          <div class="field">
+            <label class="label">Đến ngày</label>
+            <input class="input" type="date" data-pickup-end-date value="${esc(p.endDate)}" ${p.loading ? "disabled" : ""}>
+          </div>
+          <div class="pickup-control-note">Mỗi đơn sẽ lấy thêm địa chỉ theo <b>pickup_order_type</b> và lấy <b>pickup_driver_name</b> có ctime mới nhất.</div>
+          <div class="pickup-actions">
+            ${p.loading ? `<button class="ghostbtn" data-pickup-cancel>Hủy</button>` : ""}
+            <button class="primary" data-pickup-load ${p.loading || !state.bridgeReady ? "disabled" : ""}>
+              ${p.loading ? "Đang xử lý..." : icon("refresh",16) + "<span>Tải dữ liệu</span>"}
+            </button>
+          </div>
+        </div>
+      </section>
+      ${p.progress ? `<div class="progress">${esc(p.progress)}</div>` : ""}
+      ${p.error ? `<div class="error">${esc(p.error)}</div>` : ""}
+      ${pickupTableHtml()}
+    </section>`;
+  }
+
   function render() {
     if (!state.open) {
       root.innerHTML = `<button class="launch" data-open>${icon("app",17)}<span>SPX Tools</span></button>`;
+      return;
+    }
+
+    if (state.activeTab === "pickup") {
+      root.innerHTML = `<div class="app">
+        ${appHeaderHtml()}
+        ${drawerHtml()}
+        <main class="ops-main">
+          <section class="ops-page">
+            ${pageHeaderHtml("pickup")}
+            ${renderPickupTab()}
+          </section>
+        </main>
+      </div>`;
       return;
     }
 
@@ -1530,6 +1838,46 @@
     if (!d || d.source !== "SPX_FMS_AUDIT_BRIDGE") return;
 
     if (d.type === "SPX_FMS_BRIDGE_READY") { state.bridgeReady=true; render(); return; }
+
+    if (String(d.type || "").startsWith("SPX_PICKUP_ASSIGNMENT_")) {
+      if (d.requestId && d.requestId !== state.pickup.requestId) return;
+
+      if (d.type === "SPX_PICKUP_ASSIGNMENT_PROGRESS") {
+        if (d.stage === "search") {
+          state.pickup.progress = "Đang tải danh sách Assigned: " + (d.ordersFound || 0) + "/" + (d.total || "?") + " · " + (d.pagesFetched || 0) + " trang";
+        } else if (d.stage === "detail") {
+          state.pickup.progress = "Đang lấy địa chỉ & tài xế: " + (d.completed || 0) + "/" + (d.total || 0);
+        }
+        render();
+        return;
+      }
+
+      if (d.type === "SPX_PICKUP_ASSIGNMENT_RESULT") {
+        state.pickup.loading = false;
+        state.pickup.progress = "";
+        state.pickup.error = "";
+        state.pickup.rows = normalizePickupRows(d.result?.rows);
+        state.pickup.total = Number(d.result?.assigned_count || state.pickup.rows.length);
+        state.pickup.page = 1;
+        render();
+        return;
+      }
+
+      if (d.type === "SPX_PICKUP_ASSIGNMENT_ERROR") {
+        state.pickup.loading = false;
+        state.pickup.progress = "";
+        state.pickup.error = String(d.message || "Không thể tải Pickup Assignment.");
+        render();
+        return;
+      }
+
+      if (d.type === "SPX_PICKUP_ASSIGNMENT_CANCELLED") {
+        state.pickup.loading = false;
+        state.pickup.progress = "";
+        render();
+        return;
+      }
+    }
 
     if (String(d.type || "").startsWith("SPX_DELIVERY_EXPORT_")) {
       if (d.requestId && d.requestId !== state.delivery.requestId) return;
@@ -1695,6 +2043,39 @@
       return;
     }
 
+    const pickupLoadButton = t.closest("[data-pickup-load]");
+    if (pickupLoadButton) {
+      requestPickupAssignment();
+      return;
+    }
+
+    const pickupCancelButton = t.closest("[data-pickup-cancel]");
+    if (pickupCancelButton) {
+      cancelPickupAssignment();
+      return;
+    }
+
+    const pickupResetFilterButton = t.closest("[data-pickup-reset-filter]");
+    if (pickupResetFilterButton) {
+      resetPickupFilters();
+      render();
+      return;
+    }
+
+    const pickupPrevButton = t.closest("[data-pickup-prev]");
+    if (pickupPrevButton && !pickupPrevButton.disabled) {
+      state.pickup.page = Math.max(1, state.pickup.page - 1);
+      render();
+      return;
+    }
+
+    const pickupNextButton = t.closest("[data-pickup-next]");
+    if (pickupNextButton && !pickupNextButton.disabled) {
+      state.pickup.page += 1;
+      render();
+      return;
+    }
+
     const deliveryRunButton = t.closest("[data-delivery-run]");
     if (deliveryRunButton) {
       requestDeliveryExport();
@@ -1759,6 +2140,8 @@
 
   shadow.addEventListener("change", e => {
     const t=e.target;
+    if (t.matches("[data-pickup-start-date]")) { state.pickup.startDate=t.value; return; }
+    if (t.matches("[data-pickup-end-date]")) { state.pickup.endDate=t.value; return; }
     if (t.matches("[data-delivery-date]")) { state.delivery.startDate=t.value; return; }
     if (t.matches("[data-current]")) { state.currentStation=t.value; render(); return; }
     if (t.matches("[data-next]")) { state.nextStation=t.value; render(); return; }
@@ -1775,6 +2158,22 @@
 
   shadow.addEventListener("input", e => {
     const target = e.target;
+
+    if (target.matches("[data-pickup-filter]")) {
+      const key = String(target.dataset.pickupFilter || "");
+      if (Object.prototype.hasOwnProperty.call(state.pickup.filters, key)) {
+        state.pickup.filters[key] = target.value;
+        state.pickup.page = 1;
+        const pos = target.selectionStart;
+        render();
+        const next = shadow.querySelector('[data-pickup-filter="' + CSS.escape(key) + '"]');
+        if (next) {
+          next.focus();
+          if (typeof pos === "number") next.setSelectionRange(pos, pos);
+        }
+      }
+      return;
+    }
 
     if (target.matches("[data-status-search]")) {
       state.statusSearch = target.value;

@@ -6,6 +6,9 @@
 
   const SEARCH_URL = "/api/fleet_order/order/tracking_list/search";
   const DETAIL_URL = "/api/fleet_order/order/detail/tracking_info";
+  const PICKUP_SEARCH_URL = "/api/admin/pickup/fm_hub/pickup_order/search";
+  const PICKUP_SENSITIVE_URL = "/api/fleet_order/order/detail/show_sensitive_data";
+  const PICKUP_INFO_URL = "/api/admin/pickup/order/detail/pickup_info";
 
   const PAGE_SIZE = 50;
   const MAX_PAGES = 100;
@@ -15,6 +18,7 @@
 
   let activeController = null;
   let deliveryController = null;
+  let pickupController = null;
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -407,6 +411,301 @@
     return json;
   }
 
+
+  async function fetchPickupJson(url, options = {}) {
+    const maxAttempts = 3;
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        const response = await fetch(url, {
+          ...options,
+          credentials:"include",
+          headers:{
+            Accept:"application/json, text/plain, */*",
+            ...(options.headers || {})
+          },
+          signal:pickupController ? pickupController.signal : undefined
+        });
+
+        if ((response.status === 429 || response.status === 503) && attempt < maxAttempts) {
+          await sleep(500 * attempt);
+          continue;
+        }
+
+        if (response.status === 401 || response.status === 403) {
+          throw new Error("SPX từ chối quyền truy cập Pickup Assignment. Hãy kiểm tra tài khoản đang đăng nhập.");
+        }
+
+        if (!response.ok) {
+          throw new Error(`Pickup Assignment API lỗi HTTP ${response.status}.`);
+        }
+
+        let json;
+        try {
+          json = await response.json();
+        } catch (_) {
+          throw new Error("Pickup Assignment API trả về dữ liệu không phải JSON.");
+        }
+
+        if (json && typeof json.retcode !== "undefined" && Number(json.retcode) !== 0) {
+          throw new Error(json.message || `Pickup Assignment retcode ${json.retcode}.`);
+        }
+
+        return json;
+      } catch (error) {
+        if (error?.name === "AbortError") throw error;
+        lastError = error;
+        if (attempt < maxAttempts) {
+          await sleep(350 * attempt);
+          continue;
+        }
+      }
+    }
+
+    throw lastError || new Error("Không thể gọi Pickup Assignment API.");
+  }
+
+  function localDateEpoch(value, endOfDay = false) {
+    const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) throw new Error("Khoảng ngày Pickup Assignment không hợp lệ.");
+
+    const date = new Date(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3]),
+      endOfDay ? 23 : 0,
+      endOfDay ? 59 : 0,
+      endOfDay ? 59 : 0,
+      0
+    );
+
+    const ts = Math.floor(date.getTime() / 1000);
+    if (!Number.isFinite(ts)) throw new Error("Không thể chuyển khoảng ngày Pickup Assignment.");
+    return ts;
+  }
+
+  async function fetchPickupAssignmentOrders(requestId, startTs, endTs) {
+    const makeUrl = (page) =>
+      PICKUP_SEARCH_URL +
+      `?ctime=${startTs},${endTs}&status=2&pageno=${page}&count=50&fetch_total=0`;
+
+    const firstJson = await fetchPickupJson(makeUrl(1), {method:"GET"});
+    const firstData = firstJson?.data || {};
+    const assignedCount = Math.max(0, Number(firstData.assigned_count || 0));
+    const unique = new Map();
+
+    for (const item of Array.isArray(firstData.list) ? firstData.list : []) {
+      const id = String(item?.pickup_order_id || "");
+      if (id && !unique.has(id)) unique.set(id, item);
+    }
+
+    let pagesFetched = 1;
+    const maxPages = Math.max(1, Math.min(100, Math.ceil(assignedCount / 50)));
+
+    post("SPX_PICKUP_ASSIGNMENT_PROGRESS", {
+      requestId,
+      stage:"search",
+      ordersFound:Math.min(unique.size, assignedCount),
+      total:assignedCount,
+      pagesFetched
+    });
+
+    for (let page = 2; page <= maxPages && unique.size < assignedCount; page += 1) {
+      const json = await fetchPickupJson(makeUrl(page), {method:"GET"});
+      const list = Array.isArray(json?.data?.list) ? json.data.list : [];
+
+      for (const item of list) {
+        const id = String(item?.pickup_order_id || "");
+        if (id && !unique.has(id)) unique.set(id, item);
+      }
+
+      pagesFetched = page;
+      post("SPX_PICKUP_ASSIGNMENT_PROGRESS", {
+        requestId,
+        stage:"search",
+        ordersFound:Math.min(unique.size, assignedCount),
+        total:assignedCount,
+        pagesFetched
+      });
+
+      if (!list.length) break;
+      await sleep(120);
+    }
+
+    return {
+      assignedCount,
+      pagesFetched,
+      orders:Array.from(unique.values()).slice(0, assignedCount)
+    };
+  }
+
+  async function fetchPickupAddress(order) {
+    const shipmentId = String(order?.pickup_order_id || "");
+    if (!shipmentId) return "";
+
+    const dataField = Number(order?.pickup_order_type || 0) === 5
+      ? "buyer_addr"
+      : "seller_addr";
+
+    const url =
+      PICKUP_SENSITIVE_URL +
+      `?shipment_id=${encodeURIComponent(shipmentId)}&data_field=${encodeURIComponent(dataField)}`;
+
+    const json = await fetchPickupJson(url, {method:"GET"});
+    return String(json?.data?.data_detail || "");
+  }
+
+  function pickLatestDriver(json) {
+    const infoList = Array.isArray(json?.data?.pickup_info_list)
+      ? json.data.pickup_info_list
+      : [];
+    const events = [];
+
+    for (const info of infoList) {
+      for (const tracking of Array.isArray(info?.pickup_order_tracking) ? info.pickup_order_tracking : []) {
+        const name = String(tracking?.pickup_driver_name || "").trim();
+        if (!name) continue;
+
+        events.push({
+          name,
+          ctime:Number(tracking?.ctime || 0),
+          remark:String(tracking?.remark || ""),
+          status:String(tracking?.pickup_result || info?.pickup_status || ""),
+          reason:String(tracking?.on_hold_reason || "")
+        });
+      }
+    }
+
+    events.sort((a, b) => b.ctime - a.ctime);
+    if (events.length) return events[0];
+
+    for (const info of infoList) {
+      const names = Array.isArray(info?.driver_name) ? info.driver_name : [];
+      const name = String(names[0] || "").trim();
+      if (!name) continue;
+
+      return {
+        name,
+        ctime:Number(info?.assigned_time || 0),
+        remark:"",
+        status:String(info?.pickup_status || ""),
+        reason:""
+      };
+    }
+
+    return {name:"", ctime:0, remark:"", status:"", reason:""};
+  }
+
+  async function fetchPickupDriver(shipmentId) {
+    const url =
+      PICKUP_INFO_URL +
+      `?shipment_id=${encodeURIComponent(shipmentId)}&station_type=12`;
+    const json = await fetchPickupJson(url, {method:"GET"});
+    return pickLatestDriver(json);
+  }
+
+  async function enrichPickupAssignmentOrders(orders, requestId) {
+    const source = Array.isArray(orders) ? orders : [];
+    const rows = [];
+    const batchSize = 4;
+
+    for (let offset = 0; offset < source.length; offset += batchSize) {
+      const batch = source.slice(offset, offset + batchSize);
+
+      const enriched = await Promise.all(batch.map(async (order) => {
+        const shipmentId = String(order?.pickup_order_id || "");
+        let address = "";
+        let addressError = "";
+        let driver = {name:"", ctime:0, remark:"", status:"", reason:""};
+        let driverError = "";
+
+        try {
+          address = await fetchPickupAddress(order);
+        } catch (error) {
+          if (error?.name === "AbortError") throw error;
+          addressError = String(error?.message || error || "Không lấy được địa chỉ.");
+        }
+
+        try {
+          driver = await fetchPickupDriver(shipmentId);
+        } catch (error) {
+          if (error?.name === "AbortError") throw error;
+          driverError = String(error?.message || error || "Không lấy được tài xế.");
+        }
+
+        return {
+          pickup_order_id:shipmentId,
+          eta:Number(order?.eta || 0),
+          pickup_attempts:Number(order?.pickup_attempts || 0),
+          pickup_order_type:Number(order?.pickup_order_type || 0),
+          pickup_point_name:String(order?.pickup_point_name || ""),
+          pickup_station_name:String(order?.pickup_station_name || ""),
+          fo_service_type_name:String(order?.fo_service_type_name || ""),
+          on_hold_reason_name:String(order?.on_hold_reason_name || ""),
+          address,
+          address_error:addressError,
+          driver_name:String(driver.name || ""),
+          driver_ctime:Number(driver.ctime || 0),
+          driver_remark:String(driver.remark || ""),
+          driver_status:String(driver.status || ""),
+          driver_reason:String(driver.reason || ""),
+          driver_error:driverError
+        };
+      }));
+
+      rows.push(...enriched);
+
+      post("SPX_PICKUP_ASSIGNMENT_PROGRESS", {
+        requestId,
+        stage:"detail",
+        completed:rows.length,
+        total:source.length
+      });
+
+      if (offset + batchSize < source.length) await sleep(180);
+    }
+
+    return rows;
+  }
+
+  async function runPickupAssignment(requestId, rawRange) {
+    pickupController?.abort();
+    pickupController = new AbortController();
+
+    try {
+      const startTs = localDateEpoch(rawRange?.startDate, false);
+      const endTs = localDateEpoch(rawRange?.endDate, true);
+
+      if (startTs > endTs) {
+        throw new Error("Từ ngày phải nhỏ hơn hoặc bằng Đến ngày.");
+      }
+
+      const searchResult = await fetchPickupAssignmentOrders(requestId, startTs, endTs);
+      const rows = await enrichPickupAssignmentOrders(searchResult.orders, requestId);
+
+      post("SPX_PICKUP_ASSIGNMENT_RESULT", {
+        requestId,
+        result:{
+          assigned_count:searchResult.assignedCount,
+          pages_fetched:searchResult.pagesFetched,
+          rows
+        }
+      });
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        post("SPX_PICKUP_ASSIGNMENT_CANCELLED", {requestId});
+      } else {
+        post("SPX_PICKUP_ASSIGNMENT_ERROR", {
+          requestId,
+          message:String(error?.message || error || "Không thể tải Pickup Assignment.")
+        });
+      }
+    } finally {
+      pickupController = null;
+    }
+  }
+
   async function findDeliveryExportTask(taskId, requestId) {
     const startTime = Math.floor(Date.now() / 1000) - 86400;
     const maxAttempts = 60;
@@ -564,6 +863,16 @@
 
     if (data.type === "SPX_FMS_CANCEL") {
       activeController?.abort();
+      return;
+    }
+
+    if (data.type === "SPX_PICKUP_ASSIGNMENT_FETCH") {
+      runPickupAssignment(data.requestId, data.range || {});
+      return;
+    }
+
+    if (data.type === "SPX_PICKUP_ASSIGNMENT_CANCEL") {
+      pickupController?.abort();
       return;
     }
 
