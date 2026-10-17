@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         SPX Operations Tools - Safari
 // @namespace    https://github.com/taimesut/uyen-ni-extension
-// @version      1.6.2.2
-// @description  FMS Audit, Delivery Performance, JPG Preview và SeaTalk trực tiếp trên SPX cho Safari Userscripts.
+// @version      1.8.1.0
+// @description  FMS Audit, Delivery Performance, Pickup Assignment, responsive UI và SeaTalk trực tiếp trên SPX.
 // @author       taimesut
 // @match        https://spx.shopee.vn/*
 // @run-at       document-idle
@@ -14,6 +14,9 @@
 // @grant        GM.xmlHttpRequest
 // @connect      openapi.seatalk.io
 // @connect      spx.shopee.vn
+// @icon         https://raw.githubusercontent.com/taimesut/uyen-ni-extension/main/extension/icons/icon-48.png
+// @downloadURL  https://raw.githubusercontent.com/taimesut/uyen-ni-extension/main/userscript/spx-operations-tools-safari.user.js
+// @updateURL    https://raw.githubusercontent.com/taimesut/uyen-ni-extension/main/userscript/spx-operations-tools-safari.user.js
 // ==/UserScript==
 
 
@@ -68,6 +71,18 @@
 
   const runtime = {
     lastError: null,
+
+    getURL(path) {
+      const value = String(path || "");
+      if (/^icons\/icon-(?:16|32|48|128)\.png$/i.test(value)) {
+        return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAHRUlEQVR4nO2Ze4xVVxXGf2ufc98zA5Q20xbQTDUxkAhStU2pUJNGgtiWQKTGVimQalJsSZFKMLFa0VgFahoftVLQglZQMVABFQ0NNSViBaWJ0IqUYg1asDyGmfs4956zl3/sc2fuwGVm7swAIWH9ce/JeezzfXuv9e211pGTd75XuYzNXGoAg7UrBC61XSFwqe2yJ+AP6mmR+ue1AWUWAQXOHkoBbJ0LPW0ABMQNHIZ1r6laJJnqP4lKue5pVUUSyT4fb4yAMRCU8N8/Gf/GSVAOalZBQTz0xDGCrevB93snYQwEAcmpszCj2yAKu8dSRTJZolf3Ud65DVLp847V8AqoCPbYUdJTZyFNw+reY48eofyXF5FMDqw99wbPR8+cJHnbHeQWLgPPO/c9b79Fx45fo8br1YkaC2JrkVSa6NB+ij9f5fw0ihxIG7uVKpn5i5GWEe7a2XFiPLRUIDHxVnKLvu7Ah6F7PnL/tv0UHcseIty/17lRLyvZuApFEdLcQnn7RqI3DzkAIs4lPA9QvBvGkpoyHe08A6Zmdo2BUgGvdRS5L6xAmoc7cL4PRkAMqKX44ycID+xFho0ArbOCgyIAYDxs+0mKz30PIkssGbGiuOPUzPswY9rQcskBNwatlKF5GNkHH8O0Xu9mvcbvMYbCj1YSbNuANLVAGPUNZUAEVJFUmsqfdlD56y43c1HURQ61eKPbyMycGxMEKmXET5BbuIzEByaDjRwxiIkYghe2EGxai2Sycez0rWQDJoDno+USxV/8EC0WHJiqr8aukJw2G290m1MrP0n64/eTnDzN+XrVtawFY6i8vJPCU8u6XbKfNvCdOIqQTI7wld2Ud26t81JBMjky8xa5FRs2gvTs+2NXqYJ3qxD965/kVy5F853g9SG/Q0YAQC2SSFLauAYt5OuQUJKTPkLiltuJjhwk2LY+jhPbRcSePkHhyUexp08g6XR92b1wBIBEEnv0DYobfuDOVQGIOP8XITVjDibXQmnTWuzx/3bFiZZL5FcsobJ/D5Jr7o6ji0agysNPUP7dL4lef83Fgo2BeB5YS2LCzaTvvJfojX9Q2rgmfrNHcd13qLz8RyTb7OJiADZ4Ata5kT35P0rPr4sTM6kJaHecuvszeGPaCH67gej1AwTb1hNsXINkMn1q/YUlUCWRbaa843kqf4tltZYAYK5uJT1zHtp+msKqxymuXuECtpbsAGxoCKjGSaql8Oy30VKxW+Or19WSuutT+DdNobJnF6q274SvHzZ0BY0xqA3xWkchfp0cUQzacRptP4Wk0u7cIMHDUBEwHprvwL9hHLkFXwE/0Q0uThG00Enhqa8RHjoA6Ux/Ntn+vXrQI4hBwzLmmuvILX4cGTGyJsdRRyCKKDz9DYIdm0m8Zzy5z30ZfG9QwTs0BETARghC05KVeO8e1zXjgNN1Yyht+SnBbzZgWkeT+exSkrfPIDlpahwr59YCF4eACFiLhmWy8xfjT7j5rOzSgucT/GETxdUrkGSa3MKvkrjxVrCWzCcfwIxshbDsVOuiEhD3o2GFzL0Pkpo1z21eVfBxdhkdfpXiqm+ixU5Ss+aRnDI9dhvFXP8O0jPmoKVCT8W6KASMj+Y7SE6eRuaeBTF407UqGIP992Hyy5dgTxwnddenyc59uKZCize3j96N1zZ2UCQaf8pzipN43y1kFzzqfLgKXh14PXOK/IolhEcOIokE/tgJTpkk7p/EYGX4VaTveQCpEr/gBIxBCwW8Ue8kt3QlZniN4mgMzloKzyyn8vc9mFwzKkKw6SdoR7sjW5vsoaQ+fAf+uIlojw7HhSAgAlGINDWTfegxzNXXdrkL4GZfhMIz3yLYvhFpGYFWAiSTJTz4CqWtP3MEa0FaBREycxYhnl9D7EIQiPXcKcmHuiQSiI89gt//itLmuCTUuKsWRUi2iWDzOuyxo91jVcGqxR//QVLTZp/bBBgSAnHHQYt5UjPnkbztY7FE1pSEnke49yWKq5d3l4S1aYLxsKffpvjc9+tmqgCp6Z/AXHUNWgkaCui+7zQGLeRJz5hDdv7ne/Z64k3LvnWUzie+iO1oR/xE3YCUZJryi9sI9+12AGubANbivWssqRlzkLi3NDQEjEHbT5EYfxOZ+Y90bzhWu1qB2n6K/Mol2JPHkVSmvpqogp9A8x2UNq2NZZeuRpYbMyI9cy7mujGuX9rPWDg/ARG0HOBPnETTl76LZHPdzStjXFcirNC5/BEq+3bHrZBeSsIoRJpaKP/5BcovbXcz7/ldPSOMh+SayNz3MHpWLdGb9dobFWvxrh1FsHOLy1t6uI5HdPg1wr27kKZ+1rOqiOdRfPZJov+82bMVo06RKBYww0c62a3TMz0HY5+fWVXRsOI2mzrXaKSVDrEcR+dfLZGe6Xgf1nd3WgRJpM7/naHRokTVzez5Zle1oTH72V7XIStA3HBDN9hl/43sCoFLbVcIXGob3HfiBmyIdazL/g/rcy3W/HATZAAAAABJRU5ErkJggg==";
+      }
+      try {
+        return new URL(value, window.location.href).href;
+      } catch (_) {
+        return value;
+      }
+    },
 
     sendMessage(message, callback) {
       runtime.lastError = null;
@@ -342,6 +357,10 @@
   }
 })();
 
+// ============================================================================
+// BUILT FROM EXTENSION v1.8.1
+// Target: Violentmonkey / Tampermonkey / Safari Userscripts
+// ============================================================================
 
 // ---- SPX same-origin API bridge ----
 (() => {
@@ -352,6 +371,9 @@
 
   const SEARCH_URL = "/api/fleet_order/order/tracking_list/search";
   const DETAIL_URL = "/api/fleet_order/order/detail/tracking_info";
+  const PICKUP_SEARCH_URL = "/api/admin/pickup/fm_hub/pickup_order/search";
+  const PICKUP_SENSITIVE_URL = "/api/fleet_order/order/detail/show_sensitive_data";
+  const PICKUP_INFO_URL = "/api/admin/pickup/order/detail/pickup_info";
 
   const PAGE_SIZE = 50;
   const MAX_PAGES = 100;
@@ -361,8 +383,72 @@
 
   let activeController = null;
   let deliveryController = null;
+  let pickupController = null;
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  async function userscriptFetch(url, options = {}) {
+    try {
+      return await globalThis.fetch(url, options);
+    } catch (nativeError) {
+      const gm = globalThis.GM;
+      if (!gm || typeof gm.xmlHttpRequest !== "function") throw nativeError;
+
+      const absolute = new URL(String(url || ""), window.location.origin);
+      if (absolute.origin !== window.location.origin) throw nativeError;
+
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        let requestHandle = null;
+
+        const rejectOnce = (error) => {
+          if (settled) return;
+          settled = true;
+          reject(error);
+        };
+
+        try {
+          requestHandle = gm.xmlHttpRequest({
+            method: String(options.method || "GET").toUpperCase(),
+            url: absolute.href,
+            headers: options.headers || {},
+            data: options.body == null ? undefined : options.body,
+            timeout: 30000,
+            responseType: "text",
+            onload(response) {
+              if (settled) return;
+              settled = true;
+              const textValue = String(response.responseText || response.response || "");
+              resolve({
+                ok: Number(response.status) >= 200 && Number(response.status) < 300,
+                status: Number(response.status || 0),
+                text: async () => textValue,
+                json: async () => JSON.parse(textValue)
+              });
+            },
+            onerror() { rejectOnce(nativeError); },
+            ontimeout() { rejectOnce(new Error("SPX request timeout.")); },
+            onabort() { rejectOnce(new DOMException("Aborted", "AbortError")); }
+          });
+        } catch (error) {
+          rejectOnce(error);
+          return;
+        }
+
+        if (options.signal) {
+          if (options.signal.aborted) {
+            try { requestHandle?.abort?.(); } catch (_) {}
+            rejectOnce(new DOMException("Aborted", "AbortError"));
+            return;
+          }
+          options.signal.addEventListener("abort", () => {
+            try { requestHandle?.abort?.(); } catch (_) {}
+            rejectOnce(new DOMException("Aborted", "AbortError"));
+          }, {once:true});
+        }
+      });
+    }
+  }
 
   function post(type, payload = {}) {
     window.postMessage({
@@ -404,13 +490,13 @@
       signal: activeController ? activeController.signal : undefined
     };
 
-    let response = await fetch(url, requestOptions);
+    let response = await userscriptFetch(url, requestOptions);
 
     if (response.status === 403 && csrfRetry) {
       const csrf = readPageCsrfToken();
 
       if (csrf) {
-        response = await fetch(url, {
+        response = await userscriptFetch(url, {
           ...requestOptions,
           headers: {
             ...headers,
@@ -714,121 +800,10 @@
     }
   }
 
-  function absoluteSpxUrl(url) {
-    return new URL(String(url || ""), window.location.origin).href;
-  }
-
-  function safariXhrRequest(url, options = {}) {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      const method = String(options.method || "GET").toUpperCase();
-
-      xhr.open(method, absoluteSpxUrl(url), true);
-      xhr.withCredentials = true;
-      xhr.timeout = Number(options.timeout || 30000);
-
-      Object.entries(options.headers || {}).forEach(([key, value]) => {
-        try {
-          xhr.setRequestHeader(key, String(value));
-        } catch (_) {}
-      });
-
-      xhr.onload = () => {
-        resolve({
-          ok: xhr.status >= 200 && xhr.status < 300,
-          status: xhr.status,
-          text: () => Promise.resolve(xhr.responseText || "")
-        });
-      };
-
-      xhr.onerror = () => reject(new Error("Safari XHR network error."));
-      xhr.ontimeout = () => reject(new Error("Safari XHR timeout."));
-
-      if (options.signal) {
-        if (options.signal.aborted) {
-          xhr.abort();
-          reject(new DOMException("Aborted", "AbortError"));
-          return;
-        }
-
-        options.signal.addEventListener("abort", () => xhr.abort(), { once: true });
-      }
-
-      xhr.send(options.body == null ? null : options.body);
-    });
-  }
-
-  async function safariGmRequest(url, options = {}) {
-    const gm = globalThis.GM;
-
-    if (!gm || typeof gm.xmlHttpRequest !== "function") {
-      throw new Error("GM.xmlHttpRequest không khả dụng.");
-    }
-
-    const response = await gm.xmlHttpRequest({
-      method: String(options.method || "GET").toUpperCase(),
-      url: absoluteSpxUrl(url),
-      headers: options.headers || {},
-      data: options.body == null ? undefined : options.body,
-      timeout: Number(options.timeout || 30000),
-      responseType: "text"
-    });
-
-    return {
-      ok: Number(response.status) >= 200 && Number(response.status) < 300,
-      status: Number(response.status || 0),
-      text: () => Promise.resolve(String(response.responseText || response.response || ""))
-    };
-  }
-
-  async function safariSameOriginRequest(url, options = {}) {
-    const requestOptions = {
+  async function fetchDeliveryJson(url, options = {}) {
+    const response = await userscriptFetch(url, {
       ...options,
       credentials: "include",
-      signal: options.signal || (deliveryController ? deliveryController.signal : undefined)
-    };
-
-    let firstError = null;
-
-    try {
-      const response = await fetch(url, requestOptions);
-
-      if (
-        response.ok ||
-        ![0, 401, 403, 419].includes(Number(response.status))
-      ) {
-        return response;
-      }
-
-      firstError = new Error("fetch HTTP " + response.status);
-    } catch (error) {
-      if (error?.name === "AbortError") throw error;
-      firstError = error;
-    }
-
-    try {
-      return await safariXhrRequest(url, requestOptions);
-    } catch (xhrError) {
-      if (xhrError?.name === "AbortError") throw xhrError;
-
-      try {
-        return await safariGmRequest(url, requestOptions);
-      } catch (gmError) {
-        throw new Error(
-          "Safari không thể gọi SPX API. fetch: " +
-          String(firstError?.message || firstError || "unknown") +
-          " · XHR: " +
-          String(xhrError?.message || xhrError || "unknown") +
-          " · GM: " +
-          String(gmError?.message || gmError || "unknown")
-        );
-      }
-    }
-  }
-
-  async function fetchDeliveryJson(url, options = {}) {
-    const response = await safariSameOriginRequest(url, {
-      ...options,
       headers: {
         Accept: "application/json, text/plain, */*",
         ...(options.headers || {})
@@ -848,8 +823,7 @@
 
     let json;
     try {
-      const text = await response.text();
-      json = JSON.parse(text);
+      json = await response.json();
     } catch (_) {
       throw new Error("Delivery Performance API trả về dữ liệu không phải JSON.");
     }
@@ -863,6 +837,301 @@
     }
 
     return json;
+  }
+
+
+  async function fetchPickupJson(url, options = {}) {
+    const maxAttempts = 3;
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        const response = await userscriptFetch(url, {
+          ...options,
+          credentials:"include",
+          headers:{
+            Accept:"application/json, text/plain, */*",
+            ...(options.headers || {})
+          },
+          signal:pickupController ? pickupController.signal : undefined
+        });
+
+        if ((response.status === 429 || response.status === 503) && attempt < maxAttempts) {
+          await sleep(500 * attempt);
+          continue;
+        }
+
+        if (response.status === 401 || response.status === 403) {
+          throw new Error("SPX từ chối quyền truy cập Pickup Assignment. Hãy kiểm tra tài khoản đang đăng nhập.");
+        }
+
+        if (!response.ok) {
+          throw new Error(`Pickup Assignment API lỗi HTTP ${response.status}.`);
+        }
+
+        let json;
+        try {
+          json = await response.json();
+        } catch (_) {
+          throw new Error("Pickup Assignment API trả về dữ liệu không phải JSON.");
+        }
+
+        if (json && typeof json.retcode !== "undefined" && Number(json.retcode) !== 0) {
+          throw new Error(json.message || `Pickup Assignment retcode ${json.retcode}.`);
+        }
+
+        return json;
+      } catch (error) {
+        if (error?.name === "AbortError") throw error;
+        lastError = error;
+        if (attempt < maxAttempts) {
+          await sleep(350 * attempt);
+          continue;
+        }
+      }
+    }
+
+    throw lastError || new Error("Không thể gọi Pickup Assignment API.");
+  }
+
+  function localDateEpoch(value, endOfDay = false) {
+    const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) throw new Error("Khoảng ngày Pickup Assignment không hợp lệ.");
+
+    const date = new Date(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3]),
+      endOfDay ? 23 : 0,
+      endOfDay ? 59 : 0,
+      endOfDay ? 59 : 0,
+      0
+    );
+
+    const ts = Math.floor(date.getTime() / 1000);
+    if (!Number.isFinite(ts)) throw new Error("Không thể chuyển khoảng ngày Pickup Assignment.");
+    return ts;
+  }
+
+  async function fetchPickupAssignmentOrders(requestId, startTs, endTs) {
+    const makeUrl = (page) =>
+      PICKUP_SEARCH_URL +
+      `?ctime=${startTs},${endTs}&status=2&pageno=${page}&count=50&fetch_total=0`;
+
+    const firstJson = await fetchPickupJson(makeUrl(1), {method:"GET"});
+    const firstData = firstJson?.data || {};
+    const assignedCount = Math.max(0, Number(firstData.assigned_count || 0));
+    const unique = new Map();
+
+    for (const item of Array.isArray(firstData.list) ? firstData.list : []) {
+      const id = String(item?.pickup_order_id || "");
+      if (id && !unique.has(id)) unique.set(id, item);
+    }
+
+    let pagesFetched = 1;
+    const maxPages = Math.max(1, Math.min(100, Math.ceil(assignedCount / 50)));
+
+    post("SPX_PICKUP_ASSIGNMENT_PROGRESS", {
+      requestId,
+      stage:"search",
+      ordersFound:Math.min(unique.size, assignedCount),
+      total:assignedCount,
+      pagesFetched
+    });
+
+    for (let page = 2; page <= maxPages && unique.size < assignedCount; page += 1) {
+      const json = await fetchPickupJson(makeUrl(page), {method:"GET"});
+      const list = Array.isArray(json?.data?.list) ? json.data.list : [];
+
+      for (const item of list) {
+        const id = String(item?.pickup_order_id || "");
+        if (id && !unique.has(id)) unique.set(id, item);
+      }
+
+      pagesFetched = page;
+      post("SPX_PICKUP_ASSIGNMENT_PROGRESS", {
+        requestId,
+        stage:"search",
+        ordersFound:Math.min(unique.size, assignedCount),
+        total:assignedCount,
+        pagesFetched
+      });
+
+      if (!list.length) break;
+      await sleep(120);
+    }
+
+    return {
+      assignedCount,
+      pagesFetched,
+      orders:Array.from(unique.values()).slice(0, assignedCount)
+    };
+  }
+
+  async function fetchPickupAddress(order) {
+    const shipmentId = String(order?.pickup_order_id || "");
+    if (!shipmentId) return "";
+
+    const dataField = Number(order?.pickup_order_type || 0) === 5
+      ? "buyer_addr"
+      : "seller_addr";
+
+    const url =
+      PICKUP_SENSITIVE_URL +
+      `?shipment_id=${encodeURIComponent(shipmentId)}&data_field=${encodeURIComponent(dataField)}`;
+
+    const json = await fetchPickupJson(url, {method:"GET"});
+    return String(json?.data?.data_detail || "");
+  }
+
+  function pickLatestDriver(json) {
+    const infoList = Array.isArray(json?.data?.pickup_info_list)
+      ? json.data.pickup_info_list
+      : [];
+    const events = [];
+
+    for (const info of infoList) {
+      for (const tracking of Array.isArray(info?.pickup_order_tracking) ? info.pickup_order_tracking : []) {
+        const name = String(tracking?.pickup_driver_name || "").trim();
+        if (!name) continue;
+
+        events.push({
+          name,
+          ctime:Number(tracking?.ctime || 0),
+          remark:String(tracking?.remark || ""),
+          status:String(tracking?.pickup_result || info?.pickup_status || ""),
+          reason:String(tracking?.on_hold_reason || "")
+        });
+      }
+    }
+
+    events.sort((a, b) => b.ctime - a.ctime);
+    if (events.length) return events[0];
+
+    for (const info of infoList) {
+      const names = Array.isArray(info?.driver_name) ? info.driver_name : [];
+      const name = String(names[0] || "").trim();
+      if (!name) continue;
+
+      return {
+        name,
+        ctime:Number(info?.assigned_time || 0),
+        remark:"",
+        status:String(info?.pickup_status || ""),
+        reason:""
+      };
+    }
+
+    return {name:"", ctime:0, remark:"", status:"", reason:""};
+  }
+
+  async function fetchPickupDriver(shipmentId) {
+    const url =
+      PICKUP_INFO_URL +
+      `?shipment_id=${encodeURIComponent(shipmentId)}&station_type=12`;
+    const json = await fetchPickupJson(url, {method:"GET"});
+    return pickLatestDriver(json);
+  }
+
+  async function enrichPickupAssignmentOrders(orders, requestId) {
+    const source = Array.isArray(orders) ? orders : [];
+    const rows = [];
+    const batchSize = 4;
+
+    for (let offset = 0; offset < source.length; offset += batchSize) {
+      const batch = source.slice(offset, offset + batchSize);
+
+      const enriched = await Promise.all(batch.map(async (order) => {
+        const shipmentId = String(order?.pickup_order_id || "");
+        let address = "";
+        let addressError = "";
+        let driver = {name:"", ctime:0, remark:"", status:"", reason:""};
+        let driverError = "";
+
+        try {
+          address = await fetchPickupAddress(order);
+        } catch (error) {
+          if (error?.name === "AbortError") throw error;
+          addressError = String(error?.message || error || "Không lấy được địa chỉ.");
+        }
+
+        try {
+          driver = await fetchPickupDriver(shipmentId);
+        } catch (error) {
+          if (error?.name === "AbortError") throw error;
+          driverError = String(error?.message || error || "Không lấy được tài xế.");
+        }
+
+        return {
+          pickup_order_id:shipmentId,
+          eta:Number(order?.eta || 0),
+          pickup_attempts:Number(order?.pickup_attempts || 0),
+          pickup_order_type:Number(order?.pickup_order_type || 0),
+          pickup_point_name:String(order?.pickup_point_name || ""),
+          pickup_station_name:String(order?.pickup_station_name || ""),
+          fo_service_type_name:String(order?.fo_service_type_name || ""),
+          on_hold_reason_name:String(order?.on_hold_reason_name || ""),
+          address,
+          address_error:addressError,
+          driver_name:String(driver.name || ""),
+          driver_ctime:Number(driver.ctime || 0),
+          driver_remark:String(driver.remark || ""),
+          driver_status:String(driver.status || ""),
+          driver_reason:String(driver.reason || ""),
+          driver_error:driverError
+        };
+      }));
+
+      rows.push(...enriched);
+
+      post("SPX_PICKUP_ASSIGNMENT_PROGRESS", {
+        requestId,
+        stage:"detail",
+        completed:rows.length,
+        total:source.length
+      });
+
+      if (offset + batchSize < source.length) await sleep(180);
+    }
+
+    return rows;
+  }
+
+  async function runPickupAssignment(requestId, rawRange) {
+    pickupController?.abort();
+    pickupController = new AbortController();
+
+    try {
+      const startTs = localDateEpoch(rawRange?.startDate, false);
+      const endTs = localDateEpoch(rawRange?.endDate, true);
+
+      if (startTs > endTs) {
+        throw new Error("Từ ngày phải nhỏ hơn hoặc bằng Đến ngày.");
+      }
+
+      const searchResult = await fetchPickupAssignmentOrders(requestId, startTs, endTs);
+      const rows = await enrichPickupAssignmentOrders(searchResult.orders, requestId);
+
+      post("SPX_PICKUP_ASSIGNMENT_RESULT", {
+        requestId,
+        result:{
+          assigned_count:searchResult.assignedCount,
+          pages_fetched:searchResult.pagesFetched,
+          rows
+        }
+      });
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        post("SPX_PICKUP_ASSIGNMENT_CANCELLED", {requestId});
+      } else {
+        post("SPX_PICKUP_ASSIGNMENT_ERROR", {
+          requestId,
+          message:String(error?.message || error || "Không thể tải Pickup Assignment.")
+        });
+      }
+    } finally {
+      pickupController = null;
+    }
   }
 
   async function findDeliveryExportTask(taskId, requestId) {
@@ -924,11 +1193,9 @@
       fileName
     });
 
-    const response = await safariSameOriginRequest(normalizedPath, {
+    const response = await userscriptFetch(normalizedPath, {
       method: "GET",
-      headers: {
-        Accept: "text/csv,text/plain,*/*"
-      },
+      credentials: "include",
       signal: deliveryController ? deliveryController.signal : undefined
     });
 
@@ -1027,6 +1294,16 @@
       return;
     }
 
+    if (data.type === "SPX_PICKUP_ASSIGNMENT_FETCH") {
+      runPickupAssignment(data.requestId, data.range || {});
+      return;
+    }
+
+    if (data.type === "SPX_PICKUP_ASSIGNMENT_CANCEL") {
+      pickupController?.abort();
+      return;
+    }
+
     if (data.type === "SPX_DELIVERY_EXPORT_RUN") {
       runDeliveryExport(data.requestId, data.startDate);
       return;
@@ -1040,13 +1317,12 @@
   post("SPX_FMS_BRIDGE_READY");
 })();
 
-// ---- FMS status data ----
+// ---- SPX status data ----
 "use strict";
 
 globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","name":"LMHub_Received"},{"code":"2","name":"Delivering"},{"code":"3","name":"Cancelled"},{"code":"4","name":"Delivered"},{"code":"5","name":"OnHold"},{"code":"6","name":"Return_SOC_Returned"},{"code":"7","name":"SOC_PendingReceive"},{"code":"8","name":"SOC_Received"},{"code":"9","name":"SOC_Packing"},{"code":"10","name":"Return_LMHub_Received"},{"code":"11","name":"Lost"},{"code":"12","name":"Damaged"},{"code":"13","name":"SOC_Pickup_Done"},{"code":"14","name":"Return_Failed"},{"code":"15","name":"SOC_LHTransporting"},{"code":"18","name":"SOC_Handover"},{"code":"26","name":"Disposed"},{"code":"30","name":"SOC_Pickup_Onhold"},{"code":"31","name":"SOC_Pickup_Failed"},{"code":"32","name":"SOC_Pickup_Handedover"},{"code":"33","name":"SOC_Packed"},{"code":"34","name":"SOC_LHPacking"},{"code":"35","name":"SOC_LHPacked"},{"code":"36","name":"SOC_LHTransported"},{"code":"37","name":"FMHub_Pickup_Onhold"},{"code":"38","name":"FMHub_Pickup_Failed"},{"code":"39","name":"FMHub_Pickup_Done"},{"code":"40","name":"FMHub_Pickup_Handedover"},{"code":"41","name":"FMHub_PendingReceive"},{"code":"42","name":"FMHub_Received"},{"code":"43","name":"FMHub_Packing"},{"code":"44","name":"FMHub_Packed"},{"code":"45","name":"FMHub_LHPacking"},{"code":"46","name":"FMHub_LHPacked"},{"code":"47","name":"FMHub_LHTransporting"},{"code":"48","name":"FMHub_LHTransported"},{"code":"49","name":"LMHub_Assigning"},{"code":"50","name":"LMHub_Assigned"},{"code":"51","name":"Collected"},{"code":"52","name":"Return_LMHub_Packing"},{"code":"53","name":"Return_LMHub_Packed"},{"code":"54","name":"Return_LMHub_LHPacking"},{"code":"55","name":"Return_LMHub_LHPacked"},{"code":"56","name":"Return_LMHub_LHTransporting"},{"code":"57","name":"Return_LMHub_LHTransported"},{"code":"58","name":"Return_SOC_Received"},{"code":"59","name":"Return_SOC_Packing"},{"code":"60","name":"Return_SOC_Packed"},{"code":"61","name":"Return_SOC_LHPacking"},{"code":"62","name":"Return_SOC_LHPacked"},{"code":"63","name":"Return_SOC_Returning"},{"code":"64","name":"Return_SOC_LHTransporting"},{"code":"65","name":"Return_SOC_LHTransported"},{"code":"66","name":"Return_SOC_Onhold"},{"code":"67","name":"Return_FMHub_Received"},{"code":"68","name":"Return_FMHub_Packing"},{"code":"69","name":"Return_FMHub_Packed"},{"code":"70","name":"Return_FMHub_LHPacking"},{"code":"71","name":"Return_FMHub_LHPacked"},{"code":"72","name":"Return_FMHub_Returning"},{"code":"73","name":"Return_FMHub_Returned"},{"code":"74","name":"Return_FMHub_Onhold"},{"code":"75","name":"3PL_PickupDone"},{"code":"76","name":"3PL_HubReceived"},{"code":"77","name":"3PL_HubOutbound"},{"code":"78","name":"3PL_InTransit"},{"code":"79","name":"3PL_Assigned"},{"code":"80","name":"3PL_Onhold"},{"code":"81","name":"3PL_Delivered"},{"code":"82","name":"Exception_Packing"},{"code":"83","name":"Exception_Packed"},{"code":"84","name":"Exception_LHPacking"},{"code":"85","name":"Exception_LHPacked"},{"code":"86","name":"Exception_LHTransporting"},{"code":"87","name":"Exception_LHTransported"},{"code":"89","name":"3PL_Received"},{"code":"90","name":"3PL_Transporting"},{"code":"91","name":"3PL_Delivering"},{"code":"92","name":"3PL_Ready_For_Collection"},{"code":"93","name":"3PL_Return_Started"},{"code":"94","name":"3PL_Returning"},{"code":"95","name":"3PL_Returned"},{"code":"96","name":"3PL_Lost"},{"code":"97","name":"3PL_SOC_Inbound"},{"code":"98","name":"3PL_SOC_Outbound"},{"code":"99","name":"3PL_LMHub_Inbound"},{"code":"100","name":"3PL_Others"},{"code":"101","name":"SOC_FLTransporting1"},{"code":"102","name":"SOC_FLTransporting2"},{"code":"103","name":"SOC_FLOnhold"},{"code":"104","name":"SOC_FLTransporting3"},{"code":"106","name":"Return_LMHub_FLTransporting1"},{"code":"107","name":"Return_LMHub_FLTransporting2"},{"code":"108","name":"Return_LMHub_FLOnhold"},{"code":"109","name":"Return_LMHub_FLTransporting3"},{"code":"111","name":"DOP_Created"},{"code":"112","name":"DOP_Received"},{"code":"113","name":"DOP_InProgress"},{"code":"114","name":"Reallocate"},{"code":"115","name":"Return_FMHub_Assigning"},{"code":"116","name":"Return_FMHub_Assigned"},{"code":"117","name":"Return_SOC_Assigning"},{"code":"118","name":"Return_SOC_Assigned"},{"code":"119","name":"Return_LMHub_Assigning"},{"code":"120","name":"Return_LMHub_Assigned"},{"code":"121","name":"Return_FMHub_Processed"},{"code":"122","name":"Return_SOC_Processed"},{"code":"123","name":"Return_LMHub_Processed"},{"code":"124","name":"Return_LMHub_Returning"},{"code":"125","name":"Return_LMHub_Returned"},{"code":"126","name":"Return_LMHub_Onhold"},{"code":"127","name":"SOC_OrderLevelHandover"},{"code":"128","name":"SOC_pickup_retry"},{"code":"129","name":"FMHub_pickup_retry"},{"code":"130","name":"SOC_pickup_pending_failed"},{"code":"131","name":"FMHub_pickup_pending_failed"},{"code":"137","name":"LMHub_Delivery_transfer"},{"code":"138","name":"LMHub_BAT_Assigned"},{"code":"140","name":"SP_Ready_Collection"},{"code":"141","name":"SP_Collection_Reminder1"},{"code":"142","name":"SP_Collection_Reminder2"},{"code":"143","name":"SP_Collection_Reminder3"},{"code":"144","name":"SP_Collection_Reminder4"},{"code":"145","name":"SP_Collection_Collected"},{"code":"146","name":"SP_Collection_Failed"},{"code":"147","name":"SP_Returning"},{"code":"148","name":"SP_Collection_OnHold"},{"code":"149","name":"Transporting_to_sp"},{"code":"150","name":"Transported_to_sp"},{"code":"151","name":"Return_FMHub_Pickup_Done"},{"code":"152","name":"Return_SOC_Pickup_Done"},{"code":"153","name":"Return_SOC_Handover"},{"code":"170","name":"Return_SOC_Pickup_Created"},{"code":"171","name":"Return_FMHub_Pickup_Created"},{"code":"174","name":"Return_SOC_Pickup_Onhold"},{"code":"175","name":"Return_FMHub_Pickup_Onhold"},{"code":"178","name":"Return_SOC_Pickup_Handedover"},{"code":"179","name":"Return_FMHub_Pickup_Handedover"},{"code":"182","name":"Return_LMHub_Transporting_to_sp"},{"code":"183","name":"Return_LMHub_Transported_to_sp"},{"code":"184","name":"Return_SP_Ready_Collection"},{"code":"185","name":"Return_SP_Collection_Reminder1"},{"code":"186","name":"Return_SP_Collection_Reminder2"},{"code":"187","name":"Return_SP_Collection_Reminder3"},{"code":"188","name":"Return_SP_Collection_Reminder4"},{"code":"189","name":"Return_SP_Collection_Collected"},{"code":"190","name":"Return_SP_Collection_Failed"},{"code":"191","name":"Return_SOC_Pickup_Created_To_Disposal"},{"code":"192","name":"Return_FMHub_Pickup_Created_To_Disposal"},{"code":"193","name":"Return_SOC_Pickup_Done_To_Disposal"},{"code":"194","name":"Return_FMHub_Pickup_Done_To_Disposal"},{"code":"195","name":"Return_SOC_Pickup_Onhold_To_Disposal"},{"code":"196","name":"Return_FMHub_Pickup_Onhold_To_Disposal"},{"code":"199","name":"Return_SOC_Pickup_Handedover_To_Disposal"},{"code":"200","name":"Return_FMHub_Pickup_Handedover_To_Disposal"},{"code":"201","name":"Return_SOC_To_Disposal"},{"code":"202","name":"Return_FMHub_To_Disposal"},{"code":"203","name":"Return_SP_Returning"},{"code":"204","name":"Return_FMHub_Transported_to_sp"},{"code":"205","name":"Return_FMHub_Transporting_to_sp"},{"code":"206","name":"Return_SOC_Transported_to_sp"},{"code":"207","name":"Return_SOC_Transporting_to_sp"},{"code":"208","name":"Return_SOC_Collected"},{"code":"209","name":"Return_SP_Returned"},{"code":"210","name":"LMHub_Packing"},{"code":"211","name":"LMHub_Packed"},{"code":"221","name":"SOC_Manifest_Received"},{"code":"222","name":"Fraud_Order_Intercepted"},{"code":"231","name":"LMHub_LHPacking"},{"code":"232","name":"LMHub_LHPacked"},{"code":"233","name":"LMHub_LHTransporting"},{"code":"234","name":"LMHub_LHTransported"},{"code":"235","name":"Return_FMHub_LHTransporting"},{"code":"236","name":"Return_FMHub_LHTransported"},{"code":"250","name":"RETURN_LMHUB_TO_DISPOSAL"},{"code":"251","name":"RETURN_HUB_TO_DISPOSAL"},{"code":"300","name":"SP_Packing"},{"code":"301","name":"SP_Packed"},{"code":"302","name":"Return_SP_Packing"},{"code":"303","name":"Return_SP_Packed"},{"code":"304","name":"Return_SP_Packing_To_Disposal"},{"code":"305","name":"Return_SP_Packed_To_Disposal"},{"code":"306","name":"SP_Pickup_Done"},{"code":"310","name":"SP_Outbounding"},{"code":"311","name":"Return_SP_Outbounding"},{"code":"312","name":"SP_Unpaid"},{"code":"313","name":"Station_Weighing_Done"},{"code":"314","name":"Locker_Booked_Success"},{"code":"315","name":"Locker_Booked_Failed"},{"code":"316","name":"Transported_to_Locker"},{"code":"317","name":"Locker_Ready_Collection"},{"code":"318","name":"Locker_Collection_Failed"},{"code":"319","name":"Return_Locker_Timeout"},{"code":"320","name":"Return_Driver_Retrieved"},{"code":"321","name":"Return_Locker_Retrieved"},{"code":"322","name":"Locker_Collection_Collected"},{"code":"323","name":"Locker_Ready_Collection_Reminder1"},{"code":"324","name":"Locker_Ready_Collection_Reminder2"},{"code":"325","name":"Locker_Ready_Collection_Reminder3"},{"code":"330","name":"SP_LHPacking"},{"code":"331","name":"SP_LHPacked"},{"code":"332","name":"SP_LHTransporting"},{"code":"333","name":"SP_LHTransported"},{"code":"334","name":"Return_SP_LHPacking"},{"code":"335","name":"Return_SP_LHPacked"},{"code":"336","name":"Return_SP_LHTransporting"},{"code":"337","name":"Return_SP_LHTransported"},{"code":"338","name":"Return_SP_LHPacking_To_Disposal"},{"code":"339","name":"Return_SP_LHPacked_To_Disposal"},{"code":"340","name":"Return_SP_LHTransporting_To_Disposal"},{"code":"341","name":"Return_SP_LHTransported_To_Disposal"},{"code":"342","name":"Return_SOC_Received_To_Disposal"},{"code":"343","name":"SOC_Collected"},{"code":"400","name":"Hub_Received"},{"code":"401","name":"Hub_PendingReceive"},{"code":"402","name":"Hub_Pickup_Onhold"},{"code":"403","name":"Hub_Pickup_Failed"},{"code":"404","name":"Hub_Pickup_Done"},{"code":"405","name":"Hub_Pickup_Handedover"},{"code":"406","name":"Hub_Pickup_Retry"},{"code":"407","name":"Hub_Pickup_Pending_Failed"},{"code":"408","name":"Hub_Manifest_Received"},{"code":"409","name":"Hub_Packing"},{"code":"410","name":"Hub_Packed"},{"code":"411","name":"Hub_LHPacking"},{"code":"412","name":"Hub_LHPacked"},{"code":"413","name":"Hub_Handover"},{"code":"414","name":"Hub_OrderLevelHandover"},{"code":"415","name":"Hub_LHTransporting"},{"code":"416","name":"Hub_LHTransported"},{"code":"417","name":"Hub_Assigning"},{"code":"418","name":"Hub_Assigned"},{"code":"419","name":"Hub_BAT_Assigned"},{"code":"420","name":"Hub_Delivery_transfer"},{"code":"440","name":"Return_Hub_Received"},{"code":"441","name":"Return_Hub_Pickup_Created"},{"code":"442","name":"Return_Hub_Pickup_Done"},{"code":"443","name":"Return_Hub_Pickup_Handedover"},{"code":"444","name":"Return_Hub_Pickup_Onhold"},{"code":"445","name":"Return_Hub_Pickup_Created_to_Disposal"},{"code":"446","name":"Return_Hub_Pickup_Done_to_Disposal"},{"code":"447","name":"Return_Hub_Pickup_Handedover_to_Disposal"},{"code":"448","name":"Return_Hub_Pickup_Onhold_to_Disposal"},{"code":"449","name":"Return_Hub_Packing"},{"code":"450","name":"Return_Hub_Packed"},{"code":"451","name":"Return_Hub_LHPacking"},{"code":"452","name":"Return_Hub_LHPacked"},{"code":"453","name":"Return_Hub_Handover"},{"code":"454","name":"Return_Hub_LHTransporting"},{"code":"455","name":"Return_Hub_LHTransported"},{"code":"456","name":"Return_Hub_Assigning"},{"code":"457","name":"Return_Hub_Assigned"},{"code":"458","name":"Return_Hub_Onhold"},{"code":"459","name":"Return_Hub_Returning"},{"code":"460","name":"Return_Hub_Returned"},{"code":"461","name":"Return_Hub_Transporting_to_sp"},{"code":"462","name":"Return_Hub_Transported_to_sp"},{"code":"463","name":"Return_Hub_Processed"},{"code":"464","name":"Return_Hub_Collected"},{"code":"550","name":"Liquidating"},{"code":"551","name":"Liquidated"},{"code":"552","name":"FMHub_Pickup_Handover_Onhold"},{"code":"553","name":"SOC_Pickup_Handover_Onhold"},{"code":"554","name":"Hub_Pickup_Handover_Onhold"},{"code":"555","name":"Return_FMHub_Pickup_Handover_Onhold"},{"code":"556","name":"Return_SOC_Pickup_Handover_Onhold"},{"code":"557","name":"Return_Hub_Pickup_Handover_Onhold"},{"code":"558","name":"Disposal_FMHub_Pickup_Handover_Onhold"},{"code":"559","name":"Disposal_SOC_Pickup_Handover_Onhold"},{"code":"560","name":"Disposal_Hub_Pickup_Handover_Onhold"},{"code":"561","name":"Buyer_Return_FMHub_Pickup_Handover_Onhold"},{"code":"562","name":"Buyer_Return_Disposal_SOC_Pickup_Handover_Onhold"},{"code":"563","name":"Buyer_Return_Disposal_hub_Pickup_Handover_Onhold"},{"code":"570","name":"Pending Intercept"},{"code":"571","name":"Intercepting"},{"code":"572","name":"Cancel Intercept"},{"code":"573","name":"Intercepted"},{"code":"574","name":"EHA Inbound"},{"code":"575","name":"EHA Resolved"},{"code":"580","name":"Parcel_Sweeper_Scan"},{"code":"581","name":"Missing"},{"code":"582","name":"FMhub_Pickup_Transfer_to_Driver"},{"code":"583","name":"SOC_Pickup_Transfer_to_Driver"},{"code":"584","name":"Hub_Pickup_Transfer_to_Driver"},{"code":"585","name":"Return_FMhub_Pickup_Transfer_to_Driver"},{"code":"586","name":"Return_Hub_Pickup_Transfer_to_Driver"},{"code":"587","name":"Return_SOC_Pickup_Transfer_to_Driver"},{"code":"588","name":"Disposal_FMhub_Pickup_Transfer_to_Driver"},{"code":"589","name":"Disposal_Hub_Pickup_Transfer_to_Driver"},{"code":"590","name":"Disposal_SOC_Pickup_Transfer_to_Driver"},{"code":"591","name":"FMhub_Pickup_Handedover_to_Station"},{"code":"592","name":"SOC_Pickup_Handedover_to_Station"},{"code":"593","name":"Hub_Pickup_Handedover_to_Station"},{"code":"594","name":"Return_FMhub_Pickup_Handedover_to_Station"},{"code":"595","name":"Return_SOC_Pickup_Handedover_to_Station"},{"code":"596","name":"Return_Hub_Pickup_Handedover_to_Station"},{"code":"597","name":"Disposal_FMhub_Pickup_Handedover_to_Station"},{"code":"598","name":"Disposal_SOC_Pickup_Handedover_to_Station"},{"code":"599","name":"Disposal_Hub_Pickup_Handedover_to_Station"},{"code":"600","name":"FMhub_Pickup_Transfer_Driver_Onhold"},{"code":"601","name":"SOC_Pickup_Transfer_Driver_Onhold"},{"code":"602","name":"Hub_Pickup_Transfer_Driver_Onhold"},{"code":"603","name":"Return_FMhub_Pickup_Transfer_Driver_Onhold"},{"code":"604","name":"Return_SOC_Pickup_Transfer_Driver_Onhold"},{"code":"605","name":"Return_Hub_Pickup_Transfer_Driver_Onhold"},{"code":"606","name":"Disposal_FMhub_Pickup_Transfer_Driver_Onhold"},{"code":"607","name":"Disposal_SOC_Pickup_Transfer_Driver_Onhold"},{"code":"608","name":"Disposal_Hub_Pickup_Transfer_Driver_Onhold"},{"code":"609","name":"Abandoned_track_code_1"},{"code":"610","name":"Liquidate_Packing"},{"code":"611","name":"Liquidate_Packed"},{"code":"612","name":"Liquidate_LHPacking"},{"code":"613","name":"Liquidate_LHPacked"},{"code":"614","name":"Liquidate_LHTransporting"},{"code":"615","name":"Liquidate_LHTransported"},{"code":"616","name":"Liquidate_Received"},{"code":"617","name":"LiquidatePallet_Packing"},{"code":"618","name":"LiquidatePallet_Packed"},{"code":"619","name":"Return_LMHub_Delivery_Transfer"},{"code":"620","name":"Return_Hub_Delivery_Transfer"},{"code":"621","name":"SOC_Intra_Handover_Packing"},{"code":"622","name":"SOC_Intra_Handover_Packed"},{"code":"623","name":"SOC_Intra_Handover_Received"},{"code":"624","name":"SOC_Pending_Processing"},{"code":"625","name":"Return_SOC_Intra_Handover_Packing"},{"code":"626","name":"Return_SOC_Intra_Handover_Packed"},{"code":"627","name":"Return_SOC_Intra_Handover_Received"},{"code":"628","name":"Return_SOC_Pending_Processing"},{"code":"629","name":"ASM_Rejected"},{"code":"630","name":"SOC_Staging"},{"code":"631","name":"Return_SOC_Staging"},{"code":"632","name":"FMHub_Staging"},{"code":"633","name":"Return_FMHub_Staging"},{"code":"634","name":"LMHub_Staging"},{"code":"635","name":"Return_LMHub_Staging"},{"code":"636","name":"Hub_Staging"},{"code":"637","name":"Return_Hub_Staging"},{"code":"638","name":"FMHub_Pending_Processing"},{"code":"639","name":"LMHub_Pending_Processing"},{"code":"640","name":"Hub_Pending_Processing"},{"code":"641","name":"Return_FMHub_Pending_Processing"},{"code":"642","name":"Return_LMHub_Pending_Processing"},{"code":"643","name":"Return_Hub_Pending_Processing"},{"code":"644","name":"MAWB_Grouped"},{"code":"645","name":"Return_MAWB_Grouped"},{"code":"646","name":"Exception_Reason_Resolved"},{"code":"647","name":"Exception_Reason_Expired"},{"code":"648","name":"Exception_Reason_Cancelled"},{"code":"649","name":"Pending_Delivery_Address_Update"},{"code":"650","name":"Exception_Reason_Added"},{"code":"651","name":"Send_PN_To_Recipient"},{"code":"652","name":"Send_PN_To_Sender"},{"code":"653","name":"Return_Hub_BAT_Assigned"},{"code":"654","name":"VIPSeller_Pickup_Packing"},{"code":"655","name":"VIPSeller_Pickup_Packed"},{"code":"656","name":"Return_SOC_Stage_Out"},{"code":"657","name":"SOC_Stage_Out"},{"code":"658","name":"FMHub_Pickup_Assigned"},{"code":"659","name":"SOC_Pickup_Assigned"},{"code":"660","name":"Hub_Pickup_Assigned"},{"code":"661","name":"3PL_Reverse_Transporting"},{"code":"662","name":"3PL_Reverse_Handover"},{"code":"663","name":"3PL_Reverse_Returning"},{"code":"664","name":"3PL_Reverse_Returned"},{"code":"665","name":"3PL_Reverse_Onhold"},{"code":"666","name":"Return_SOC_Cache_Packing"},{"code":"667","name":"Return_FMHub_Cache_Packing"},{"code":"668","name":"Return_LMHub_Cache_Packing"},{"code":"669","name":"Return_Hub_Cache_Packing"},{"code":"670","name":"Return_SOC_Cache_Packed"},{"code":"671","name":"Return_FMHub_Cache_Packed"},{"code":"672","name":"Return_LMHub_Cache_Packed"},{"code":"673","name":"Return_Hub_Cache_Packed"},{"code":"679","name":"SOC_Cache_Packing"},{"code":"680","name":"FMHub_Cache_Packing"},{"code":"681","name":"LMHub_Cache_Packing"},{"code":"682","name":"Hub_Cache_Packing"},{"code":"683","name":"SOC_Cache_Packed"},{"code":"684","name":"FMHub_Cache_Packed"},{"code":"685","name":"LMHub_Cache_Packed"},{"code":"686","name":"Hub_Cache_Packed"},{"code":"715","name":"LMHub_Feeder_Transferring"},{"code":"716","name":"LMHub_Feeder_Transferred"},{"code":"718","name":"LMHub_Feeder_Onhold_Transferring"},{"code":"719","name":"LMHub_Feeder_Onhold_Transferred"},{"code":"720","name":"Return_LMHub_Feeder_Transferring"},{"code":"721","name":"Return_Hub_Feeder_Transferring"},{"code":"722","name":"Return_LMHub_Feeder_Transferred"},{"code":"723","name":"Return_Hub_Feeder_Transferred"},{"code":"726","name":"Return_LMHub_Feeder_Onhold_Transferring"},{"code":"727","name":"Return_Hub_Feeder_Onhold_Transferring"},{"code":"728","name":"Return_LMHub_Feeder_Onhold_Transferred"},{"code":"729","name":"Return_Hub_Feeder_Onhold_Transferred"},{"code":"730","name":"Disposing"},{"code":"731","name":"Disposal_Received"},{"code":"732","name":"Disposal_Packing"},{"code":"733","name":"Disposal_Packed"},{"code":"734","name":"Disposal_LHPacking"},{"code":"735","name":"Disposal_LHPacked"},{"code":"736","name":"Disposal_LHTransporting"},{"code":"737","name":"Disposal_LHTransported"},{"code":"738","name":"Return_FMHub_Pickup_Assigned"},{"code":"739","name":"Return_SOC_Pickup_Assigned"},{"code":"740","name":"Return_Hub_Pickup_Assigned"},{"code":"745","name":"Locker_DOP_Received"},{"code":"746","name":"Locker_Retrieved"},{"code":"747","name":"Locker_Retrieval_Timeout"},{"code":"749","name":"LMHub_MH_Handedover"},{"code":"750","name":"Intercepted_at_SP"},{"code":"751","name":"Exception_Reason_Rejected"},{"code":"782","name":"SP_HD_Received"},{"code":"783","name":"SP_Ready_for_Delivering"},{"code":"784","name":"Return_SP_HD_Received"},{"code":"785","name":"Station_Container_Packing"},{"code":"786","name":"Return_Station_Container_Packing"},{"code":"787","name":"Station_Container_Packed"},{"code":"788","name":"Return_Station_Container_Packed"},{"code":"789","name":"SP_HD_Assigning"},{"code":"790","name":"SP_HD_Assigned"},{"code":"791","name":"Interception_Pickup_Done"},{"code":"792","name":"Interception_Pickup_Onhold"},{"code":"793","name":"Interception_Pickup_Transfer_to_Driver"},{"code":"794","name":"Interception_Pickup_Handedover_to_Station"},{"code":"795","name":"Interception_Pickup_Assigned"},{"code":"796","name":"Interception_Pickup_Handover_Onhold"},{"code":"797","name":"Interception_Pickup_Retry"},{"code":"798","name":"Interception_Pickup_Failed"},{"code":"799","name":"Interception_Pickup_Pending_Failed"},{"code":"800","name":"Interception_Transfer_Driver_Onhold"},{"code":"801","name":"SP_HD_Delivery_transfer"},{"code":"802","name":"WHS_Received"},{"code":"803","name":"WHS_Packing"},{"code":"804","name":"WHS_Packed"},{"code":"805","name":"WHS_Handover"},{"code":"806","name":"WHS_LHPacking"},{"code":"807","name":"WHS_LHPacked"},{"code":"808","name":"WHS_LHTransporting"},{"code":"809","name":"WHS_LHTransported"},{"code":"810","name":"Return_WHS_Received"},{"code":"811","name":"Return_WHS_Packing"},{"code":"812","name":"Return_WHS_Packed"},{"code":"813","name":"Return_WHS_LHPacking"},{"code":"814","name":"Return_WHS_LHPacked"},{"code":"815","name":"Return_WHS_LHTransporting"},{"code":"816","name":"Return_WHS_LHTransported"},{"code":"817","name":"WHS_Staging"},{"code":"818","name":"Return_WHS_Staging"},{"code":"819","name":"WHS_Pending_Process"},{"code":"820","name":"Return_WHS_Pending_Process"},{"code":"821","name":"WHS_Stage_Out"},{"code":"822","name":"Return_WHS_Stage_Out"},{"code":"823","name":"Return_WHS_Handover"},{"code":"824","name":"WHS_Intra_Handover_Packed"},{"code":"825","name":"Return_WHS_Intra_Handover_Packed"},{"code":"826","name":"WHS_Intra_Handover_Packing"},{"code":"827","name":"Return_WHS_Intra_Handover_Packing"},{"code":"828","name":"WHS_Intra_Handover_Received"},{"code":"829","name":"Return_WHS_Intra_Handover_Received"},{"code":"830","name":"WHS_Manifest_Received"},{"code":"831","name":"Return_WHS_Returned"},{"code":"832","name":"Exception_SP_Packing"},{"code":"833","name":"Exception_SP_Packed"},{"code":"835","name":"Send_PN_to_Recipient_Reroute"},{"code":"836","name":"3PL_Reverse_Pickup_Failed"},{"code":"837","name":"Hub_Feeder_Transferred"},{"code":"838","name":"Hub_Feeder_Transferring"},{"code":"839","name":"Hub_Feeder_Onhold_Transferring"},{"code":"840","name":"Hub_Feeder_Onhold_Transferred"},{"code":"841","name":"Return_Holding"},{"code":"842","name":"Delivery_Holding"},{"code":"843","name":"SP_Pitstop_Received"},{"code":"844","name":"Return_SP_Pitstop_Received"},{"code":"845","name":"SP_Pitstop_Outbound"},{"code":"846","name":"Return_SP_Pitstop_Outbound"},{"code":"847","name":"Escalation_Ticket_Send_PN"},{"code":"848","name":"SOC_Sorting"},{"code":"849","name":"Return_SOC_Sorting"},{"code":"867","name":"Parcel_Confiscated"},{"code":"870","name":"Locker_Booked_Expired"},{"code":"872","name":"Transporting_to_Locker"},{"code":"873","name":"Hub_Intra_Handover_Packed"},{"code":"874","name":"Hub_Intra_Handover_Received"},{"code":"875","name":"Return_Hub_Intra_Handover_Packing"},{"code":"876","name":"Return_Hub_Intra_Handover_Packed"},{"code":"877","name":"Return_Hub_Intra_Handover_Received"},{"code":"878","name":"Hub_Intra_Handover_Packing"},{"code":"879","name":"FMHub_LHArrived"},{"code":"880","name":"LMHub_LHArrived"},{"code":"881","name":"Hub_LHArrived"},{"code":"882","name":"SOC_LHArrived"},{"code":"883","name":"WHS_LHArrived"},{"code":"884","name":"Return_FMHub_LHArrived"},{"code":"885","name":"Return_LMHub_LHArrived"},{"code":"886","name":"Return_Hub_LHArrived"},{"code":"887","name":"Return_SOC_LHArrived"},{"code":"888","name":"Return_WHS_LHArrived"},{"code":"889","name":"Airhub_LHTransported"},{"code":"890","name":"Airhub_AHPacked"},{"code":"891","name":"Airhub_AHTransporting"},{"code":"892","name":"Airhub_AHTransported"},{"code":"893","name":"Airhub_retained"},{"code":"894","name":"Airhub_Released"},{"code":"895","name":"Airhub_LHPacked"},{"code":"897","name":"Task_Completed"},{"code":"904","name":"SP_Collection_Extended"},{"code":"905","name":"SP_Collection_Extended_Reminder1"},{"code":"906","name":"SP_Collection_Extended_Reminder2"},{"code":"907","name":"SP_Collection_Extended_Reminder3"},{"code":"908","name":"3PL_Delivery_Cancelled"},{"code":"909","name":"Locker_Deposit_Confirmed"},{"code":"913","name":"SP_Returned_On_the_Spot"},{"code":"914","name":"Hub_LHUnloading"},{"code":"915","name":"Return_Hub_LHUnloading"},{"code":"916","name":"FMHub_LHUnloading"},{"code":"917","name":"Return_FMHub_LHUnloading"},{"code":"918","name":"SOC_LHUnloading"},{"code":"919","name":"Return_SOC_LHUnloading"},{"code":"920","name":"LMHub_LHUnloading"},{"code":"921","name":"Return_LMHub_LHUnloading"},{"code":"922","name":"WHS_LHUnloading"},{"code":"923","name":"Return_WHS_LHUnloading"},{"code":"924","name":"HUB_LHUnloaded"},{"code":"925","name":"Return_HUB_LHUnloaded"},{"code":"926","name":"FMHub_LHUnloaded"},{"code":"927","name":"Return_FMHub_LHUnloaded"},{"code":"928","name":"SOC_LHUnloaded"},{"code":"929","name":"Return_SOC_LHUnloaded"},{"code":"930","name":"LMHub_LHUnloaded"},{"code":"931","name":"Return_LMHub_LHUnloaded"},{"code":"932","name":"WHS_LHUnloaded"},{"code":"933","name":"Return_WHS_LHUnloaded"},{"code":"934","name":"LMHub_Sorted"},{"code":"935","name":"Hub_Sorted"},{"code":"937","name":"SP_LHUnloading"},{"code":"938","name":"Return_SP_LHUnloading"},{"code":"939","name":"SP_LHUnloaded"},{"code":"940","name":"Return_SP_LHUnloaded"},{"code":"945","name":"SP_LHArrived"},{"code":"946","name":"Return_SP_LHArrived"},{"code":"947","name":"MAWB_Removed"},{"code":"948","name":"Return_MAWB_Removed"},{"code":"949","name":"MAWB_Added"},{"code":"950","name":"Return_MAWB_Added"},{"code":"951","name":"SP_DOP_OUTBOUND"},{"code":"953","name":"LMHub_Sorting"},{"code":"954","name":"Hub_Sorting"},{"code":"970","name":"Intercepted_at_Locker"},{"code":"989","name":"FMHub_Pickup_Sorted"},{"code":"990","name":"SOC_Pickup_Sorted"},{"code":"991","name":"Hub_Pickup_Sorted"},{"code":"992","name":"SP_Pickup_Sorted"},{"code":"993","name":"Return_SOC_Pickup_Sorted"},{"code":"994","name":"Return_Hub_Pickup_Sorted"},{"code":"995","name":"Return_FMHub_Pickup_Sorted"},{"code":"996","name":"Return_SP_Pickup_Sorted"},{"code":"5001","name":"TO_Created"},{"code":"5002","name":"TO_CTPacking"},{"code":"5003","name":"TO_CTUnpacking  "},{"code":"5004","name":"TO_CTPacked"},{"code":"5005","name":"TO_LHTransporting"},{"code":"5006","name":"TO_LHTransported"},{"code":"5007","name":"TO_Received"},{"code":"5008","name":"TO_DOP_Received"},{"code":"5009","name":"TO_LHPacking"},{"code":"5010","name":"TO_LHPacked"},{"code":"6001","name":"Installation_Created"},{"code":"6002","name":"Assigning"},{"code":"6003","name":"Assigned_Done"},{"code":"6004","name":"Installation_Cancelled"},{"code":"6005","name":"In_Transit"},{"code":"6006","name":"Installed"},{"code":"6007","name":"On_Hold"},{"code":"6008","name":"Installation_Failed"},{"code":"6009","name":"Closed"},{"code":"16211","name":"FMHub_Handover"}];
 
-
-// ---- SPX Operations UI ----
+// ---- SPX responsive UI ----
 (() => {
   "use strict";
 
@@ -1059,6 +1335,9 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
   const STATUS_MAP = new Map(STATUSES.map(x => [String(x.code), x.name]));
   const DEFAULT_STATUSES = ["880", "36", "15"];
   const PAGE_SIZE = 25;
+  const APP_ICON_URL = globalThis.chrome?.runtime?.getURL
+    ? chrome.runtime.getURL("icons/icon-48.png")
+    : "";
 
   function localDateInputValue(date) {
     const d = date || new Date();
@@ -1076,6 +1355,18 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     rows:[], total:0, applied:null,
     search:"", aging:"ALL", orderStatus:"ALL", page:1,
     picker:false, error:"", progress:"",
+    pickup:{
+      startDate:localDateInputValue(new Date(Date.now() - 92 * 86400000)),
+      endDate:localDateInputValue(new Date()),
+      loading:false,
+      requestId:"",
+      progress:"",
+      error:"",
+      rows:[],
+      total:0,
+      page:1,
+      driverFilter:"ALL"
+    },
     delivery:{
       startDate:localDateInputValue(new Date()),
       loading:false,
@@ -1104,6 +1395,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       close:'<path d="M6 6l12 12M18 6L6 18"/>',
       fms:'<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="9"/>',
       delivery:'<path d="M4 20V11M10 20V5M16 20v-8M22 20H2"/>',
+      pickup:'<path d="M3 6h11v10H3z"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M5 10h5"/>',
       image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 15l-5-5L5 20"/>',
       download:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
       send:'<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/>',
@@ -1218,15 +1510,21 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
   }
 
   const host = document.createElement("div");
-  host.style.cssText = "position:fixed;left:18px;top:18px;z-index:2147483646";
+  host.style.cssText = "position:fixed;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));z-index:2147483646";
   const shadow = host.attachShadow({mode:"open"});
   document.documentElement.appendChild(host);
 
+  const fontLink = document.createElement("link");
+  fontLink.rel = "stylesheet";
+  fontLink.href = "https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap";
+  shadow.appendChild(fontLink);
+
   const style = document.createElement("style");
   style.textContent = `
-    :host{all:initial;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,Arial,sans-serif;color:#26292e}
+    :host{all:initial;font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;color:#26292e}
     *{box-sizing:border-box}button,input,select{font:inherit}button{cursor:pointer}
-    .launch{height:50px;padding:0 18px;border:0;border-radius:14px;background:#ee4d2d;color:#fff;font-weight:900;box-shadow:0 12px 30px #0003}
+    .launch{width:42px;height:42px;padding:0;border:0;border-radius:12px;background:transparent;color:#fff;box-shadow:0 8px 22px #0002;display:grid;place-items:center}
+    .launch-icon{width:42px;height:42px;border-radius:12px;display:block;object-fit:cover}
     .app{position:fixed;inset:0;width:100vw;height:100vh;background:#f5f6f8;display:flex;flex-direction:column;z-index:2147483647}
     .header{height:68px;flex:0 0 68px;padding:0 22px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between}
     .brand{display:flex;align-items:center;gap:12px}.logo{width:40px;height:40px;border-radius:12px;background:#ee4d2d;color:#fff;display:grid;place-items:center;font-weight:950}
@@ -1248,7 +1546,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     .meta{padding:8px 12px;background:#fbfcfd;border-bottom:1px solid #e7e9ed;font-size:9.5px;color:#727b86;display:flex;justify-content:space-between;gap:10px}
     .tablewrap{overflow:auto;max-height:calc(100vh - 305px);min-height:300px}table{width:100%;border-collapse:separate;border-spacing:0;min-width:1450px}
     th,td{padding:10px 11px;border-bottom:1px solid #edf0f2;text-align:left;vertical-align:top}th{position:sticky;top:0;z-index:2;background:#f8f9fa;font-size:9px;text-transform:uppercase;color:#646d78}td{font-size:10.5px;color:#505861}
-    tbody tr:hover td{background:#fffaf8}.mono{font-family:ui-monospace,Consolas,monospace;font-weight:850;color:#30363d}.badge{display:inline-block;padding:3px 6px;border-radius:7px;background:#fff0ec;color:#c54429;font-size:9px;font-weight:900}.small{font-size:9px;color:#7b8490;margin-top:3px}
+    tbody tr:hover td{background:#fffaf8}.mono{font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;font-weight:800;color:#30363d}.badge{display:inline-block;padding:3px 6px;border-radius:7px;background:#fff0ec;color:#c54429;font-size:9px;font-weight:900}.small{font-size:9px;color:#7b8490;margin-top:3px}
     .age{font-size:9px;font-weight:900;padding:4px 7px;border-radius:8px;background:#f5f6f8}.pager{height:46px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;font-size:9.5px;color:#727b86}.pager button{height:30px;border:1px solid #e0e3e7;border-radius:8px;background:#fff}
     .empty{padding:60px;text-align:center;color:#818a95;font-size:11px}
 
@@ -1315,27 +1613,18 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     }
 
     .launch{
-      min-width:148px;
-      height:52px;
-      border-radius:16px;
-      background:linear-gradient(135deg,var(--spx-primary),#ff8a5c 55%,#ffb052);
-      box-shadow:0 16px 38px rgba(238,77,45,.34);
+      width:42px;
+      min-width:42px;
+      height:42px;
+      padding:0;
+      border-radius:12px;
+      background:transparent;
+      box-shadow:0 12px 30px rgba(31,41,55,.20);
       transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
       position:relative;
       overflow:hidden;
-      letter-spacing:.01em;
-    }
-    .launch::after{
-      content:"";
-      position:absolute;
-      inset:-40% auto -40% -35%;
-      width:38%;
-      transform:rotate(18deg);
-      background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);
-      transition:left .45s ease;
     }
     .launch:hover{transform:translateY(-2px) scale(1.015);box-shadow:0 20px 48px rgba(238,77,45,.42)}
-    .launch:hover::after{left:110%}
     .launch:active{transform:translateY(0) scale(.985)}
 
     .app{
@@ -1679,7 +1968,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       --ops-amber:#b36b08;
       --ops-red:#b42348;
       --ops-shadow:0 1px 2px rgba(15,23,42,.04);
-      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,Arial,sans-serif!important;
+      font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif!important;
       color:var(--ops-text)!important;
     }
 
@@ -1690,7 +1979,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     .menu-btn,.close,.drawer-close,.page-icon,.logo,.drawer-logo,.nav-icon{line-height:0}
     .primary,.ghostbtn,.launch,.pager button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
     .pick{display:flex;align-items:center;justify-content:space-between;gap:8px}
-    .title,.page-title,.cardtitle,.drawer-title{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",sans-serif!important}
+    .title,.page-title,.cardtitle,.drawer-title{font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif!important}
     button:focus-visible,input:focus-visible,select:focus-visible{
       outline:3px solid rgba(245,61,45,.24)!important;
       outline-offset:2px;
@@ -1875,7 +2164,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       display:grid;gap:10px;box-shadow:var(--ops-shadow);
     }
     .fms-mobile-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-    .fms-mobile-spx{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:900;color:#252c34;overflow-wrap:anywhere}
+    .fms-mobile-spx{font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;font-size:12px;font-weight:800;color:#252c34;overflow-wrap:anywhere}
     .fms-mobile-to{font-size:10px;color:#7b8490;margin-top:3px;overflow-wrap:anywhere}
     .fms-mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
     .fms-mobile-item{min-width:0;padding:9px;border-radius:10px;background:#f8f9fb}
@@ -1949,6 +2238,118 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
   `;
   shadow.appendChild(opsFteStyle);
 
+  const pickupStyle = document.createElement("style");
+  pickupStyle.id = "spx-pickup-assignment-style";
+  pickupStyle.textContent = `
+    .pickup-layout{display:grid;gap:14px}
+    .pickup-controls{padding:14px;display:grid;grid-template-columns:minmax(180px,220px) minmax(180px,220px) 1fr auto;gap:12px;align-items:end}
+    .pickup-control-note{font-size:10px;color:#7b8490;line-height:1.55;padding:2px 0 3px}
+    .pickup-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+    .pickup-result{overflow:hidden}
+    .pickup-result-head{padding:12px 14px;border-bottom:1px solid #e7e9ed;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff}
+    .pickup-table-wrap{overflow:auto;max-height:calc(100vh - 340px);min-height:260px}
+    .pickup-table{width:100%;min-width:1320px;border-collapse:separate;border-spacing:0;table-layout:fixed}
+    .pickup-table th,.pickup-table td{padding:8px 7px;border-bottom:1px solid #edf0f2;vertical-align:top}
+    .pickup-table thead th{top:0;z-index:4;height:38px}
+    .pickup-driver-filter{width:min(260px,100%);height:36px;border:1px solid #dfe3e8;border-radius:9px;background:#fff;padding:0 10px;font-size:10px;color:#3f4853;outline:0}
+    .pickup-driver-filter:focus{border-color:#f58b75;box-shadow:0 0 0 2px rgba(245,61,45,.10)}
+    .pickup-id{font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;font-weight:800;color:#30363d;white-space:nowrap}
+    .pickup-address{line-height:1.4;overflow-wrap:anywhere}
+    .pickup-point{font-weight:700;color:#374151;overflow-wrap:anywhere}
+    .pickup-driver{font-weight:800;color:#374151;overflow-wrap:anywhere}
+    .pickup-attempt{text-align:center;font-weight:800}
+    .pickup-eta{white-space:nowrap;font-weight:700}
+    .pickup-sub{margin-top:3px;font-size:9px;color:#8a929c;line-height:1.35}
+    .pickup-type{display:inline-flex;padding:3px 7px;border-radius:999px;background:#fff1ed;color:#c7482d;font-size:9px;font-weight:900;white-space:nowrap}
+    .pickup-type.reverse{background:#f2edff;color:#6c4ccf}
+    .pickup-reason{min-width:220px;line-height:1.4}
+    .pickup-pager{height:50px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;font-size:9.5px;color:#727b86;background:#fff}
+    .pickup-pager button{height:30px;border:1px solid #e0e3e7;border-radius:8px;background:#fff;display:inline-flex;align-items:center;gap:5px}
+    .pickup-pager button:disabled{opacity:.45;cursor:not-allowed}
+    .pickup-empty{padding:64px 20px;text-align:center;color:#7a838e;font-size:11px}
+    @media(max-width:1023px){
+      .pickup-controls{grid-template-columns:1fr 1fr}
+      .pickup-controls .pickup-control-note{grid-column:1/-1}
+      .pickup-actions{justify-content:stretch}
+      .pickup-actions>*{flex:1}
+      .pickup-table-wrap{max-height:none}
+    }
+    @media(max-width:640px){
+      .pickup-controls{grid-template-columns:1fr}
+      .pickup-result-head{align-items:flex-start;flex-direction:column}
+      .pickup-pager{height:auto;min-height:50px;padding:10px;gap:8px;flex-direction:column;align-items:stretch}
+      .pickup-pager>span:last-child{display:flex;align-items:center;justify-content:space-between}
+    }
+  `;
+  shadow.appendChild(pickupStyle);
+
+
+  const designSystemStyle = document.createElement("style");
+  designSystemStyle.id = "spx-design-system-v180";
+  designSystemStyle.textContent = `
+    :host{
+      --ds-color-brand:#f53d2d;--ds-color-brand-hover:#d73223;--ds-color-brand-soft:#fff1ed;
+      --ds-color-text:#1f2937;--ds-color-text-2:#4b5563;--ds-color-muted:#77818d;
+      --ds-color-border:#e2e6eb;--ds-color-surface:#fff;--ds-color-surface-2:#f8fafc;--ds-color-canvas:#f3f5f7;
+      --ds-space-1:4px;--ds-space-2:8px;--ds-space-3:12px;--ds-space-4:16px;--ds-space-5:20px;--ds-space-6:24px;--ds-space-8:32px;
+      --ds-radius-sm:10px;--ds-radius-md:14px;--ds-radius-lg:18px;--ds-radius-xl:24px;
+      --ds-control-h:44px;--ds-shadow-sm:0 1px 2px rgba(15,23,42,.05);--ds-shadow-md:0 10px 30px rgba(15,23,42,.08);--ds-shadow-lg:0 24px 70px rgba(15,23,42,.20);
+      font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif!important;
+    }
+    .launch{width:42px!important;min-width:42px!important;height:42px!important;padding:0!important;border-radius:12px!important;background:transparent!important;box-shadow:0 10px 26px rgba(15,23,42,.18)!important}
+    .launch-icon{width:42px!important;height:42px!important;border-radius:12px!important}
+    .app{background:var(--ds-color-canvas)!important}
+    .header{height:60px!important;flex-basis:60px!important;padding-left:max(10px,env(safe-area-inset-left))!important;padding-right:max(10px,env(safe-area-inset-right))!important;background:rgba(255,255,255,.96)!important;border-bottom:1px solid var(--ds-color-border)!important}
+    .app-brand-icon{width:100%;height:100%;display:block;object-fit:cover;border-radius:inherit}
+    .drawer-logo{overflow:hidden!important;background:transparent!important;padding:0!important;box-shadow:none!important}
+    .drawer-logo{width:40px!important;height:40px!important}
+    .title{font-size:15px!important;font-weight:800!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .menu-btn,.close,.drawer-close{min-width:44px!important;min-height:44px!important}
+    .ops-main{overscroll-behavior:contain;scrollbar-gutter:stable;padding-bottom:max(var(--ds-space-6),env(safe-area-inset-bottom))!important}
+    .ops-page{width:min(100%,1440px)!important;max-width:1440px!important;padding:clamp(14px,2vw,28px)!important}
+    .page-header{min-height:48px;margin:0 0 var(--ds-space-4)!important;padding:0 0 var(--ds-space-4)!important;align-items:center!important}
+    .page-heading{align-items:center!important;gap:var(--ds-space-3)!important}.page-icon{width:38px!important;height:38px!important;flex-basis:38px!important;border-radius:12px!important}.page-title{font-size:clamp(21px,2.2vw,30px)!important;font-weight:800!important;line-height:1.2!important}
+    .drawer-panel{width:min(320px,calc(100vw - 24px))!important;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))!important}
+    .nav-item{min-height:48px!important;border-radius:var(--ds-radius-md)!important;font-size:13px!important}.drawer-footer{font-size:11px!important}
+    .card,.delivery-result{border:1px solid var(--ds-color-border)!important;border-radius:var(--ds-radius-lg)!important;box-shadow:var(--ds-shadow-sm)!important;overflow:hidden}
+    .fms-filter-card{overflow:visible!important;position:relative;z-index:30}
+    .fms-filter-card .query{overflow:visible!important}
+    .fms-filter-card .field:has([data-picker]){z-index:35}
+    .fms-filter-card .pop{z-index:1000!important}
+    .cardhead,.delivery-result-head,.pickup-result-head{min-height:56px!important;padding:var(--ds-space-3) var(--ds-space-4)!important;border-bottom:1px solid var(--ds-color-border)!important;background:var(--ds-color-surface)!important}
+    .cardtitle{font-size:14px!important;font-weight:800!important}.hint{font-size:11px!important}.field{gap:6px!important}.label{font-size:11px!important;font-weight:700!important}
+    .input,.select,.pick,.pickup-driver-filter{min-height:var(--ds-control-h)!important;height:var(--ds-control-h)!important;border:1px solid #d8dde4!important;border-radius:12px!important;background:#fff!important;color:var(--ds-color-text)!important;font-size:13px!important;box-shadow:none!important}
+    .input,.select{padding-left:12px!important;padding-right:12px!important}.pick{padding:0 12px!important}
+    .input:focus,.select:focus,.pick:focus,.pickup-driver-filter:focus{border-color:#f28c78!important;box-shadow:0 0 0 3px rgba(245,61,45,.10)!important}
+    .primary,.ghostbtn{min-height:var(--ds-control-h)!important;height:var(--ds-control-h)!important;border-radius:12px!important;font-size:12px!important;font-weight:800!important}
+    .primary{background:var(--ds-color-brand)!important}.primary:hover:not(:disabled){background:var(--ds-color-brand-hover)!important}.ghostbtn{background:#fff!important;border:1px solid var(--ds-color-border)!important}button:disabled{cursor:not-allowed!important;opacity:.5!important}
+    .query{padding:var(--ds-space-4)!important;gap:var(--ds-space-3)!important;grid-template-columns:minmax(190px,1fr) 28px minmax(190px,1fr) minmax(260px,1.35fr) 150px!important}
+    .tools{padding:var(--ds-space-3)!important;gap:var(--ds-space-2)!important;grid-template-columns:minmax(260px,1fr) minmax(150px,190px) minmax(220px,300px)!important}
+    .meta{font-size:11px!important;gap:var(--ds-space-3)!important;flex-wrap:wrap}.pop{max-height:min(420px,60vh)!important}
+    .stat-strip,.delivery-kpis{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:var(--ds-space-2)!important;padding:var(--ds-space-3)!important;background:var(--ds-color-surface-2)!important}
+    .stat-card{min-width:0!important;min-height:78px!important;padding:var(--ds-space-3)!important;border-radius:var(--ds-radius-md)!important}.stat-value{font-size:clamp(19px,2vw,24px)!important}.stat-label{font-size:10px!important}
+    .tablewrap,.delivery-table-wrap,.pickup-table-wrap{width:100%;overflow:auto!important;-webkit-overflow-scrolling:touch;scrollbar-width:thin;overscroll-behavior-inline:contain}th,td{line-height:1.45!important}th{font-size:10px!important}td{font-size:12px!important}
+    .pager,.pickup-pager{min-height:52px!important;height:auto!important;padding:10px 12px!important;gap:10px!important;flex-wrap:wrap!important;background:#fff!important}.pager button,.pickup-pager button{min-height:36px!important;padding:0 10px!important}
+    .delivery-form,.pickup-controls{padding:var(--ds-space-4)!important;gap:var(--ds-space-3)!important}.delivery-form{grid-template-columns:minmax(180px,220px) 1fr auto!important}.pickup-controls{grid-template-columns:minmax(180px,220px) minmax(180px,220px) 1fr auto!important}
+    .delivery-form-actions,.pickup-actions{display:flex;gap:var(--ds-space-2)!important;align-items:center}.delivery-result-head,.pickup-result-head{gap:var(--ds-space-3)!important;flex-wrap:wrap}.delivery-actions{display:flex!important;gap:var(--ds-space-2)!important;flex-wrap:wrap}
+    .fms-mobile-list,.pickup-mobile-list,.delivery-mobile-list{display:none}
+    .mobile-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.mobile-card-title{font-size:13px;font-weight:800;color:#252c34;overflow-wrap:anywhere}.mobile-card-sub{margin-top:3px;font-size:11px;color:var(--ds-color-muted);overflow-wrap:anywhere}
+    .rank-chip{min-width:36px;height:28px;padding:0 8px;border-radius:999px;background:var(--ds-color-brand-soft);color:#c7462c;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+    .mobile-metric-grid,.pickup-mobile-primary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.mobile-metric,.pickup-mobile-primary>div,.mobile-detail{min-width:0;padding:10px;border-radius:12px;background:var(--ds-color-surface-2)}
+    .mobile-metric span,.pickup-mobile-primary span,.mobile-detail span{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#89929c}.mobile-metric b,.pickup-mobile-primary b,.mobile-detail b{display:block;margin-top:4px;font-size:12px;color:#38414b;overflow-wrap:anywhere}
+    .mobile-detail{margin-top:8px}.pickup-mobile-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--ds-color-border);font-size:10px;color:var(--ds-color-muted)}
+    .preview-backdrop{padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important}.preview-modal{width:min(1500px,100%)!important;height:min(94dvh,1000px)!important}.preview-head{min-height:56px!important;height:auto!important;padding:10px 12px!important}.preview-scroll{padding:clamp(8px,2vw,20px)!important}
+    @media(max-width:1199px){.query{grid-template-columns:1fr 28px 1fr!important}.query .field:nth-of-type(3){grid-column:1/-1}.query .primary{grid-column:1/-1;width:100%}.delivery-form,.pickup-controls{grid-template-columns:1fr 1fr!important}.delivery-form>div:nth-child(2),.pickup-controls>div:nth-child(3){display:none}.delivery-form-actions,.pickup-actions{grid-column:1/-1;justify-content:flex-end}.tools{grid-template-columns:minmax(220px,1fr) minmax(150px,180px)!important}.tools .select:last-child{grid-column:1/-1}}
+    @media(max-width:767px){:host{--ds-control-h:46px}.header{height:58px!important;flex-basis:58px!important}.brand{gap:7px!important}.title{font-size:14px!important}.ops-page{padding:12px 10px calc(20px + env(safe-area-inset-bottom))!important}.page-header{margin-bottom:12px!important;padding-bottom:12px!important}.page-icon{width:34px!important;height:34px!important;flex-basis:34px!important}.page-title{font-size:21px!important}.card,.delivery-result{border-radius:15px!important}.cardhead,.delivery-result-head,.pickup-result-head{padding:11px 12px!important}.query,.tools,.delivery-form,.pickup-controls{grid-template-columns:1fr!important;padding:12px!important}.query .field:nth-of-type(3),.query .primary,.delivery-form-actions,.pickup-actions{grid-column:auto!important}.arrow{height:16px!important;transform:rotate(90deg)}.delivery-form>div:nth-child(2),.pickup-controls>div:nth-child(3){display:none}.delivery-form-actions,.pickup-actions{justify-content:stretch!important}.delivery-form-actions>*,.pickup-actions>*{flex:1 1 0}.tools .select:last-child{grid-column:auto}.meta{display:grid!important;grid-template-columns:1fr!important}.stat-strip,.delivery-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;padding:10px!important}.stat-card{min-height:70px!important;padding:10px!important}.stat-value{font-size:19px!important}.tablewrap,.delivery-table-wrap,.pickup-table-wrap{display:none!important}.fms-mobile-list,.pickup-mobile-list,.delivery-mobile-list{display:grid!important;grid-template-columns:1fr;gap:10px;padding:10px;background:#f7f8fa}.pickup-mobile-card,.delivery-mobile-card{border:1px solid var(--ds-color-border);border-radius:14px;background:#fff;padding:12px;box-shadow:var(--ds-shadow-sm)}.delivery-mobile-card.rank-first{border-color:#ecd45a;background:#fffdf0}.delivery-mobile-card.rank-second{background:#fbfcfd}.delivery-mobile-card.rank-third{background:#fff7f2}.delivery-mobile-card.rank-zero{background:#fbfef9}.pickup-driver-filter{width:100%!important}.delivery-actions{width:100%;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}.delivery-actions .ghostbtn{width:100%}.pager,.pickup-pager{align-items:stretch!important}.pager>span:last-child,.pickup-pager>span:last-child{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}.preview-backdrop{padding:0!important}.preview-modal{width:100%!important;height:100dvh!important;max-height:none!important;border-radius:0!important;border:0!important}.preview-head{padding-top:max(10px,env(safe-area-inset-top))!important;padding-left:max(12px,env(safe-area-inset-left))!important;padding-right:max(12px,env(safe-area-inset-right))!important}.preview-scroll{padding:8px!important}}
+    @media(max-width:420px){.title{font-size:13px!important}.menu-btn,.close{min-width:40px!important;width:40px!important}.stat-strip,.delivery-kpis{grid-template-columns:1fr 1fr!important;gap:7px!important}.stat-card{min-height:66px!important}.stat-label{font-size:9px!important}.stat-value{font-size:18px!important}.delivery-actions{grid-template-columns:1fr!important}.pager,.pickup-pager{font-size:10px!important}}
+    @media(min-width:1600px){.ops-page{max-width:1500px!important}.query{grid-template-columns:260px 28px 260px minmax(360px,1fr) 160px!important}}
+    @media(pointer:coarse){.nav-item,.primary,.ghostbtn,.input,.select,.pick,.pickup-driver-filter{min-height:48px!important}.opt{min-height:44px!important}}
+    @media(hover:none){.nav-item:hover,.primary:hover,.ghostbtn:hover,tbody tr:hover td{transform:none!important}}
+    @media(prefers-contrast:more){.card,.delivery-result,.pickup-mobile-card,.delivery-mobile-card,.fms-mobile-card{border-color:#b7bec8!important}.input,.select,.pick,.pickup-driver-filter{border-color:#aeb7c3!important}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+  `;
+  shadow.appendChild(designSystemStyle);
+
   const root = document.createElement("div");
   shadow.appendChild(root);
 
@@ -1956,14 +2357,9 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     return `<header class="header">
       <button class="menu-btn" data-menu-open aria-label="Mở menu">${icon("menu",21)}</button>
       <div class="brand">
-        <div class="logo">${icon("app",17)}</div>
-        <div style="min-width:0">
-          <div class="title"><span style="color:#F53D2D">SPX</span> Operations Tools</div>
-          <div class="sub">Pleiku 03 · dùng session SPX hiện tại</div>
-        </div>
+        <div class="title"><span style="color:#F53D2D">SPX</span> Operations Tools</div>
       </div>
       <div class="header-actions">
-        <div class="session-pill"><span class="session-dot"></span><span>${state.bridgeReady ? "Connected" : "Connecting"}</span></div>
         <button class="close" data-close aria-label="Đóng SPX Tools">${icon("close",20)}</button>
       </div>
     </header>`;
@@ -1974,11 +2370,8 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       <aside class="drawer-panel" aria-label="SPX Operations navigation">
         <div class="drawer-head">
           <div class="drawer-brand">
-            <div class="drawer-logo">${icon("app",19)}</div>
-            <div>
-              <div class="drawer-title">SPX Operations Tools</div>
-              <div class="drawer-sub">Pleiku 03 workspace</div>
-            </div>
+            <div class="drawer-logo">${APP_ICON_URL ? `<img class="app-brand-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",19)}</div>
+            <div class="drawer-title">SPX Operations Tools</div>
           </div>
           <button class="drawer-close" data-menu-close aria-label="Đóng menu">${icon("close",20)}</button>
         </div>
@@ -1989,36 +2382,26 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
           <button class="nav-item ${state.activeTab === "delivery" ? "active" : ""}" data-nav="delivery">
             <span class="nav-icon">${icon("delivery",16)}</span><span>Delivery Performance</span>
           </button>
+          <button class="nav-item ${state.activeTab === "pickup" ? "active" : ""}" data-nav="pickup">
+            <span class="nav-icon">${icon("pickup",16)}</span><span>Pickup Assignment</span>
+          </button>
         </nav>
-        <div class="drawer-footer">
-          <div class="drawer-status"><span class="drawer-status-dot"></span>${state.bridgeReady ? "SPX session ready" : "Đang kết nối SPX"}</div>
-          <div>Extension chạy trực tiếp trên spx.shopee.vn.</div>
-          <div style="margin-top:5px">v1.6.2.2 · Safari</div>
-        </div>
+        <div class="drawer-footer">v1.8.1</div>
       </aside>
     </div>`;
   }
 
   function pageHeaderHtml(type) {
-    if (type === "delivery") {
-      return `<header class="page-header">
-        <div class="page-heading">
-          <div class="page-icon">${icon("delivery",20)}</div>
-          <div>
-            <h1 class="page-title">Delivery Performance</h1>
-            <div class="page-description">Export CSV từ SPX, xử lý hiệu suất giao hàng, preview JPG và gửi report qua SeaTalk.</div>
-          </div>
-        </div>
-      </header>`;
-    }
+    const config = type === "pickup"
+      ? {icon:"pickup", title:"Pickup Assignment"}
+      : type === "delivery"
+        ? {icon:"delivery", title:"Delivery Performance"}
+        : {icon:"fms", title:"FMS Audit"};
 
     return `<header class="page-header">
       <div class="page-heading">
-        <div class="page-icon">${icon("fms",20)}</div>
-        <div>
-          <h1 class="page-title">FMS Audit</h1>
-          <div class="page-description">Kiểm tra shipment và tracking theo tuyến, Order Status và nhóm thời gian. Chỉ tải khi bạn chủ động nhấn Tải dữ liệu.</div>
-        </div>
+        <div class="page-icon">${icon(config.icon,20)}</div>
+        <h1 class="page-title">${config.title}</h1>
       </div>
     </header>`;
   }
@@ -2237,26 +2620,47 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
         <td><b>${row.rank}</b></td>
       </tr>`;
     }).join("");
+
+    const mobileCards = d.rows.map((row) => {
+      const rankClass =
+        row.rank === 1 ? "rank-first" :
+        row.rank === 2 ? "rank-second" :
+        row.rank === 3 ? "rank-third" :
+        row.assigned === 0 ? "rank-zero" : "";
+      return `<article class="delivery-mobile-card ${rankClass}">
+        <div class="mobile-card-head">
+          <div class="mobile-card-title">${esc(row.driver)}</div>
+          <span class="rank-chip">#${row.rank}</span>
+        </div>
+        <div class="mobile-metric-grid">
+          <div class="mobile-metric"><span>Đơn nhận</span><b>${row.assigned.toLocaleString("en-US")}</b></div>
+          <div class="mobile-metric"><span>Giao TC</span><b>${row.delivered.toLocaleString("en-US")}</b></div>
+          <div class="mobile-metric"><span>Delay</span><b>${row.delay.toLocaleString("en-US")}</b></div>
+          <div class="mobile-metric"><span>Tỷ lệ GTC</span><b>${row.rate.toFixed(1)}%</b></div>
+        </div>
+      </article>`;
+    }).join("");
   
     const t = d.totals || {assigned:0,delivered:0,delay:0,rate:0};
   
     return `<section class="delivery-result">
       <div class="delivery-kpis">
-        <div class="stat-card stat-orange"><div class="stat-label">Drivers</div><div class="stat-value">${d.rows.length.toLocaleString("en-US")}</div><div class="stat-note">Nhân sự trong report</div></div>
-        <div class="stat-card stat-purple"><div class="stat-label">Đơn Nhận</div><div class="stat-value">${t.assigned.toLocaleString("en-US")}</div><div class="stat-note">Assigned parcels</div></div>
-        <div class="stat-card stat-green"><div class="stat-label">Giao Thành Công</div><div class="stat-value">${t.delivered.toLocaleString("en-US")}</div><div class="stat-note">${t.rate.toFixed(2)}% success rate</div></div>
-        <div class="stat-card stat-amber"><div class="stat-label">Delay</div><div class="stat-value">${t.delay.toLocaleString("en-US")}</div><div class="stat-note">On-hold parcels</div></div>
+        <div class="stat-card stat-orange"><div class="stat-label">Drivers</div><div class="stat-value">${d.rows.length.toLocaleString("en-US")}</div></div>
+        <div class="stat-card stat-purple"><div class="stat-label">Đơn Nhận</div><div class="stat-value">${t.assigned.toLocaleString("en-US")}</div></div>
+        <div class="stat-card stat-green"><div class="stat-label">Giao Thành Công</div><div class="stat-value">${t.delivered.toLocaleString("en-US")}</div></div>
+        <div class="stat-card stat-amber"><div class="stat-label">Delay</div><div class="stat-value">${t.delay.toLocaleString("en-US")}</div></div>
       </div>
       <div class="delivery-result-head">
         <div>
           <div class="cardtitle">Delivery Performance Report</div>
-          <div class="hint">${esc(d.stationName || "Station")} · ${esc(formatVietnameseReportDate(d.startDate))}</div>
+          <div class="hint">${esc(formatVietnameseReportDate(d.startDate))}</div>
         </div>
         <div class="delivery-actions">
           <button class="ghostbtn" data-delivery-preview>${icon("image",16)}<span>Preview JPG</span></button>
           <button class="ghostbtn" data-delivery-download-jpg>${icon("download",16)}<span>Tải JPG</span></button>
         </div>
       </div>
+      <div class="delivery-mobile-list">${mobileCards}</div>
       <div class="delivery-table-wrap">
         <table class="delivery-table">
           <thead><tr>
@@ -2288,8 +2692,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       <section class="card delivery-control">
         <div class="cardhead">
           <div>
-            <div class="cardtitle">Export Delivery Performance</div>
-            <div class="hint">Tạo task → dò task_id → tải CSV → xử lý report trong RAM.</div>
+            <div class="cardtitle">Delivery Performance</div>
           </div>
           ${d.taskId ? `<span class="task-chip">Task #${d.taskId}</span>` : ""}
         </div>
@@ -2300,12 +2703,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
             <input class="input" type="date" data-delivery-date value="${esc(d.startDate)}" ${d.loading ? "disabled" : ""}>
           </div>
   
-          <div class="delivery-flow">
-            <span>1. Create task</span><b>${icon("arrowRight",14)}</b>
-            <span>2. Wait export</span><b>${icon("arrowRight",14)}</b>
-            <span>3. Download CSV</span><b>${icon("arrowRight",14)}</b>
-            <span>4. Build report</span>
-          </div>
+          <div></div>
   
           <div class="delivery-form-actions">
             ${d.loading ? `<button class="ghostbtn" data-delivery-cancel>Hủy</button>` : ""}
@@ -2354,7 +2752,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       ctx.strokeRect(x1 + .5, y + .5, x2 - x1 - 1, h - 1);
   
       ctx.fillStyle = "#111827";
-      ctx.font = (bold ? "700 " : "500 ") + (size || 22) + "px Arial";
+      ctx.font = (bold ? "700 " : "500 ") + (size || 22) + 'px "Be Vietnam Pro", Arial';
       ctx.textAlign = align || "center";
   
       const pad = 14;
@@ -2495,12 +2893,12 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
 
     return `<section class="card">
       <div class="stat-strip">
-        <div class="stat-card stat-orange"><div class="stat-label">Kết quả</div><div class="stat-value">${rows.length}</div><div class="stat-note">Đơn sau bộ lọc</div></div>
-        <div class="stat-card stat-green"><div class="stat-label">&lt; 24H</div><div class="stat-value">${agingUnder24}</div><div class="stat-note">Trong ngưỡng mới</div></div>
-        <div class="stat-card stat-amber"><div class="stat-label">24H → 36H</div><div class="stat-value">${aging24to36}</div><div class="stat-note">Cần theo dõi</div></div>
-        <div class="stat-card stat-purple"><div class="stat-label">&gt; 36H</div><div class="stat-value">${agingOver36}</div><div class="stat-note">Ưu tiên xử lý</div></div>
+        <div class="stat-card stat-orange"><div class="stat-label">Kết quả</div><div class="stat-value">${rows.length}</div></div>
+        <div class="stat-card stat-green"><div class="stat-label">&lt; 24H</div><div class="stat-value">${agingUnder24}</div></div>
+        <div class="stat-card stat-amber"><div class="stat-label">24H → 36H</div><div class="stat-value">${aging24to36}</div></div>
+        <div class="stat-card stat-purple"><div class="stat-label">&gt; 36H</div><div class="stat-value">${agingOver36}</div></div>
       </div>
-      <div class="cardhead"><div><div class="cardtitle">Kết quả đã tải</div><div class="hint">Bộ lọc dưới đây không gọi lại API.</div></div><b>${rows.length} kết quả</b></div>
+      <div class="cardhead"><div class="cardtitle">Kết quả</div><b>${rows.length}</b></div>
       <div class="tools">
         <input class="input" data-search placeholder="Tìm SPX, TO, Order Status, Station..." value="${esc(state.search)}">
         <select class="select" data-aging>
@@ -2528,9 +2926,219 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     </section>`;
   }
 
+
+  function pickupTypeName(type) {
+    return Number(type) === 5 ? "Reverse" : "Pickup";
+  }
+
+  function normalizePickupRows(rows) {
+    return (Array.isArray(rows) ? rows : []).map((row) => ({
+      shipmentId:String(row?.pickup_order_id || ""),
+      eta:Number(row?.eta || 0),
+      attempts:Number(row?.pickup_attempts || 0),
+      pickupOrderType:Number(row?.pickup_order_type || 0),
+      pointName:String(row?.pickup_point_name || ""),
+      stationName:String(row?.pickup_station_name || ""),
+      serviceName:String(row?.fo_service_type_name || ""),
+      address:String(row?.address || ""),
+      driverName:String(row?.driver_name || ""),
+      driverCtime:Number(row?.driver_ctime || 0),
+      driverRemark:String(row?.driver_remark || ""),
+      driverStatus:String(row?.driver_status || ""),
+      reason:String(row?.driver_reason || row?.on_hold_reason_name || ""),
+      addressError:String(row?.address_error || ""),
+      driverError:String(row?.driver_error || "")
+    })).filter((row) => row.shipmentId);
+  }
+
+  function pickupDriverOptions() {
+    return [...new Set(
+      state.pickup.rows
+        .map((row) => String(row.driverName || "").trim())
+        .filter(Boolean)
+    )].sort((a,b) => a.localeCompare(b, "vi"));
+  }
+
+  function pickupFilteredRows() {
+    const driver = String(state.pickup.driverFilter || "ALL");
+    return state.pickup.rows.filter((row) =>
+      driver === "ALL" || row.driverName === driver
+    ).sort((a, b) =>
+      Number(a.eta || 0) - Number(b.eta || 0) ||
+      a.shipmentId.localeCompare(b.shipmentId)
+    );
+  }
+
+  function resetPickupFilter() {
+    state.pickup.driverFilter = "ALL";
+    state.pickup.page = 1;
+  }
+
+  function requestPickupAssignment() {
+    const p = state.pickup;
+    if (p.loading) return;
+
+    p.loading = true;
+    p.error = "";
+    p.progress = "Đang tải danh sách Pickup Assignment...";
+    p.requestId = Date.now() + "_pickup_" + Math.random().toString(36).slice(2);
+    p.rows = [];
+    p.total = 0;
+    p.page = 1;
+    resetPickupFilter();
+    render();
+
+    post("SPX_PICKUP_ASSIGNMENT_FETCH", {
+      requestId:p.requestId,
+      range:{
+        startDate:p.startDate,
+        endDate:p.endDate
+      }
+    });
+  }
+
+  function cancelPickupAssignment() {
+    if (!state.pickup.loading) return;
+    post("SPX_PICKUP_ASSIGNMENT_CANCEL", {
+      requestId:state.pickup.requestId
+    });
+  }
+
+  function pickupTableHtml() {
+    const p = state.pickup;
+    const rows = pickupFilteredRows();
+    const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    p.page = Math.min(Math.max(1, p.page), pages);
+    const start = (p.page - 1) * PAGE_SIZE;
+    const view = rows.slice(start, start + PAGE_SIZE);
+    const reverseCount = p.rows.filter((row) => Number(row.pickupOrderType) === 5).length;
+    const withDriver = p.rows.filter((row) => row.driverName).length;
+    const driverOptions = pickupDriverOptions();
+
+    const body = view.map((row) => {
+      const typeClass = Number(row.pickupOrderType) === 5 ? "pickup-type reverse" : "pickup-type";
+      return `<tr>
+        <td class="pickup-id">${esc(row.shipmentId)}</td>
+        <td class="pickup-driver">${esc(row.driverName || "Chưa có")}</td>
+        <td class="pickup-attempt">${row.attempts}</td>
+        <td class="pickup-address">${esc(row.address || "—")}</td>
+        <td class="pickup-eta">${esc(dateTime(row.eta))}</td>
+        <td><span class="${typeClass}">${esc(pickupTypeName(row.pickupOrderType))}</span></td>
+        <td class="pickup-point">${esc(row.pointName || "—")}</td>
+        <td><b>${esc(dateTime(row.driverCtime))}</b>${row.driverRemark ? `<div class="pickup-sub">${esc(row.driverRemark)}</div>` : ""}</td>
+        <td class="pickup-reason">${esc(row.reason || "—")}</td>
+      </tr>`;
+    }).join("");
+
+    const mobileCards = view.map((row) => {
+      const typeClass = Number(row.pickupOrderType) === 5 ? "pickup-type reverse" : "pickup-type";
+      return `<article class="pickup-mobile-card">
+        <div class="mobile-card-head">
+          <div>
+            <div class="mobile-card-title pickup-id">${esc(row.shipmentId)}</div>
+            <div class="mobile-card-sub">${esc(row.driverName || "Chưa có tài xế")}</div>
+          </div>
+          <span class="${typeClass}">${esc(pickupTypeName(row.pickupOrderType))}</span>
+        </div>
+        <div class="pickup-mobile-primary">
+          <div><span>Attempt</span><b>${row.attempts}</b></div>
+          <div><span>ETA</span><b>${esc(dateTime(row.eta))}</b></div>
+        </div>
+        <div class="mobile-detail"><span>Địa chỉ</span><b>${esc(row.address || "—")}</b></div>
+        <div class="mobile-detail"><span>Điểm pickup</span><b>${esc(row.pointName || "—")}</b></div>
+        <div class="pickup-mobile-meta">
+          <span>${esc(dateTime(row.driverCtime))}</span>
+          <span>${esc(row.reason || row.driverRemark || "—")}</span>
+        </div>
+      </article>`;
+    }).join("");
+
+    return `<section class="card pickup-result">
+      <div class="stat-strip">
+        <div class="stat-card stat-orange"><div class="stat-label">Assigned</div><div class="stat-value">${p.total.toLocaleString("en-US")}</div></div>
+        <div class="stat-card stat-green"><div class="stat-label">Hiển thị</div><div class="stat-value">${rows.length.toLocaleString("en-US")}</div></div>
+        <div class="stat-card stat-purple"><div class="stat-label">Có tài xế</div><div class="stat-value">${withDriver.toLocaleString("en-US")}</div></div>
+        <div class="stat-card stat-amber"><div class="stat-label">Reverse</div><div class="stat-value">${reverseCount.toLocaleString("en-US")}</div></div>
+      </div>
+      <div class="pickup-result-head">
+        <div class="cardtitle">Danh sách</div>
+        <select class="pickup-driver-filter" data-pickup-driver-filter>
+          <option value="ALL">Tất cả tài xế</option>
+          ${driverOptions.map((name) => `<option value="${esc(name)}" ${p.driverFilter === name ? "selected" : ""}>${esc(name)}</option>`).join("")}
+        </select>
+      </div>
+      ${p.rows.length ? `<div class="pickup-mobile-list">${mobileCards}</div>
+      <div class="pickup-table-wrap">
+        <table class="pickup-table">
+          <colgroup>
+            <col style="width:165px">
+            <col style="width:155px">
+            <col style="width:74px">
+            <col style="width:300px">
+            <col style="width:155px">
+            <col style="width:90px">
+            <col style="width:150px">
+            <col style="width:165px">
+            <col style="width:210px">
+          </colgroup>
+          <thead><tr>
+            <th>Mã đơn</th><th>Tài xế</th><th>Attempt</th><th>Địa chỉ</th><th>ETA</th><th>Loại</th><th>Điểm pickup</th><th>Cập nhật gần nhất</th><th>Trạng thái / lý do</th>
+          </tr></thead>
+          <tbody>${body || `<tr><td colspan="9"><div class="pickup-empty">Không có dữ liệu.</div></td></tr>`}</tbody>
+        </table>
+      </div>
+      <div class="pickup-pager">
+        <span>${rows.length ? start + 1 : 0}-${Math.min(start + PAGE_SIZE, rows.length)} / ${rows.length}</span>
+        <span>
+          <button data-pickup-prev ${p.page <= 1 ? "disabled" : ""}>${icon("chevronLeft",14)}<span>Trước</span></button>
+          <b>${p.page}/${pages}</b>
+          <button data-pickup-next ${p.page >= pages ? "disabled" : ""}><span>Sau</span>${icon("chevronRight",14)}</button>
+        </span>
+      </div>` : `<div class="pickup-empty">Chưa có dữ liệu.</div>`}
+    </section>`;
+  }
+
+  function renderPickupTab() {
+    const p = state.pickup;
+    return `<section class="pickup-layout">
+      <section class="card">
+        <div class="cardhead">
+          <div class="cardtitle">Khoảng thời gian</div>
+          ${p.total ? `<b>${p.total.toLocaleString("en-US")} đơn</b>` : ""}
+        </div>
+        <div class="pickup-controls">
+          <div class="field"><label class="label">Từ ngày</label><input class="input" type="date" data-pickup-start-date value="${esc(p.startDate)}" ${p.loading ? "disabled" : ""}></div>
+          <div class="field"><label class="label">Đến ngày</label><input class="input" type="date" data-pickup-end-date value="${esc(p.endDate)}" ${p.loading ? "disabled" : ""}></div>
+          <div></div>
+          <div class="pickup-actions">
+            ${p.loading ? `<button class="ghostbtn" data-pickup-cancel>Hủy</button>` : ""}
+            <button class="primary" data-pickup-load ${p.loading || !state.bridgeReady ? "disabled" : ""}>${p.loading ? "Đang xử lý..." : icon("refresh",16) + "<span>Tải dữ liệu</span>"}</button>
+          </div>
+        </div>
+      </section>
+      ${p.progress ? `<div class="progress">${esc(p.progress)}</div>` : ""}
+      ${p.error ? `<div class="error">${esc(p.error)}</div>` : ""}
+      ${pickupTableHtml()}
+    </section>`;
+  }
+
   function render() {
     if (!state.open) {
-      root.innerHTML = `<button class="launch" data-open>${icon("app",17)}<span>SPX Tools</span></button>`;
+      root.innerHTML = `<button class="launch" data-open aria-label="Mở SPX Operations Tools" title="SPX Operations Tools">${APP_ICON_URL ? `<img class="launch-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",20)}</button>`;
+      return;
+    }
+
+    if (state.activeTab === "pickup") {
+      root.innerHTML = `<div class="app">
+        ${appHeaderHtml()}
+        ${drawerHtml()}
+        <main class="ops-main">
+          <section class="ops-page">
+            ${pageHeaderHtml("pickup")}
+            ${renderPickupTab()}
+          </section>
+        </main>
+      </div>`;
       return;
     }
 
@@ -2555,12 +3163,12 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       <main class="ops-main">
         <section class="ops-page">
           ${pageHeaderHtml("fms")}
-          <section class="card">
-            <div class="cardhead"><div><div class="cardtitle">Điều kiện tải dữ liệu</div><div class="hint">Đổi station hoặc status sẽ không tự request FMS.</div></div><span>${state.selectedStatuses.length?state.selectedStatuses.length+" status":"Tất cả status"}</span></div>
+          <section class="card fms-filter-card">
+            <div class="cardhead"><div class="cardtitle">Bộ lọc</div><span>${state.selectedStatuses.length?state.selectedStatuses.length+" status":"Tất cả status"}</span></div>
             <div class="query">
               <div class="field"><label class="label">Current Station</label><select class="select" data-current><option value="1030" ${state.currentStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.currentStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
               <div class="arrow">${icon("arrowRight",18)}</div>
-              <div class="field"><label class="label">Next Station</label><select class="select" data-next><option value="1030" ${state.nextStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.nextStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
+              <div class="field"><label class="label">Next Station</label><select class="select" data-next-station><option value="1030" ${state.nextStation==="1030"?"selected":""}>1030 - Pleiku SOC</option><option value="1812" ${state.nextStation==="1812"?"selected":""}>1812 - Pleiku 03 Hub</option></select></div>
               <div class="field"><label class="label">Order Status cần lấy</label><button class="pick" data-picker><span>${state.selectedStatuses.length?state.selectedStatuses.length+" trạng thái đã chọn":"Tất cả trạng thái"}</span>${icon("chevronDown",16)}</button>${pickerHtml()}</div>
               <button class="primary" data-load ${state.loading||!state.bridgeReady?"disabled":""}>${state.loading?"Đang tải...":icon("refresh",16)+"<span>Tải dữ liệu</span>"}</button>
             </div>
@@ -2579,6 +3187,46 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     if (!d || d.source !== "SPX_FMS_AUDIT_BRIDGE") return;
 
     if (d.type === "SPX_FMS_BRIDGE_READY") { state.bridgeReady=true; render(); return; }
+
+    if (String(d.type || "").startsWith("SPX_PICKUP_ASSIGNMENT_")) {
+      if (d.requestId && d.requestId !== state.pickup.requestId) return;
+
+      if (d.type === "SPX_PICKUP_ASSIGNMENT_PROGRESS") {
+        if (d.stage === "search") {
+          state.pickup.progress = "Đang tải danh sách Assigned: " + (d.ordersFound || 0) + "/" + (d.total || "?") + " · " + (d.pagesFetched || 0) + " trang";
+        } else if (d.stage === "detail") {
+          state.pickup.progress = "Đang lấy địa chỉ & tài xế: " + (d.completed || 0) + "/" + (d.total || 0);
+        }
+        render();
+        return;
+      }
+
+      if (d.type === "SPX_PICKUP_ASSIGNMENT_RESULT") {
+        state.pickup.loading = false;
+        state.pickup.progress = "";
+        state.pickup.error = "";
+        state.pickup.rows = normalizePickupRows(d.result?.rows);
+        state.pickup.total = Number(d.result?.assigned_count || state.pickup.rows.length);
+        state.pickup.page = 1;
+        render();
+        return;
+      }
+
+      if (d.type === "SPX_PICKUP_ASSIGNMENT_ERROR") {
+        state.pickup.loading = false;
+        state.pickup.progress = "";
+        state.pickup.error = String(d.message || "Không thể tải Pickup Assignment.");
+        render();
+        return;
+      }
+
+      if (d.type === "SPX_PICKUP_ASSIGNMENT_CANCELLED") {
+        state.pickup.loading = false;
+        state.pickup.progress = "";
+        render();
+        return;
+      }
+    }
 
     if (String(d.type || "").startsWith("SPX_DELIVERY_EXPORT_")) {
       if (d.requestId && d.requestId !== state.delivery.requestId) return;
@@ -2600,7 +3248,6 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
 
       if (d.type === "SPX_DELIVERY_EXPORT_RESULT") {
         const result = d.result || {};
-        state.delivery.progress = "Đã tải CSV · đang dựng báo cáo...";
         const report = buildDeliveryReport(result.csv_text || "");
 
         state.delivery.loading = false;
@@ -2614,13 +3261,6 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
         state.delivery.totals = report.totals;
         state.delivery.previewDataUrl = "";
         state.delivery.previewOpen = false;
-
-        if (!report.rows.length) {
-          state.delivery.error =
-            "CSV đã tải nhưng không có driver hợp lệ để dựng report. " +
-            "Hãy kiểm tra ngày export hoặc dữ liệu SPX.";
-        }
-
         render();
         return;
       }
@@ -2738,16 +3378,42 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       return;
     }
 
-    const prevButton = t.closest("[data-prev]");
+    const prevButton = t.closest("button[data-prev]");
     if (prevButton) {
       state.page = Math.max(1, state.page - 1);
       render();
       return;
     }
 
-    const nextButton = t.closest("[data-next]");
+    const nextButton = t.closest("button[data-next]");
     if (nextButton) {
       state.page += 1;
+      render();
+      return;
+    }
+
+    const pickupLoadButton = t.closest("[data-pickup-load]");
+    if (pickupLoadButton) {
+      requestPickupAssignment();
+      return;
+    }
+
+    const pickupCancelButton = t.closest("[data-pickup-cancel]");
+    if (pickupCancelButton) {
+      cancelPickupAssignment();
+      return;
+    }
+
+    const pickupPrevButton = t.closest("[data-pickup-prev]");
+    if (pickupPrevButton && !pickupPrevButton.disabled) {
+      state.pickup.page = Math.max(1, state.pickup.page - 1);
+      render();
+      return;
+    }
+
+    const pickupNextButton = t.closest("[data-pickup-next]");
+    if (pickupNextButton && !pickupNextButton.disabled) {
+      state.pickup.page += 1;
       render();
       return;
     }
@@ -2816,9 +3482,12 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
 
   shadow.addEventListener("change", e => {
     const t=e.target;
+    if (t.matches("[data-pickup-start-date]")) { state.pickup.startDate=t.value; return; }
+    if (t.matches("[data-pickup-end-date]")) { state.pickup.endDate=t.value; return; }
+    if (t.matches("[data-pickup-driver-filter]")) { state.pickup.driverFilter=t.value || "ALL"; state.pickup.page=1; render(); return; }
     if (t.matches("[data-delivery-date]")) { state.delivery.startDate=t.value; return; }
     if (t.matches("[data-current]")) { state.currentStation=t.value; render(); return; }
-    if (t.matches("[data-next]")) { state.nextStation=t.value; render(); return; }
+    if (t.matches("[data-next-station]")) { state.nextStation=t.value; render(); return; }
     if (t.matches("[data-all]")) { state.selectedStatuses=[]; render(); return; }
     if (t.matches("[data-status]")) {
       const c=String(t.dataset.status); const i=state.selectedStatuses.indexOf(c);
@@ -3019,7 +3688,6 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       config.innerHTML = `
         <div class="seatalk-config-head">
           <div class="seatalk-config-title icon-label">${icon("link",15)}<span>SeaTalk Webhook</span></div>
-          <div class="seatalk-local">Lưu bằng chrome.storage.local · chỉ trên extension này</div>
         </div>
         <div class="seatalk-row">
           <input
