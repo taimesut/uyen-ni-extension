@@ -129,3 +129,9 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Bảng Pickup ưu tiên 5 cột chính nằm liền nhau: **Mã đơn → Tài xế → Attempt → Địa chỉ → ETA**.
 - Thu hẹp padding/cột và dùng fixed column width để bảng dễ quét mắt hơn.
 - Đổi **Lần pickup** thành **Attempt**.
+
+## v1.7.3 - Extension Icon
+
+- Thay icon extension bằng logo **X trắng nền cam** từ file người dùng cung cấp.
+- Tạo bộ icon chuẩn 16 / 32 / 48 / 128 px cho Chrome.
+- Nút mở **SPX** góc phải dùng cùng icon mới.

@@ -10,6 +10,9 @@
   const STATUS_MAP = new Map(STATUSES.map(x => [String(x.code), x.name]));
   const DEFAULT_STATUSES = ["880", "36", "15"];
   const PAGE_SIZE = 25;
+  const APP_ICON_URL = globalThis.chrome?.runtime?.getURL
+    ? chrome.runtime.getURL("icons/icon-32.png")
+    : "";
 
   function localDateInputValue(date) {
     const d = date || new Date();
@@ -195,7 +198,8 @@
   style.textContent = `
     :host{all:initial;font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;color:#26292e}
     *{box-sizing:border-box}button,input,select{font:inherit}button{cursor:pointer}
-    .launch{height:40px;padding:0 12px;border:0;border-radius:11px;background:#ee4d2d;color:#fff;font-weight:900;box-shadow:0 8px 22px #0002}
+    .launch{height:40px;padding:0 12px;border:0;border-radius:11px;background:#ee4d2d;color:#fff;font-weight:900;box-shadow:0 8px 22px #0002;display:inline-flex;align-items:center;gap:7px}
+    .launch-icon{width:22px;height:22px;border-radius:5px;display:block;object-fit:cover;flex:0 0 auto}
     .app{position:fixed;inset:0;width:100vw;height:100vh;background:#f5f6f8;display:flex;flex-direction:column;z-index:2147483647}
     .header{height:68px;flex:0 0 68px;padding:0 22px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between}
     .brand{display:flex;align-items:center;gap:12px}.logo{width:40px;height:40px;border-radius:12px;background:#ee4d2d;color:#fff;display:grid;place-items:center;font-weight:950}
@@ -1694,7 +1698,7 @@
 
   function render() {
     if (!state.open) {
-      root.innerHTML = `<button class="launch" data-open aria-label="Mở SPX Operations Tools">${icon("app",16)}<span>SPX</span></button>`;
+      root.innerHTML = `<button class="launch" data-open aria-label="Mở SPX Operations Tools">${APP_ICON_URL ? `<img class="launch-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",16)}<span>SPX</span></button>`;
       return;
     }
 
