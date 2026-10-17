@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SPX Operations Tools",
-  "version": "1.7.3",
-  "description": "SPX Operations Tools với Be Vietnam Pro, FMS Audit, Delivery Performance và Pickup Assignment.",
+  "version": "1.8.0",
+  "description": "SPX Operations Tools responsive design system cho desktop, tablet và mobile.",
   "content_scripts": [
     {
       "matches": [

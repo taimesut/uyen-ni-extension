@@ -185,7 +185,7 @@
   }
 
   const host = document.createElement("div");
-  host.style.cssText = "position:fixed;right:12px;top:12px;z-index:2147483646";
+  host.style.cssText = "position:fixed;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));z-index:2147483646";
   const shadow = host.attachShadow({mode:"open"});
   document.documentElement.appendChild(host);
 
@@ -968,6 +968,67 @@
   `;
   shadow.appendChild(pickupStyle);
 
+
+  const designSystemStyle = document.createElement("style");
+  designSystemStyle.id = "spx-design-system-v180";
+  designSystemStyle.textContent = `
+    :host{
+      --ds-color-brand:#f53d2d;--ds-color-brand-hover:#d73223;--ds-color-brand-soft:#fff1ed;
+      --ds-color-text:#1f2937;--ds-color-text-2:#4b5563;--ds-color-muted:#77818d;
+      --ds-color-border:#e2e6eb;--ds-color-surface:#fff;--ds-color-surface-2:#f8fafc;--ds-color-canvas:#f3f5f7;
+      --ds-space-1:4px;--ds-space-2:8px;--ds-space-3:12px;--ds-space-4:16px;--ds-space-5:20px;--ds-space-6:24px;--ds-space-8:32px;
+      --ds-radius-sm:10px;--ds-radius-md:14px;--ds-radius-lg:18px;--ds-radius-xl:24px;
+      --ds-control-h:44px;--ds-shadow-sm:0 1px 2px rgba(15,23,42,.05);--ds-shadow-md:0 10px 30px rgba(15,23,42,.08);--ds-shadow-lg:0 24px 70px rgba(15,23,42,.20);
+      font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif!important;
+    }
+    .app{background:var(--ds-color-canvas)!important}
+    .header{height:60px!important;flex-basis:60px!important;padding-left:max(10px,env(safe-area-inset-left))!important;padding-right:max(10px,env(safe-area-inset-right))!important;background:rgba(255,255,255,.96)!important;border-bottom:1px solid var(--ds-color-border)!important}
+    .app-brand-icon{width:100%;height:100%;display:block;object-fit:cover;border-radius:inherit}
+    .logo,.drawer-logo{overflow:hidden!important;background:transparent!important;padding:0!important;box-shadow:none!important}
+    .logo{width:36px!important;height:36px!important}.drawer-logo{width:40px!important;height:40px!important}
+    .title{font-size:15px!important;font-weight:800!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .menu-btn,.close,.drawer-close{min-width:44px!important;min-height:44px!important}
+    .ops-main{overscroll-behavior:contain;scrollbar-gutter:stable;padding-bottom:max(var(--ds-space-6),env(safe-area-inset-bottom))!important}
+    .ops-page{width:min(100%,1440px)!important;max-width:1440px!important;padding:clamp(14px,2vw,28px)!important}
+    .page-header{min-height:48px;margin:0 0 var(--ds-space-4)!important;padding:0 0 var(--ds-space-4)!important;align-items:center!important}
+    .page-heading{align-items:center!important;gap:var(--ds-space-3)!important}.page-icon{width:38px!important;height:38px!important;flex-basis:38px!important;border-radius:12px!important}.page-title{font-size:clamp(21px,2.2vw,30px)!important;font-weight:800!important;line-height:1.2!important}
+    .drawer-panel{width:min(320px,calc(100vw - 24px))!important;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))!important}
+    .nav-item{min-height:48px!important;border-radius:var(--ds-radius-md)!important;font-size:13px!important}.drawer-footer{font-size:11px!important}
+    .card,.delivery-result{border:1px solid var(--ds-color-border)!important;border-radius:var(--ds-radius-lg)!important;box-shadow:var(--ds-shadow-sm)!important;overflow:hidden}
+    .cardhead,.delivery-result-head,.pickup-result-head{min-height:56px!important;padding:var(--ds-space-3) var(--ds-space-4)!important;border-bottom:1px solid var(--ds-color-border)!important;background:var(--ds-color-surface)!important}
+    .cardtitle{font-size:14px!important;font-weight:800!important}.hint{font-size:11px!important}.field{gap:6px!important}.label{font-size:11px!important;font-weight:700!important}
+    .input,.select,.pick,.pickup-driver-filter{min-height:var(--ds-control-h)!important;height:var(--ds-control-h)!important;border:1px solid #d8dde4!important;border-radius:12px!important;background:#fff!important;color:var(--ds-color-text)!important;font-size:13px!important;box-shadow:none!important}
+    .input,.select{padding-left:12px!important;padding-right:12px!important}.pick{padding:0 12px!important}
+    .input:focus,.select:focus,.pick:focus,.pickup-driver-filter:focus{border-color:#f28c78!important;box-shadow:0 0 0 3px rgba(245,61,45,.10)!important}
+    .primary,.ghostbtn{min-height:var(--ds-control-h)!important;height:var(--ds-control-h)!important;border-radius:12px!important;font-size:12px!important;font-weight:800!important}
+    .primary{background:var(--ds-color-brand)!important}.primary:hover:not(:disabled){background:var(--ds-color-brand-hover)!important}.ghostbtn{background:#fff!important;border:1px solid var(--ds-color-border)!important}button:disabled{cursor:not-allowed!important;opacity:.5!important}
+    .query{padding:var(--ds-space-4)!important;gap:var(--ds-space-3)!important;grid-template-columns:minmax(190px,1fr) 28px minmax(190px,1fr) minmax(260px,1.35fr) 150px!important}
+    .tools{padding:var(--ds-space-3)!important;gap:var(--ds-space-2)!important;grid-template-columns:minmax(260px,1fr) minmax(150px,190px) minmax(220px,300px)!important}
+    .meta{font-size:11px!important;gap:var(--ds-space-3)!important;flex-wrap:wrap}.pop{max-height:min(420px,60vh)!important}
+    .stat-strip,.delivery-kpis{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:var(--ds-space-2)!important;padding:var(--ds-space-3)!important;background:var(--ds-color-surface-2)!important}
+    .stat-card{min-width:0!important;min-height:78px!important;padding:var(--ds-space-3)!important;border-radius:var(--ds-radius-md)!important}.stat-value{font-size:clamp(19px,2vw,24px)!important}.stat-label{font-size:10px!important}
+    .tablewrap,.delivery-table-wrap,.pickup-table-wrap{width:100%;overflow:auto!important;-webkit-overflow-scrolling:touch;scrollbar-width:thin;overscroll-behavior-inline:contain}th,td{line-height:1.45!important}th{font-size:10px!important}td{font-size:12px!important}
+    .pager,.pickup-pager{min-height:52px!important;height:auto!important;padding:10px 12px!important;gap:10px!important;flex-wrap:wrap!important;background:#fff!important}.pager button,.pickup-pager button{min-height:36px!important;padding:0 10px!important}
+    .delivery-form,.pickup-controls{padding:var(--ds-space-4)!important;gap:var(--ds-space-3)!important}.delivery-form{grid-template-columns:minmax(180px,220px) 1fr auto!important}.pickup-controls{grid-template-columns:minmax(180px,220px) minmax(180px,220px) 1fr auto!important}
+    .delivery-form-actions,.pickup-actions{display:flex;gap:var(--ds-space-2)!important;align-items:center}.delivery-result-head,.pickup-result-head{gap:var(--ds-space-3)!important;flex-wrap:wrap}.delivery-actions{display:flex!important;gap:var(--ds-space-2)!important;flex-wrap:wrap}
+    .fms-mobile-list,.pickup-mobile-list,.delivery-mobile-list{display:none}
+    .mobile-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.mobile-card-title{font-size:13px;font-weight:800;color:#252c34;overflow-wrap:anywhere}.mobile-card-sub{margin-top:3px;font-size:11px;color:var(--ds-color-muted);overflow-wrap:anywhere}
+    .rank-chip{min-width:36px;height:28px;padding:0 8px;border-radius:999px;background:var(--ds-color-brand-soft);color:#c7462c;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+    .mobile-metric-grid,.pickup-mobile-primary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.mobile-metric,.pickup-mobile-primary>div,.mobile-detail{min-width:0;padding:10px;border-radius:12px;background:var(--ds-color-surface-2)}
+    .mobile-metric span,.pickup-mobile-primary span,.mobile-detail span{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#89929c}.mobile-metric b,.pickup-mobile-primary b,.mobile-detail b{display:block;margin-top:4px;font-size:12px;color:#38414b;overflow-wrap:anywhere}
+    .mobile-detail{margin-top:8px}.pickup-mobile-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--ds-color-border);font-size:10px;color:var(--ds-color-muted)}
+    .preview-backdrop{padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important}.preview-modal{width:min(1500px,100%)!important;height:min(94dvh,1000px)!important}.preview-head{min-height:56px!important;height:auto!important;padding:10px 12px!important}.preview-scroll{padding:clamp(8px,2vw,20px)!important}
+    @media(max-width:1199px){.query{grid-template-columns:1fr 28px 1fr!important}.query .field:nth-of-type(3){grid-column:1/-1}.query .primary{grid-column:1/-1;width:100%}.delivery-form,.pickup-controls{grid-template-columns:1fr 1fr!important}.delivery-form>div:nth-child(2),.pickup-controls>div:nth-child(3){display:none}.delivery-form-actions,.pickup-actions{grid-column:1/-1;justify-content:flex-end}.tools{grid-template-columns:minmax(220px,1fr) minmax(150px,180px)!important}.tools .select:last-child{grid-column:1/-1}}
+    @media(max-width:767px){:host{--ds-control-h:46px}.header{height:58px!important;flex-basis:58px!important}.brand{gap:7px!important}.logo{width:34px!important;height:34px!important}.title{font-size:14px!important}.ops-page{padding:12px 10px calc(20px + env(safe-area-inset-bottom))!important}.page-header{margin-bottom:12px!important;padding-bottom:12px!important}.page-icon{width:34px!important;height:34px!important;flex-basis:34px!important}.page-title{font-size:21px!important}.card,.delivery-result{border-radius:15px!important}.cardhead,.delivery-result-head,.pickup-result-head{padding:11px 12px!important}.query,.tools,.delivery-form,.pickup-controls{grid-template-columns:1fr!important;padding:12px!important}.query .field:nth-of-type(3),.query .primary,.delivery-form-actions,.pickup-actions{grid-column:auto!important}.arrow{height:16px!important;transform:rotate(90deg)}.delivery-form>div:nth-child(2),.pickup-controls>div:nth-child(3){display:none}.delivery-form-actions,.pickup-actions{justify-content:stretch!important}.delivery-form-actions>*,.pickup-actions>*{flex:1 1 0}.tools .select:last-child{grid-column:auto}.meta{display:grid!important;grid-template-columns:1fr!important}.stat-strip,.delivery-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;padding:10px!important}.stat-card{min-height:70px!important;padding:10px!important}.stat-value{font-size:19px!important}.tablewrap,.delivery-table-wrap,.pickup-table-wrap{display:none!important}.fms-mobile-list,.pickup-mobile-list,.delivery-mobile-list{display:grid!important;grid-template-columns:1fr;gap:10px;padding:10px;background:#f7f8fa}.pickup-mobile-card,.delivery-mobile-card{border:1px solid var(--ds-color-border);border-radius:14px;background:#fff;padding:12px;box-shadow:var(--ds-shadow-sm)}.delivery-mobile-card.rank-first{border-color:#ecd45a;background:#fffdf0}.delivery-mobile-card.rank-second{background:#fbfcfd}.delivery-mobile-card.rank-third{background:#fff7f2}.delivery-mobile-card.rank-zero{background:#fbfef9}.pickup-driver-filter{width:100%!important}.delivery-actions{width:100%;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}.delivery-actions .ghostbtn{width:100%}.pager,.pickup-pager{align-items:stretch!important}.pager>span:last-child,.pickup-pager>span:last-child{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}.preview-backdrop{padding:0!important}.preview-modal{width:100%!important;height:100dvh!important;max-height:none!important;border-radius:0!important;border:0!important}.preview-head{padding-top:max(10px,env(safe-area-inset-top))!important;padding-left:max(12px,env(safe-area-inset-left))!important;padding-right:max(12px,env(safe-area-inset-right))!important}.preview-scroll{padding:8px!important}}
+    @media(max-width:420px){.brand .logo{display:block!important}.title{font-size:13px!important}.menu-btn,.close{min-width:40px!important;width:40px!important}.stat-strip,.delivery-kpis{grid-template-columns:1fr 1fr!important;gap:7px!important}.stat-card{min-height:66px!important}.stat-label{font-size:9px!important}.stat-value{font-size:18px!important}.delivery-actions{grid-template-columns:1fr!important}.pager,.pickup-pager{font-size:10px!important}}
+    @media(min-width:1600px){.ops-page{max-width:1500px!important}.query{grid-template-columns:260px 28px 260px minmax(360px,1fr) 160px!important}}
+    @media(pointer:coarse){.nav-item,.primary,.ghostbtn,.input,.select,.pick,.pickup-driver-filter{min-height:48px!important}.opt{min-height:44px!important}}
+    @media(hover:none){.nav-item:hover,.primary:hover,.ghostbtn:hover,tbody tr:hover td{transform:none!important}}
+    @media(prefers-contrast:more){.card,.delivery-result,.pickup-mobile-card,.delivery-mobile-card,.fms-mobile-card{border-color:#b7bec8!important}.input,.select,.pick,.pickup-driver-filter{border-color:#aeb7c3!important}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+  `;
+  shadow.appendChild(designSystemStyle);
+
   const root = document.createElement("div");
   shadow.appendChild(root);
 
@@ -975,7 +1036,7 @@
     return `<header class="header">
       <button class="menu-btn" data-menu-open aria-label="Mở menu">${icon("menu",21)}</button>
       <div class="brand">
-        <div class="logo">${icon("app",17)}</div>
+        <div class="logo">${APP_ICON_URL ? `<img class="app-brand-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",17)}</div>
         <div class="title"><span style="color:#F53D2D">SPX</span> Operations Tools</div>
       </div>
       <div class="header-actions">
@@ -989,7 +1050,7 @@
       <aside class="drawer-panel" aria-label="SPX Operations navigation">
         <div class="drawer-head">
           <div class="drawer-brand">
-            <div class="drawer-logo">${icon("app",19)}</div>
+            <div class="drawer-logo">${APP_ICON_URL ? `<img class="app-brand-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",19)}</div>
             <div class="drawer-title">SPX Operations Tools</div>
           </div>
           <button class="drawer-close" data-menu-close aria-label="Đóng menu">${icon("close",20)}</button>
@@ -1005,7 +1066,7 @@
             <span class="nav-icon">${icon("pickup",16)}</span><span>Pickup Assignment</span>
           </button>
         </nav>
-        <div class="drawer-footer">v1.7.1</div>
+        <div class="drawer-footer">v1.8.0</div>
       </aside>
     </div>`;
   }
@@ -1239,6 +1300,26 @@
         <td><b>${row.rank}</b></td>
       </tr>`;
     }).join("");
+
+    const mobileCards = d.rows.map((row) => {
+      const rankClass =
+        row.rank === 1 ? "rank-first" :
+        row.rank === 2 ? "rank-second" :
+        row.rank === 3 ? "rank-third" :
+        row.assigned === 0 ? "rank-zero" : "";
+      return `<article class="delivery-mobile-card ${rankClass}">
+        <div class="mobile-card-head">
+          <div class="mobile-card-title">${esc(row.driver)}</div>
+          <span class="rank-chip">#${row.rank}</span>
+        </div>
+        <div class="mobile-metric-grid">
+          <div class="mobile-metric"><span>Đơn nhận</span><b>${row.assigned.toLocaleString("en-US")}</b></div>
+          <div class="mobile-metric"><span>Giao TC</span><b>${row.delivered.toLocaleString("en-US")}</b></div>
+          <div class="mobile-metric"><span>Delay</span><b>${row.delay.toLocaleString("en-US")}</b></div>
+          <div class="mobile-metric"><span>Tỷ lệ GTC</span><b>${row.rate.toFixed(1)}%</b></div>
+        </div>
+      </article>`;
+    }).join("");
   
     const t = d.totals || {assigned:0,delivered:0,delay:0,rate:0};
   
@@ -1259,6 +1340,7 @@
           <button class="ghostbtn" data-delivery-download-jpg>${icon("download",16)}<span>Tải JPG</span></button>
         </div>
       </div>
+      <div class="delivery-mobile-list">${mobileCards}</div>
       <div class="delivery-table-wrap">
         <table class="delivery-table">
           <thead><tr>
@@ -1628,6 +1710,29 @@
       </tr>`;
     }).join("");
 
+    const mobileCards = view.map((row) => {
+      const typeClass = Number(row.pickupOrderType) === 5 ? "pickup-type reverse" : "pickup-type";
+      return `<article class="pickup-mobile-card">
+        <div class="mobile-card-head">
+          <div>
+            <div class="mobile-card-title pickup-id">${esc(row.shipmentId)}</div>
+            <div class="mobile-card-sub">${esc(row.driverName || "Chưa có tài xế")}</div>
+          </div>
+          <span class="${typeClass}">${esc(pickupTypeName(row.pickupOrderType))}</span>
+        </div>
+        <div class="pickup-mobile-primary">
+          <div><span>Attempt</span><b>${row.attempts}</b></div>
+          <div><span>ETA</span><b>${esc(dateTime(row.eta))}</b></div>
+        </div>
+        <div class="mobile-detail"><span>Địa chỉ</span><b>${esc(row.address || "—")}</b></div>
+        <div class="mobile-detail"><span>Điểm pickup</span><b>${esc(row.pointName || "—")}</b></div>
+        <div class="pickup-mobile-meta">
+          <span>${esc(dateTime(row.driverCtime))}</span>
+          <span>${esc(row.reason || row.driverRemark || "—")}</span>
+        </div>
+      </article>`;
+    }).join("");
+
     return `<section class="card pickup-result">
       <div class="stat-strip">
         <div class="stat-card stat-orange"><div class="stat-label">Assigned</div><div class="stat-value">${p.total.toLocaleString("en-US")}</div></div>
@@ -1642,7 +1747,8 @@
           ${driverOptions.map((name) => `<option value="${esc(name)}" ${p.driverFilter === name ? "selected" : ""}>${esc(name)}</option>`).join("")}
         </select>
       </div>
-      ${p.rows.length ? `<div class="pickup-table-wrap">
+      ${p.rows.length ? `<div class="pickup-mobile-list">${mobileCards}</div>
+      <div class="pickup-table-wrap">
         <table class="pickup-table">
           <colgroup>
             <col style="width:165px">

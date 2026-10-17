@@ -135,3 +135,13 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Thay icon extension bằng logo **X trắng nền cam** từ file người dùng cung cấp.
 - Tạo bộ icon chuẩn 16 / 32 / 48 / 128 px cho Chrome.
 - Nút mở **SPX** góc phải dùng cùng icon mới.
+
+## v1.8.0 - Responsive Design System
+
+- Chuẩn hóa design token cho màu sắc, spacing, radius, control height, typography và shadow.
+- Responsive theo desktop / tablet / mobile với safe-area và touch target.
+- FMS, Pickup Assignment và Delivery Performance có layout mobile dạng card.
+- Tablet tự co form, filter và action theo 2 cột; mobile chuyển về 1 cột.
+- KPI, table, pagination, drawer và preview modal dùng cùng một hệ UI.
+- Mobile không còn phụ thuộc vào bảng ngang cho Pickup và Delivery.
+- Hỗ trợ coarse pointer, reduced motion và increased contrast.
