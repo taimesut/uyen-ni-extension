@@ -153,3 +153,11 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Fix dropdown **Order Status cần lấy** bị card cắt mất; filter card cho phép dropdown overflow và có z-index riêng.
 - Launcher góc phải chỉ còn favicon, bỏ chữ **SPX** và nền pill.
 - Header bỏ favicon, chỉ giữ menu và tên **SPX Operations Tools**.
+
+## v1.8.2 - Pickup Address & Driver Logic
+
+- `pickup_order_type = 0` → `seller_addr`.
+- `pickup_order_type = 5` → `buyer_addr`.
+- Không tự suy đoán địa chỉ cho các pickup type khác.
+- Tài xế lấy từ `pickup_order_tracking[].pickup_driver_name` có `ctime` gần thời điểm hiện tại nhất.
+- Chỉ fallback sang `driver_name[0]` nếu không có tracking driver.

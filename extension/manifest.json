@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SPX Operations Tools",
-  "version": "1.8.1",
-  "description": "SPX Operations Tools responsive UI với FMS, Delivery Performance và Pickup Assignment.",
+  "version": "1.8.2",
+  "description": "SPX Operations Tools responsive UI với Pickup address/driver logic chính xác.",
   "content_scripts": [
     {
       "matches": [

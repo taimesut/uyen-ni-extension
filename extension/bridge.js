@@ -541,35 +541,48 @@
   }
 
   async function fetchPickupAddress(order) {
-    const shipmentId = String(order?.pickup_order_id || "");
+    const shipmentId = String(order?.pickup_order_id || "").trim();
     if (!shipmentId) return "";
 
-    const dataField = Number(order?.pickup_order_type || 0) === 5
-      ? "buyer_addr"
-      : "seller_addr";
+    const pickupOrderType = Number(order?.pickup_order_type);
+    let dataField = "";
+
+    if (pickupOrderType === 0) {
+      dataField = "seller_addr";
+    } else if (pickupOrderType === 5) {
+      dataField = "buyer_addr";
+    } else {
+      throw new Error(
+        "Không hỗ trợ pickup_order_type=" + String(order?.pickup_order_type ?? "")
+      );
+    }
 
     const url =
       PICKUP_SENSITIVE_URL +
       `?shipment_id=${encodeURIComponent(shipmentId)}&data_field=${encodeURIComponent(dataField)}`;
 
     const json = await fetchPickupJson(url, {method:"GET"});
-    return String(json?.data?.data_detail || "");
+    return String(json?.data?.data_detail || "").trim();
   }
 
   function pickLatestDriver(json) {
     const infoList = Array.isArray(json?.data?.pickup_info_list)
       ? json.data.pickup_info_list
       : [];
+    const nowTs = Math.floor(Date.now() / 1000);
     const events = [];
 
     for (const info of infoList) {
       for (const tracking of Array.isArray(info?.pickup_order_tracking) ? info.pickup_order_tracking : []) {
         const name = String(tracking?.pickup_driver_name || "").trim();
-        if (!name) continue;
+        const ctime = Number(tracking?.ctime || 0);
+
+        if (!name || !Number.isFinite(ctime) || ctime <= 0) continue;
 
         events.push({
           name,
-          ctime:Number(tracking?.ctime || 0),
+          ctime,
+          distanceToNow:Math.abs(nowTs - ctime),
           remark:String(tracking?.remark || ""),
           status:String(tracking?.pickup_result || info?.pickup_status || ""),
           reason:String(tracking?.on_hold_reason || "")
@@ -577,21 +590,45 @@
       }
     }
 
-    events.sort((a, b) => b.ctime - a.ctime);
-    if (events.length) return events[0];
+    events.sort((a, b) =>
+      a.distanceToNow - b.distanceToNow ||
+      b.ctime - a.ctime
+    );
+
+    if (events.length) {
+      const {distanceToNow, ...driver} = events[0];
+      return driver;
+    }
+
+    const fallbackDrivers = [];
 
     for (const info of infoList) {
       const names = Array.isArray(info?.driver_name) ? info.driver_name : [];
       const name = String(names[0] || "").trim();
+      const ctime = Number(info?.assigned_time || 0);
+
       if (!name) continue;
 
-      return {
+      fallbackDrivers.push({
         name,
-        ctime:Number(info?.assigned_time || 0),
+        ctime:Number.isFinite(ctime) ? ctime : 0,
+        distanceToNow:Number.isFinite(ctime) && ctime > 0
+          ? Math.abs(nowTs - ctime)
+          : Number.POSITIVE_INFINITY,
         remark:"",
         status:String(info?.pickup_status || ""),
         reason:""
-      };
+      });
+    }
+
+    fallbackDrivers.sort((a, b) =>
+      a.distanceToNow - b.distanceToNow ||
+      b.ctime - a.ctime
+    );
+
+    if (fallbackDrivers.length) {
+      const {distanceToNow, ...driver} = fallbackDrivers[0];
+      return driver;
     }
 
     return {name:"", ctime:0, remark:"", status:"", reason:""};
