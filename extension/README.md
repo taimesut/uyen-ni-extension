@@ -161,3 +161,11 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Không tự suy đoán địa chỉ cho các pickup type khác.
 - Tài xế lấy từ `pickup_order_tracking[].pickup_driver_name` có `ctime` gần thời điểm hiện tại nhất.
 - Chỉ fallback sang `driver_name[0]` nếu không có tracking driver.
+
+## v1.9.0 - Operations Dashboard Redesign
+
+- Làm mới giao diện theo dashboard vận hành SPX cam-trắng.
+- Desktop có sidebar điều hướng cố định, header gọn và vùng nội dung rộng.
+- Làm nổi bật KPI, bộ lọc và bảng dữ liệu; giữ trải nghiệm drawer trên mobile.
+- Đồng bộ giao diện giữa Chrome Extension và Safari Userscript.
+- Giữ nguyên logic FMS Audit, Pickup Assignment, Delivery Performance và SeaTalk.
