@@ -18,6 +18,7 @@
 
   let activeController = null;
   let deliveryController = null;
+  let deliveryMonthController = null;
   let pickupController = null;
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -380,7 +381,7 @@
         Accept: "application/json, text/plain, */*",
         ...(options.headers || {})
       },
-      signal: deliveryController ? deliveryController.signal : undefined
+      signal: options.signal || (deliveryController ? deliveryController.signal : undefined)
     });
 
     if (response.status === 401 || response.status === 403) {
@@ -642,7 +643,7 @@
     return pickLatestDriver(json);
   }
 
-  async function enrichPickupAssignmentOrders(orders, requestId) {
+  async function enrichPickupAssignmentOrders(orders, requestId, addressCache={}) {
     const source = Array.isArray(orders) ? orders : [];
     const rows = [];
     const batchSize = 4;
@@ -657,11 +658,16 @@
         let driver = {name:"", ctime:0, remark:"", status:"", reason:""};
         let driverError = "";
 
-        try {
-          address = await fetchPickupAddress(order);
-        } catch (error) {
-          if (error?.name === "AbortError") throw error;
-          addressError = String(error?.message || error || "Không lấy được địa chỉ.");
+        const cachedAddress = String(addressCache?.[shipmentId] || "").trim();
+        if (cachedAddress) {
+          address = cachedAddress;
+        } else {
+          try {
+            address = await fetchPickupAddress(order);
+          } catch (error) {
+            if (error?.name === "AbortError") throw error;
+            addressError = String(error?.message || error || "Không lấy được địa chỉ.");
+          }
         }
 
         try {
@@ -706,7 +712,7 @@
     return rows;
   }
 
-  async function runPickupAssignment(requestId, rawRange) {
+  async function runPickupAssignment(requestId, rawRange, addressCache={}) {
     pickupController?.abort();
     pickupController = new AbortController();
 
@@ -719,7 +725,7 @@
       }
 
       const searchResult = await fetchPickupAssignmentOrders(requestId, startTs, endTs);
-      const rows = await enrichPickupAssignmentOrders(searchResult.orders, requestId);
+      const rows = await enrichPickupAssignmentOrders(searchResult.orders, requestId, addressCache);
 
       post("SPX_PICKUP_ASSIGNMENT_RESULT", {
         requestId,
@@ -743,7 +749,7 @@
     }
   }
 
-  async function findDeliveryExportTask(taskId, requestId) {
+  async function findDeliveryExportTask(taskId, requestId, reportType, controller) {
     const startTime = Math.floor(Date.now() / 1000) - 86400;
     const maxAttempts = 60;
 
@@ -753,7 +759,7 @@
           "/spxdata/api/export_platform/export_task/list_for_portal" +
           `?start_time=${startTime}&count=100&pageno=${page}`;
 
-        const json = await fetchDeliveryJson(listUrl, { method: "GET" });
+        const json = await fetchDeliveryJson(listUrl, { method: "GET", signal:controller?.signal });
         const data = json?.data || {};
         const tasks = Array.isArray(data.task_list) ? data.task_list : [];
         const task = tasks.find((item) => Number(item?.task_id) === Number(taskId));
@@ -777,6 +783,7 @@
 
       post("SPX_DELIVERY_EXPORT_PROGRESS", {
         requestId,
+        reportType,
         stage: "poll",
         attempt,
         maxAttempts,
@@ -789,7 +796,7 @@
     throw new Error("Quá thời gian chờ file Delivery Performance được tạo.");
   }
 
-  async function downloadDeliveryCsv(task, requestId) {
+  async function downloadDeliveryCsv(task, requestId, reportType, controller) {
     const fileName = String(task?.file_name || "").trim();
     if (!fileName) throw new Error("Export task chưa có file_name.");
 
@@ -797,6 +804,7 @@
 
     post("SPX_DELIVERY_EXPORT_PROGRESS", {
       requestId,
+      reportType,
       stage: "download",
       taskId: Number(task.task_id || 0),
       fileName
@@ -805,7 +813,7 @@
     const response = await fetch(normalizedPath, {
       method: "GET",
       credentials: "include",
-      signal: deliveryController ? deliveryController.signal : undefined
+      signal: controller?.signal
     });
 
     if (response.status === 401 || response.status === 403) {
@@ -819,28 +827,39 @@
     return await response.text();
   }
 
-  async function runDeliveryExport(requestId, rawDate) {
-    deliveryController?.abort();
-    deliveryController = new AbortController();
+  async function runDeliveryExport(requestId, rawDate, frequency=1, reportType="day") {
+    const isMonthly = reportType === "month";
+    const controller = new AbortController();
+    if (isMonthly) {
+      deliveryMonthController?.abort();
+      deliveryMonthController = controller;
+    } else {
+      deliveryController?.abort();
+      deliveryController = controller;
+    }
 
     try {
       const startDate = String(rawDate || "").trim();
 
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
-        throw new Error("Ngày export không hợp lệ. Định dạng yêu cầu: YYYY-MM-DD.");
+      const datePattern = isMonthly ? /^\d{4}-\d{2}$/ : /^\d{4}-\d{2}-\d{2}$/;
+      if (!datePattern.test(startDate)) {
+        throw new Error(isMonthly
+          ? "Tháng export không hợp lệ. Định dạng yêu cầu: YYYY-MM."
+          : "Ngày export không hợp lệ. Định dạng yêu cầu: YYYY-MM-DD.");
       }
 
       post("SPX_DELIVERY_EXPORT_PROGRESS", {
         requestId,
+        reportType,
         stage: "create",
         startDate
       });
 
       const createUrl =
         "/api/driverservice/admin/performance/delivery/export/list" +
-        `?function_type=0&frequency=1&start_date=${encodeURIComponent(startDate)}`;
+        `?function_type=0&frequency=${frequency}&start_date=${encodeURIComponent(startDate)}`;
 
-      const created = await fetchDeliveryJson(createUrl, { method: "GET" });
+      const created = await fetchDeliveryJson(createUrl, { method: "GET", signal:controller.signal });
       const taskId = Number(created?.data?.task_id || created?.data?.fms_task_id || 0);
 
       if (!taskId) {
@@ -849,16 +868,18 @@
 
       post("SPX_DELIVERY_EXPORT_PROGRESS", {
         requestId,
+        reportType,
         stage: "task-created",
         taskId,
         startDate
       });
 
-      const task = await findDeliveryExportTask(taskId, requestId);
-      const csvText = await downloadDeliveryCsv(task, requestId);
+      const task = await findDeliveryExportTask(taskId, requestId, reportType, controller);
+      const csvText = await downloadDeliveryCsv(task, requestId, reportType, controller);
 
       post("SPX_DELIVERY_EXPORT_RESULT", {
         requestId,
+        reportType,
         result: {
           task_id: taskId,
           station_id: Number(task.station_id || 0),
@@ -870,15 +891,20 @@
       });
     } catch (error) {
       if (error?.name === "AbortError") {
-        post("SPX_DELIVERY_EXPORT_CANCELLED", { requestId });
+        post("SPX_DELIVERY_EXPORT_CANCELLED", { requestId, reportType });
       } else {
         post("SPX_DELIVERY_EXPORT_ERROR", {
           requestId,
+          reportType,
           message: String(error?.message || error || "Không thể export Delivery Performance.")
         });
       }
     } finally {
-      deliveryController = null;
+      if (isMonthly) {
+        if (deliveryMonthController === controller) deliveryMonthController = null;
+      } else if (deliveryController === controller) {
+        deliveryController = null;
+      }
     }
   }
 
@@ -904,7 +930,7 @@
     }
 
     if (data.type === "SPX_PICKUP_ASSIGNMENT_FETCH") {
-      runPickupAssignment(data.requestId, data.range || {});
+      runPickupAssignment(data.requestId, data.range || {}, data.addressCache || {});
       return;
     }
 
@@ -914,12 +940,22 @@
     }
 
     if (data.type === "SPX_DELIVERY_EXPORT_RUN") {
-      runDeliveryExport(data.requestId, data.startDate);
+      runDeliveryExport(data.requestId, data.startDate, 1, "day");
+      return;
+    }
+
+    if (data.type === "SPX_DELIVERY_MONTH_EXPORT_RUN") {
+      runDeliveryExport(data.requestId, data.startDate, 4, "month");
       return;
     }
 
     if (data.type === "SPX_DELIVERY_EXPORT_CANCEL") {
       deliveryController?.abort();
+      return;
+    }
+
+    if (data.type === "SPX_DELIVERY_MONTH_EXPORT_CANCEL") {
+      deliveryMonthController?.abort();
     }
   });
 

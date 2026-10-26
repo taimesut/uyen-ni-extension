@@ -169,3 +169,31 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Làm nổi bật KPI, bộ lọc và bảng dữ liệu; giữ trải nghiệm drawer trên mobile.
 - Đồng bộ giao diện giữa Chrome Extension và Safari Userscript.
 - Giữ nguyên logic FMS Audit, Pickup Assignment, Delivery Performance và SeaTalk.
+
+## v1.9.1 - Notion Paper Theme
+
+- Áp dụng nền giấy ấm, thẻ trắng viền mảnh và kiểu chữ Inter theo design reference.
+- Dùng xanh dương Notion cho hành động chính; nút phụ dùng nền xanh nhạt.
+- Loại bỏ bóng đổ và gradient khỏi các bề mặt dashboard.
+- Đồng bộ chủ đề giữa Chrome Extension và Safari Userscript.
+
+
+## v1.9.2 - Pickup Address Cache
+
+- Lưu địa chỉ Pickup theo mã đơn trong local storage sau lần lấy thành công đầu tiên.
+- Dùng lại địa chỉ đã lưu khi mã đơn còn trong kết quả lần tải tiếp theo.
+- Xóa địa chỉ của các mã đơn không còn xuất hiện; tự hết hạn cache sau 3 ngày.
+- Đồng bộ cache cho Chrome Extension và Safari Userscript.
+
+## v1.9.3 - Monthly Delivery Performance
+
+- Thêm mục Delivery Performance (Month), export với `frequency=4` và tháng `YYYY-MM`.
+- Dùng chung luồng theo dõi export task và tải CSV với báo cáo ngày.
+- Đọc các cột ngày làm việc, đơn phân công, đơn giao thành công và tỷ lệ giao thành công.
+- Hiển thị bảng desktop/mobile cùng tổng hợp KPI.
+
+## v2.0.0 - shadcn/ui Visual System
+
+- Thay toàn bộ giao diện bằng hệ màu neutral, surface, border, radius và focus style kiểu shadcn/ui.
+- Đồng bộ button, input, select, card, navigation, table, dialog và mobile cards.
+- Giữ nguyên cấu trúc responsive và toàn bộ nghiệp vụ hiện có.

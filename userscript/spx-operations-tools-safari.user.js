@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         SPX Operations Tools - Safari
 // @namespace    https://github.com/taimesut/uyen-ni-extension
-// @version      1.9.0.0
-// @description  FMS Audit, Delivery Performance, Pickup Assignment, responsive UI và SeaTalk trực tiếp trên SPX.
+// @version      2.0.0.0
+// @description  FMS, Pickup, Delivery Performance ngày/tháng và SeaTalk trực tiếp trên SPX.
 // @author       taimesut
 // @match        https://spx.shopee.vn/*
 // @run-at       document-idle
@@ -388,71 +388,10 @@
 
   let activeController = null;
   let deliveryController = null;
+  let deliveryMonthController = null;
   let pickupController = null;
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  async function userscriptFetch(url, options = {}) {
-    try {
-      return await globalThis.fetch(url, options);
-    } catch (nativeError) {
-      const gm = globalThis.GM;
-      if (!gm || typeof gm.xmlHttpRequest !== "function") throw nativeError;
-
-      const absolute = new URL(String(url || ""), window.location.origin);
-      if (absolute.origin !== window.location.origin) throw nativeError;
-
-      return new Promise((resolve, reject) => {
-        let settled = false;
-        let requestHandle = null;
-        const rejectOnce = (error) => {
-          if (settled) return;
-          settled = true;
-          reject(error);
-        };
-
-        try {
-          requestHandle = gm.xmlHttpRequest({
-            method: String(options.method || "GET").toUpperCase(),
-            url: absolute.href,
-            headers: options.headers || {},
-            data: options.body == null ? undefined : options.body,
-            timeout: 30000,
-            responseType: "text",
-            onload(response) {
-              if (settled) return;
-              settled = true;
-              const textValue = String(response.responseText || response.response || "");
-              resolve({
-                ok: Number(response.status) >= 200 && Number(response.status) < 300,
-                status: Number(response.status || 0),
-                text: async () => textValue,
-                json: async () => JSON.parse(textValue)
-              });
-            },
-            onerror() { rejectOnce(nativeError); },
-            ontimeout() { rejectOnce(new Error("SPX request timeout.")); },
-            onabort() { rejectOnce(new DOMException("Aborted", "AbortError")); }
-          });
-        } catch (error) {
-          rejectOnce(error);
-          return;
-        }
-
-        if (options.signal) {
-          if (options.signal.aborted) {
-            try { requestHandle?.abort?.(); } catch (_) {}
-            rejectOnce(new DOMException("Aborted", "AbortError"));
-            return;
-          }
-          options.signal.addEventListener("abort", () => {
-            try { requestHandle?.abort?.(); } catch (_) {}
-            rejectOnce(new DOMException("Aborted", "AbortError"));
-          }, {once:true});
-        }
-      });
-    }
-  }
 
   function post(type, payload = {}) {
     window.postMessage({
@@ -494,13 +433,13 @@
       signal: activeController ? activeController.signal : undefined
     };
 
-    let response = await userscriptFetch(url, requestOptions);
+    let response = await fetch(url, requestOptions);
 
     if (response.status === 403 && csrfRetry) {
       const csrf = readPageCsrfToken();
 
       if (csrf) {
-        response = await userscriptFetch(url, {
+        response = await fetch(url, {
           ...requestOptions,
           headers: {
             ...headers,
@@ -805,14 +744,14 @@
   }
 
   async function fetchDeliveryJson(url, options = {}) {
-    const response = await userscriptFetch(url, {
+    const response = await fetch(url, {
       ...options,
       credentials: "include",
       headers: {
         Accept: "application/json, text/plain, */*",
         ...(options.headers || {})
       },
-      signal: deliveryController ? deliveryController.signal : undefined
+      signal: options.signal || (deliveryController ? deliveryController.signal : undefined)
     });
 
     if (response.status === 401 || response.status === 403) {
@@ -850,7 +789,7 @@
 
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       try {
-        const response = await userscriptFetch(url, {
+        const response = await fetch(url, {
           ...options,
           credentials:"include",
           headers:{
@@ -1074,7 +1013,7 @@
     return pickLatestDriver(json);
   }
 
-  async function enrichPickupAssignmentOrders(orders, requestId) {
+  async function enrichPickupAssignmentOrders(orders, requestId, addressCache={}) {
     const source = Array.isArray(orders) ? orders : [];
     const rows = [];
     const batchSize = 4;
@@ -1089,11 +1028,16 @@
         let driver = {name:"", ctime:0, remark:"", status:"", reason:""};
         let driverError = "";
 
-        try {
-          address = await fetchPickupAddress(order);
-        } catch (error) {
-          if (error?.name === "AbortError") throw error;
-          addressError = String(error?.message || error || "Không lấy được địa chỉ.");
+        const cachedAddress = String(addressCache?.[shipmentId] || "").trim();
+        if (cachedAddress) {
+          address = cachedAddress;
+        } else {
+          try {
+            address = await fetchPickupAddress(order);
+          } catch (error) {
+            if (error?.name === "AbortError") throw error;
+            addressError = String(error?.message || error || "Không lấy được địa chỉ.");
+          }
         }
 
         try {
@@ -1138,7 +1082,7 @@
     return rows;
   }
 
-  async function runPickupAssignment(requestId, rawRange) {
+  async function runPickupAssignment(requestId, rawRange, addressCache={}) {
     pickupController?.abort();
     pickupController = new AbortController();
 
@@ -1151,7 +1095,7 @@
       }
 
       const searchResult = await fetchPickupAssignmentOrders(requestId, startTs, endTs);
-      const rows = await enrichPickupAssignmentOrders(searchResult.orders, requestId);
+      const rows = await enrichPickupAssignmentOrders(searchResult.orders, requestId, addressCache);
 
       post("SPX_PICKUP_ASSIGNMENT_RESULT", {
         requestId,
@@ -1175,7 +1119,7 @@
     }
   }
 
-  async function findDeliveryExportTask(taskId, requestId) {
+  async function findDeliveryExportTask(taskId, requestId, reportType, controller) {
     const startTime = Math.floor(Date.now() / 1000) - 86400;
     const maxAttempts = 60;
 
@@ -1185,7 +1129,7 @@
           "/spxdata/api/export_platform/export_task/list_for_portal" +
           `?start_time=${startTime}&count=100&pageno=${page}`;
 
-        const json = await fetchDeliveryJson(listUrl, { method: "GET" });
+        const json = await fetchDeliveryJson(listUrl, { method: "GET", signal:controller?.signal });
         const data = json?.data || {};
         const tasks = Array.isArray(data.task_list) ? data.task_list : [];
         const task = tasks.find((item) => Number(item?.task_id) === Number(taskId));
@@ -1209,6 +1153,7 @@
 
       post("SPX_DELIVERY_EXPORT_PROGRESS", {
         requestId,
+        reportType,
         stage: "poll",
         attempt,
         maxAttempts,
@@ -1221,7 +1166,7 @@
     throw new Error("Quá thời gian chờ file Delivery Performance được tạo.");
   }
 
-  async function downloadDeliveryCsv(task, requestId) {
+  async function downloadDeliveryCsv(task, requestId, reportType, controller) {
     const fileName = String(task?.file_name || "").trim();
     if (!fileName) throw new Error("Export task chưa có file_name.");
 
@@ -1229,15 +1174,16 @@
 
     post("SPX_DELIVERY_EXPORT_PROGRESS", {
       requestId,
+      reportType,
       stage: "download",
       taskId: Number(task.task_id || 0),
       fileName
     });
 
-    const response = await userscriptFetch(normalizedPath, {
+    const response = await fetch(normalizedPath, {
       method: "GET",
       credentials: "include",
-      signal: deliveryController ? deliveryController.signal : undefined
+      signal: controller?.signal
     });
 
     if (response.status === 401 || response.status === 403) {
@@ -1251,28 +1197,39 @@
     return await response.text();
   }
 
-  async function runDeliveryExport(requestId, rawDate) {
-    deliveryController?.abort();
-    deliveryController = new AbortController();
+  async function runDeliveryExport(requestId, rawDate, frequency=1, reportType="day") {
+    const isMonthly = reportType === "month";
+    const controller = new AbortController();
+    if (isMonthly) {
+      deliveryMonthController?.abort();
+      deliveryMonthController = controller;
+    } else {
+      deliveryController?.abort();
+      deliveryController = controller;
+    }
 
     try {
       const startDate = String(rawDate || "").trim();
 
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
-        throw new Error("Ngày export không hợp lệ. Định dạng yêu cầu: YYYY-MM-DD.");
+      const datePattern = isMonthly ? /^\d{4}-\d{2}$/ : /^\d{4}-\d{2}-\d{2}$/;
+      if (!datePattern.test(startDate)) {
+        throw new Error(isMonthly
+          ? "Tháng export không hợp lệ. Định dạng yêu cầu: YYYY-MM."
+          : "Ngày export không hợp lệ. Định dạng yêu cầu: YYYY-MM-DD.");
       }
 
       post("SPX_DELIVERY_EXPORT_PROGRESS", {
         requestId,
+        reportType,
         stage: "create",
         startDate
       });
 
       const createUrl =
         "/api/driverservice/admin/performance/delivery/export/list" +
-        `?function_type=0&frequency=1&start_date=${encodeURIComponent(startDate)}`;
+        `?function_type=0&frequency=${frequency}&start_date=${encodeURIComponent(startDate)}`;
 
-      const created = await fetchDeliveryJson(createUrl, { method: "GET" });
+      const created = await fetchDeliveryJson(createUrl, { method: "GET", signal:controller.signal });
       const taskId = Number(created?.data?.task_id || created?.data?.fms_task_id || 0);
 
       if (!taskId) {
@@ -1281,16 +1238,18 @@
 
       post("SPX_DELIVERY_EXPORT_PROGRESS", {
         requestId,
+        reportType,
         stage: "task-created",
         taskId,
         startDate
       });
 
-      const task = await findDeliveryExportTask(taskId, requestId);
-      const csvText = await downloadDeliveryCsv(task, requestId);
+      const task = await findDeliveryExportTask(taskId, requestId, reportType, controller);
+      const csvText = await downloadDeliveryCsv(task, requestId, reportType, controller);
 
       post("SPX_DELIVERY_EXPORT_RESULT", {
         requestId,
+        reportType,
         result: {
           task_id: taskId,
           station_id: Number(task.station_id || 0),
@@ -1302,15 +1261,20 @@
       });
     } catch (error) {
       if (error?.name === "AbortError") {
-        post("SPX_DELIVERY_EXPORT_CANCELLED", { requestId });
+        post("SPX_DELIVERY_EXPORT_CANCELLED", { requestId, reportType });
       } else {
         post("SPX_DELIVERY_EXPORT_ERROR", {
           requestId,
+          reportType,
           message: String(error?.message || error || "Không thể export Delivery Performance.")
         });
       }
     } finally {
-      deliveryController = null;
+      if (isMonthly) {
+        if (deliveryMonthController === controller) deliveryMonthController = null;
+      } else if (deliveryController === controller) {
+        deliveryController = null;
+      }
     }
   }
 
@@ -1336,7 +1300,7 @@
     }
 
     if (data.type === "SPX_PICKUP_ASSIGNMENT_FETCH") {
-      runPickupAssignment(data.requestId, data.range || {});
+      runPickupAssignment(data.requestId, data.range || {}, data.addressCache || {});
       return;
     }
 
@@ -1346,12 +1310,22 @@
     }
 
     if (data.type === "SPX_DELIVERY_EXPORT_RUN") {
-      runDeliveryExport(data.requestId, data.startDate);
+      runDeliveryExport(data.requestId, data.startDate, 1, "day");
+      return;
+    }
+
+    if (data.type === "SPX_DELIVERY_MONTH_EXPORT_RUN") {
+      runDeliveryExport(data.requestId, data.startDate, 4, "month");
       return;
     }
 
     if (data.type === "SPX_DELIVERY_EXPORT_CANCEL") {
       deliveryController?.abort();
+      return;
+    }
+
+    if (data.type === "SPX_DELIVERY_MONTH_EXPORT_CANCEL") {
+      deliveryMonthController?.abort();
     }
   });
 
@@ -1376,6 +1350,8 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
   const STATUS_MAP = new Map(STATUSES.map(x => [String(x.code), x.name]));
   const DEFAULT_STATUSES = ["880", "36", "15"];
   const PAGE_SIZE = 25;
+  const PICKUP_ADDRESS_CACHE_KEY = "spxPickupAddressCacheV1";
+  const PICKUP_ADDRESS_CACHE_TTL = 3 * 24 * 60 * 60 * 1000;
   const APP_ICON_URL = globalThis.chrome?.runtime?.getURL
     ? chrome.runtime.getURL("icons/icon-48.png")
     : "";
@@ -1406,8 +1382,9 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       rows:[],
       total:0,
       page:1,
-      driverFilter:"ALL"
-    },
+       driverFilter:"ALL",
+       addressCache:{}
+     },
     delivery:{
       startDate:localDateInputValue(new Date()),
       loading:false,
@@ -1422,6 +1399,17 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       totals:null,
       previewDataUrl:"",
       previewOpen:false
+    },
+    deliveryMonth:{
+      startMonth:localDateInputValue(new Date()).slice(0,7),
+      loading:false,
+      requestId:"",
+      progress:"",
+      error:"",
+      taskId:0,
+      fileName:"",
+      rows:[],
+      totals:null
     }
   };
 
@@ -1461,7 +1449,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     id === "1030" ? "1030 - Pleiku SOC" : "1812 - Pleiku 03 Hub";
 
   const statusName = code =>
-    STATUS_MAP.get(String(code)) || ("Status " + code);
+    STATUS_MAP.get(String(code)) || (String(code || "").trim() ? "Trạng thái khác" : "—");
 
   const hours = ts =>
     Number(ts) > 0 ? Math.max(0, Date.now() - Number(ts) * 1000) / 3600000 : null;
@@ -1557,7 +1545,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
 
   const fontLink = document.createElement("link");
   fontLink.rel = "stylesheet";
-  fontLink.href = "https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap";
+  fontLink.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
   shadow.appendChild(fontLink);
 
   const style = document.createElement("style");
@@ -1669,11 +1657,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     .launch:active{transform:translateY(0) scale(.985)}
 
     .app{
-      background:
-        radial-gradient(circle at 8% 0%,rgba(255,90,54,.10),transparent 28%),
-        radial-gradient(circle at 98% 6%,rgba(118,87,255,.10),transparent 26%),
-        radial-gradient(circle at 70% 92%,rgba(24,183,201,.08),transparent 24%),
-        linear-gradient(180deg,#f9fafc 0%,#f3f5f8 100%);
+      background:#fff;
     }
 
     .header{
@@ -1690,13 +1674,13 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     }
     .header::before{
       content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;
-      background:linear-gradient(90deg,var(--spx-primary),#ff9f43,var(--spx-purple),var(--spx-cyan));
+      background:#fff;
       opacity:.78;
     }
     .brand{gap:13px}
     .logo{
       width:44px;height:44px;border-radius:14px;
-      background:linear-gradient(135deg,var(--spx-primary),#ff8b61);
+      background:#fff;
       box-shadow:0 10px 24px rgba(238,77,45,.25),inset 0 1px 0 rgba(255,255,255,.25);
       font-size:17px;
       transform:rotate(-2deg);
@@ -1734,7 +1718,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     .tab:hover{color:#394452;background:rgba(255,255,255,.62);transform:translateY(-1px)}
     .tab.active{
       color:#fff;
-      background:linear-gradient(135deg,var(--spx-primary),#ff7958);
+      background:#fff;
       box-shadow:0 8px 20px rgba(238,77,45,.22);
     }
 
@@ -1750,7 +1734,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     .cardhead,.delivery-result-head{
       min-height:58px;padding:12px 16px;
       border-bottom:1px solid rgba(37,50,65,.075);
-      background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(248,250,252,.72));
+      background:#fff;
       border-radius:18px 18px 0 0;
     }
     .cardtitle{font-size:13px;color:#2d3742;letter-spacing:-.01em}
@@ -1779,7 +1763,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
 
     .primary{
       height:44px;border-radius:12px;
-      background:linear-gradient(135deg,var(--spx-primary),#ff7855);
+      background:#fff;
       box-shadow:0 10px 24px rgba(238,77,45,.22);
       transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
       position:relative;overflow:hidden;
@@ -1794,7 +1778,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
 
     .progress{
       position:relative;overflow:hidden;
-      background:linear-gradient(90deg,#fff8e9,#fff2df,#fff8e9);
+      background:#fff;
       background-size:200% 100%;animation:spxShimmer 2s linear infinite;
       border-color:#f1d59a;color:#835a13;box-shadow:0 8px 22px rgba(244,165,28,.08);
     }
@@ -1805,7 +1789,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     .tablewrap,.delivery-table-wrap{scrollbar-color:#cfd5dc transparent;scrollbar-width:thin}
     table{border-spacing:0}
     th{
-      background:linear-gradient(180deg,#f8fafc,#f3f6f9);
+      background:#fff;
       color:#687380;letter-spacing:.055em;box-shadow:inset 0 -1px 0 rgba(40,52,65,.08);
     }
     td{transition:background .14s ease,transform .14s ease}
@@ -1814,7 +1798,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--spx-primary)}
     .badge{
       padding:4px 7px;border-radius:8px;
-      background:linear-gradient(135deg,#fff0ec,#fff7f4);
+      background:#fff;
       color:#c9482c;border:1px solid #ffd9cf;
     }
     .age{border:1px solid rgba(55,65,81,.08);background:#f7f8fa}
@@ -1826,28 +1810,21 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     .delivery-form{padding:16px;gap:14px}
     .delivery-flow{
       height:46px;border-radius:12px;border-color:rgba(118,87,255,.18);
-      background:linear-gradient(135deg,rgba(118,87,255,.055),rgba(24,183,201,.045));
+      background:#fff;
       color:#637080;
     }
     .task-chip{
-      padding:6px 10px;background:linear-gradient(135deg,#fff0ec,#fff7f4);
+      padding:6px 10px;background:#fff;
       border:1px solid #ffd9cf;
     }
     .delivery-result-head{padding:13px 16px}
     .delivery-table thead th{
-      background:linear-gradient(135deg,#16a76d,#1abf84);
+      background:#fff;
       box-shadow:inset 0 -1px 0 rgba(0,0,0,.08);
     }
     .delivery-table tbody tr{transition:filter .14s ease,transform .14s ease}
     .delivery-table tbody tr:hover{filter:saturate(1.06);transform:translateY(-1px)}
-    .delivery-table tr.rank-first td{background:linear-gradient(90deg,#fff7a8,#fff26d)}
-    .delivery-table tr.rank-second td{background:linear-gradient(90deg,#fff7e8,#ffefd3)}
-    .delivery-table tr.rank-third td{background:linear-gradient(90deg,#fbe6df,#f8d8cc)}
-    .delivery-table tr.rank-zero td{background:linear-gradient(90deg,#f1fbea,#e9f8e1)}
-    .delivery-table tfoot th{background:linear-gradient(135deg,#e6f7fb,#d7f0f6)}
-
-    .preview-backdrop{
-      background:rgba(15,23,42,.72);
+    .delivery-table tr.rank-first td{background:#fff;
       backdrop-filter:blur(12px) saturate(120%);
       -webkit-backdrop-filter:blur(12px) saturate(120%);
       animation:spxFadeUp .18s ease both;
@@ -1856,20 +1833,20 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       border-radius:20px;box-shadow:var(--spx-shadow-lg);
       border:1px solid rgba(255,255,255,.5);
     }
-    .preview-head{background:linear-gradient(180deg,#fff,#f9fafb)}
-    .preview-scroll{background:radial-gradient(circle at 50% 0%,#3a4250,#242930 62%)}
+    .preview-head{background:#fff}
+    .preview-scroll{background:#242930}
     .preview-scroll img{border-radius:8px;box-shadow:0 18px 50px rgba(0,0,0,.36)}
 
     .seatalk-config{
-      background:linear-gradient(135deg,rgba(238,245,255,.92),rgba(247,250,255,.92))!important;
+      background:#fff;
       border-color:rgba(71,118,190,.16)!important;
       box-shadow:0 10px 30px rgba(36,89,169,.06);
     }
     .seatalk-send{
-      background:linear-gradient(135deg,#edf5ff,#e8f0ff)!important;
+      background:#fff;
       border-color:#c8d9f4!important;color:#285da9!important;
     }
-    .seatalk-send:hover:not(:disabled){background:linear-gradient(135deg,#dfeeff,#e9f2ff)!important;box-shadow:0 8px 18px rgba(36,89,169,.12)}
+    .seatalk-send:hover:not(:disabled){background:#fff;box-shadow:0 8px 18px rgba(36,89,169,.12)}
 
     .stat-strip,.delivery-kpis{
       display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px 14px;
@@ -1877,7 +1854,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     }
     .stat-card{
       min-height:72px;padding:12px;border-radius:14px;border:1px solid rgba(31,41,55,.07);
-      background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(249,250,252,.92));
+      background:#fff;
       box-shadow:0 7px 20px rgba(31,41,55,.045);position:relative;overflow:hidden;
     }
     .stat-card::after{content:"";position:absolute;right:-18px;top:-22px;width:70px;height:70px;border-radius:50%;background:var(--stat-color,rgba(238,77,45,.08))}
@@ -2119,7 +2096,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     .drawer-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:15px;border-bottom:1px solid var(--ops-line)}
     .drawer-brand{display:flex;align-items:center;gap:10px;min-width:0}
     .drawer-logo{
-      width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,var(--ops-primary),var(--ops-secondary));
+      width:40px;height:40px;border-radius:14px;background:#fff;
       color:#fff;display:grid;place-items:center;font-weight:900;box-shadow:0 8px 18px rgba(245,61,45,.18);
     }
     .drawer-title{font-size:14px;font-weight:750;color:#252b33}
@@ -2392,54 +2369,66 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
   shadow.appendChild(designSystemStyle);
 
   const dashboardStyle = document.createElement("style");
-  dashboardStyle.id = "spx-operations-dashboard-v190";
+  dashboardStyle.id = "spx-notion-paper-theme-v191";
   dashboardStyle.textContent = `
     :host{
-      --dash-ink:#202832;--dash-muted:#788390;--dash-line:#e8ebef;
-      --dash-canvas:#f5f6f8;--dash-orange:#f53d2d;--dash-sidebar:#202832;
-      --dash-sidebar-muted:#aeb7c1;
+      --dash-ink:#111;--dash-muted:#757575;--dash-line:rgba(0,0,0,.08);
+      --dash-canvas:#f6f5f4;--dash-blue:#0075de;--dash-blue-hover:#0067c5;
+      --dash-blue-wash:#e6f3fe;--dash-sidebar:#f6f5f4;
+      font-family:Inter,"Segoe UI",Arial,sans-serif!important;color:#111!important;
     }
     .app{display:grid!important;grid-template-columns:248px minmax(0,1fr);grid-template-rows:64px minmax(0,1fr);background:var(--dash-canvas)!important}
-    .header{grid-column:1/-1;grid-row:1;height:64px!important;flex-basis:64px!important;padding:0 28px!important;border-bottom:1px solid var(--dash-line)!important;background:#fff!important;box-shadow:0 2px 10px rgba(32,40,50,.035)!important;z-index:90!important}
+    .header{grid-column:1/-1;grid-row:1;height:64px!important;flex-basis:64px!important;padding:0 28px!important;border-bottom:1px solid var(--dash-line)!important;background:#fff!important;box-shadow:none!important;z-index:90!important}
     .menu-btn{display:none!important}
     .brand{gap:12px!important}
-    .brand::before{content:"X";width:34px;height:34px;border-radius:11px;background:var(--dash-orange);color:#fff;display:grid;place-items:center;font-size:17px;font-weight:950;box-shadow:0 5px 12px rgba(245,61,45,.19)}
+    .brand::before{content:"X";width:34px;height:34px;border:1px solid var(--dash-line);border-radius:8px;background:#fff;color:#111;display:grid;place-items:center;font-size:17px;font-weight:800}
     .title{font-size:15px!important;letter-spacing:-.02em;color:var(--dash-ink)!important}
-    .title span{color:var(--dash-orange)!important}
-    .header-actions::before{content:"OPERATIONS CENTER";font-size:9px;font-weight:900;letter-spacing:.13em;color:#9aa3ad;margin-right:15px}
-    .close{width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;border:1px solid var(--dash-line)!important;border-radius:11px!important;background:#fff!important}
+    .title span{color:#111!important}
+    .header-actions::before{content:"OPERATIONS";font-size:9px;font-weight:600;letter-spacing:.12em;color:#757575;margin-right:15px}
+    .close{width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;border:1px solid var(--dash-line)!important;border-radius:8px!important;background:#fff!important;color:#111!important}
     .drawer-overlay{position:relative!important;inset:auto!important;grid-column:1;grid-row:2;z-index:1!important;opacity:1!important;pointer-events:auto!important;background:var(--dash-sidebar)!important;backdrop-filter:none!important}
     .drawer-panel{position:sticky!important;inset:auto!important;top:0;width:248px!important;height:calc(100vh - 64px);padding:24px 15px!important;background:var(--dash-sidebar)!important;box-shadow:none!important;transform:none!important;transition:none!important}
-    .drawer-head{padding:2px 8px 22px!important;border-color:rgba(255,255,255,.10)!important}
-    .drawer-brand{gap:11px!important}.drawer-logo{width:38px!important;height:38px!important;flex:0 0 38px;border-radius:12px!important}
-    .drawer-title{font-size:12px!important;color:#fff!important}.drawer-sub{color:var(--dash-sidebar-muted)!important}
+    .drawer-head{padding:2px 8px 22px!important;border-color:var(--dash-line)!important}
+    .drawer-brand{gap:11px!important}.drawer-logo{width:38px!important;height:38px!important;flex:0 0 38px;border-radius:8px!important}
+    .drawer-title{font-size:12px!important;color:#111!important}.drawer-sub{color:#757575!important}
     .drawer-close{display:none!important}
     .drawer-nav{gap:6px!important;margin-top:22px!important}
-    .nav-item{min-height:46px!important;padding:0 11px!important;border-radius:10px!important;color:var(--dash-sidebar-muted)!important;font-size:11px!important}
-    .nav-item:hover{background:rgba(255,255,255,.07)!important;color:#fff!important;transform:none!important}
-    .nav-item.active{background:rgba(245,61,45,.16)!important;color:#ff806f!important;box-shadow:inset 3px 0 0 var(--dash-orange)!important}
-    .nav-item.active .nav-icon{background:rgba(245,61,45,.18)!important;color:#ff806f!important}
-    .nav-icon{background:rgba(255,255,255,.08)!important}
-    .drawer-footer{padding:14px 10px 0!important;border-color:rgba(255,255,255,.10)!important;color:#84909c!important}
+    .nav-item{min-height:44px!important;padding:0 11px!important;border-radius:8px!important;color:rgba(0,0,0,.58)!important;font-size:12px!important;font-weight:500!important}
+    .nav-item:hover{background:rgba(0,0,0,.04)!important;color:#111!important;transform:none!important}
+    .nav-item.active{background:var(--dash-blue-wash)!important;color:var(--dash-blue)!important;box-shadow:none!important}
+    .nav-item.active .nav-icon{background:transparent!important;color:var(--dash-blue)!important}
+    .nav-icon{background:transparent!important}
+    .drawer-footer{padding:14px 10px 0!important;border-color:var(--dash-line)!important;color:#757575!important}
     .ops-main{grid-column:2;grid-row:2;min-width:0;min-height:0;background:var(--dash-canvas)!important}
-    .ops-page{max-width:1500px!important;padding:30px 34px 42px!important}
-    .page-header{min-height:76px!important;margin-bottom:22px!important;padding-bottom:20px!important;border-color:#e5e8ec!important}
+    .ops-page{max-width:1440px!important;padding:30px 34px 42px!important}
+    .page-header{min-height:76px!important;margin-bottom:22px!important;padding-bottom:20px!important;border-color:var(--dash-line)!important}
     .page-heading{align-items:flex-start!important;gap:14px!important}
-    .page-icon{width:46px!important;height:46px!important;flex-basis:46px!important;border-radius:14px!important;background:#fff0ed!important;color:var(--dash-orange)!important}
-    .page-title{font-size:27px!important;letter-spacing:-.035em!important}
-    .page-title::before{content:"OPERATIONS / ";display:block;margin-bottom:6px;color:#a0a8b1;font-size:9px;line-height:1.2;font-weight:900;letter-spacing:.14em}
-    .card,.delivery-result{border-color:#e7eaee!important;border-radius:15px!important;box-shadow:0 3px 12px rgba(32,40,50,.035)!important}
+    .page-icon{width:46px!important;height:46px!important;flex-basis:46px!important;border-radius:8px!important;background:var(--dash-blue-wash)!important;color:var(--dash-blue)!important}
+    .page-title{font-size:27px!important;letter-spacing:-.035em!important;color:#111!important}
+    .page-title::before{content:"OPERATIONS / ";display:block;margin-bottom:6px;color:#757575;font-size:9px;line-height:1.2;font-weight:600;letter-spacing:.12em}
+    .card,.delivery-result{border:1px solid var(--dash-line)!important;border-radius:12px!important;box-shadow:none!important;background:#fff!important}
     .cardhead,.delivery-result-head,.pickup-result-head{min-height:60px!important;padding:15px 18px!important}
     .cardtitle{font-size:14px!important}
     .stat-strip,.delivery-kpis{gap:12px!important;padding:15px!important;background:#fff!important;border-bottom:1px solid var(--dash-line)!important}
-    .stat-card{position:relative!important;min-height:88px!important;padding:15px!important;border:1px solid #eceff2!important;border-radius:12px!important;background:#fff!important;box-shadow:none!important}
-    .stat-card::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:4px;background:var(--dash-orange)}
-    .stat-card:nth-child(2)::before{background:#f5a623}.stat-card:nth-child(3)::before{background:#18a66a}.stat-card:nth-child(4)::before{background:#6176d9}
-    .stat-label{font-size:9px!important;letter-spacing:.08em!important}.stat-value{margin-top:9px!important;font-size:25px!important;font-weight:850!important;letter-spacing:-.04em!important}
+    .stat-card{position:relative!important;min-height:88px!important;padding:15px!important;border:1px solid var(--dash-line)!important;border-radius:8px!important;background:#fff!important;box-shadow:none!important}
+    .stat-card::before{content:none!important}
+    .stat-card:nth-child(2){background:#e6f3fe!important}.stat-card:nth-child(3){background:#fff4d6!important}.stat-card:nth-child(4){background:#fce9e5!important}
+    .stat-label{font-size:10px!important;letter-spacing:.01em!important;color:#615d59!important}.stat-value{margin-top:9px!important;font-size:25px!important;font-weight:700!important;letter-spacing:-.035em!important;color:#111!important}
     .query,.delivery-form,.pickup-controls{padding:18px!important}
     .tools{padding:13px 16px!important}
     .tablewrap,.pickup-table-wrap,.delivery-table-wrap{border-top:1px solid #eff1f3}
-    th{background:#f7f8fa!important}tbody tr:hover td{background:#fff7f4!important}
+    .primary{background:var(--dash-blue)!important;border-radius:8px!important;color:#fff!important;box-shadow:none!important;font-weight:500!important}
+    .primary:hover:not(:disabled){background:var(--dash-blue-hover)!important}
+    .ghostbtn{border-radius:8px!important;background:var(--dash-blue-wash)!important;border-color:transparent!important;color:var(--dash-blue)!important;font-weight:500!important}
+    .ghostbtn:hover:not(:disabled){background:#d8edfc!important;color:#0067c5!important}
+    .input,.select,.pick,.pickup-driver-filter{border-radius:8px!important}
+    .badge,.task-chip,.pickup-type,.rank-chip{border-radius:9999px!important}
+    .badge{background:#e6f3fe!important;color:#0075de!important}
+    .tab.active{background:#0075de!important;color:#fff!important;box-shadow:none!important}
+    .delivery-table thead th{background:#f6f5f4!important;color:#111!important}
+    th{background:#f6f5f4!important}tbody tr:hover td{background:#e6f3fe!important}
+    .progress{background:#fff4d6!important;border-color:#f0d99f!important;color:#615d59!important;animation:none!important}
+    .error{background:#fce9e5!important;border-color:#f2c7bd!important;color:#8c2a1a!important}
     @media(max-width:900px){.app{grid-template-columns:210px minmax(0,1fr)}.drawer-panel{width:210px!important;padding:20px 11px!important}.ops-page{padding:22px 20px 32px!important}.header{padding:0 20px!important}}
     @media(max-width:767px){
       .app{display:flex!important;flex-direction:column!important}
@@ -2450,11 +2439,11 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       .close{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important}
       .drawer-overlay{position:fixed!important;inset:0!important;grid-column:auto;grid-row:auto;z-index:110!important;background:rgba(17,24,39,.42)!important;opacity:0!important;pointer-events:none!important;transition:opacity .18s ease!important}
       .drawer-overlay.open{opacity:1!important;pointer-events:auto!important}
-      .drawer-panel{position:absolute!important;inset:0 auto 0 0!important;width:min(300px,86vw)!important;height:100%!important;padding:16px!important;background:#fff!important;box-shadow:18px 0 52px rgba(15,23,42,.18)!important;transform:translateX(-102%)!important;transition:transform .22s ease!important}
+      .drawer-panel{position:absolute!important;inset:0 auto 0 0!important;width:min(300px,86vw)!important;height:100%!important;padding:16px!important;background:#fff!important;box-shadow:0 4px 12px rgba(0,0,0,.10)!important;transform:translateX(-102%)!important;transition:transform .2s ease!important}
       .drawer-overlay.open .drawer-panel{transform:translateX(0)!important}
-      .drawer-head{border-color:var(--dash-line)!important}.drawer-title{color:var(--dash-ink)!important}.drawer-close{display:grid!important;place-items:center}
-      .drawer-nav{margin-top:18px!important}.nav-item{color:#4c5663!important}.nav-item:hover{background:#f3f4f6!important;color:#374151!important}.nav-item.active{background:var(--dash-orange)!important;color:#fff!important;box-shadow:0 7px 16px rgba(245,61,45,.17)!important}.nav-item.active .nav-icon{background:rgba(255,255,255,.16)!important;color:#fff!important}.nav-icon{background:rgba(127,127,127,.08)!important}
-      .drawer-footer{border-color:var(--dash-line)!important;color:#7b8490!important}
+      .drawer-head{border-color:var(--dash-line)!important}.drawer-title{color:#111!important}.drawer-close{display:grid!important;place-items:center}
+      .drawer-nav{margin-top:18px!important}.nav-item{color:rgba(0,0,0,.58)!important}.nav-item:hover{background:rgba(0,0,0,.04)!important;color:#111!important}.nav-item.active{background:#e6f3fe!important;color:#0075de!important;box-shadow:none!important}.nav-item.active .nav-icon{background:transparent!important;color:#0075de!important}.nav-icon{background:transparent!important}
+      .drawer-footer{border-color:var(--dash-line)!important;color:#757575!important}
       .ops-main{flex:1;min-height:0}.ops-page{padding:18px 12px calc(22px + env(safe-area-inset-bottom))!important}
       .page-header{min-height:60px!important;margin-bottom:15px!important;padding-bottom:14px!important}.page-heading{align-items:center!important}.page-icon{width:38px!important;height:38px!important;flex-basis:38px!important}.page-title{font-size:22px!important}.page-title::before{font-size:8px!important;margin-bottom:4px}
       .stat-strip,.delivery-kpis{gap:8px!important;padding:10px!important}.stat-card{min-height:72px!important;padding:11px!important}.stat-value{font-size:20px!important}
@@ -2462,15 +2451,153 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
   `;
   shadow.appendChild(dashboardStyle);
 
+  const shadcnStyle = document.createElement("style");
+  shadcnStyle.id = "spx-shadcn-theme-v200";
+  shadcnStyle.textContent = `
+    :host{
+      --sc-background:#fff9fc;--sc-foreground:#181116;--sc-card:#fff;
+      --sc-muted:#fff0f6;--sc-muted-foreground:#806b76;
+      --sc-border:#f1d5e1;--sc-input:#efd3df;--sc-primary:#db2777;
+      --sc-primary-foreground:#fff;--sc-secondary:#fce7f3;
+      --sc-secondary-foreground:#9d174d;--sc-accent:#fce7f3;
+      --sc-ring:#ec4899;--sc-pink-soft:#fce7f3;--sc-pink-border:#f9a8d4;--sc-pink-ink:#be185d;--sc-radius:8px;
+      font-family:Inter,"Segoe UI",Arial,sans-serif!important;color:var(--sc-foreground)!important;
+      color-scheme:light;
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    button,input,select,textarea{font-family:inherit!important}
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+      outline:2px solid var(--sc-ring)!important;outline-offset:2px!important;box-shadow:none!important
+    }
+    .app{grid-template-columns:228px minmax(0,1fr)!important;grid-template-rows:48px minmax(0,1fr)!important;background:#fff0f6!important;color:var(--sc-foreground)!important}
+    .launch{border-radius:8px!important;box-shadow:none!important;transition:background .15s ease!important}
+    .launch:hover{transform:none!important;box-shadow:none!important;filter:none!important}
+    .header{grid-column:2!important;grid-row:1!important;height:48px!important;flex-basis:48px!important;justify-content:flex-end!important;padding:0 20px!important;background:#fff0f6!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important}
+    .header::before{display:none!important}
+    .header-actions{display:flex;align-items:center;gap:8px!important}
+    .header-actions::before{display:none!important;content:none!important}
+    .close,.menu-btn,.drawer-close{border:1px solid transparent!important;border-radius:var(--sc-radius)!important;background:transparent!important;color:#52525b!important;box-shadow:none!important}
+    .close:hover,.menu-btn:hover,.drawer-close:hover{background:var(--sc-muted)!important;color:var(--sc-foreground)!important;transform:none!important}
+    .close{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important}
+    .ops-main{grid-column:2!important;grid-row:2!important;min-width:0;min-height:0;margin:0 8px 8px 0;padding:24px!important;overflow:auto!important;border:1px solid #f1d5e1!important;border-radius:16px!important;background:#fff!important;overscroll-behavior:contain}
+    .ops-page{max-width:1500px!important;margin:0 auto!important;padding:0 0 24px!important}
+    .page-header{min-height:68px!important;margin:0 0 18px!important;padding:0 0 14px!important;border-bottom:1px solid #f4e2eb!important}
+    .page-heading{align-items:center!important;gap:13px!important}
+    .page-heading>div:last-child{min-width:0}
+    .page-icon{width:34px!important;height:34px!important;flex-basis:34px!important;border:0!important;border-radius:0!important;background:transparent!important;color:#db2777!important;box-shadow:none!important}
+    .page-title{color:var(--sc-foreground)!important;font-size:25px!important;font-weight:650!important;line-height:1.2!important;letter-spacing:-.04em!important}
+    .page-title::before{display:none!important}
+    .page-description{margin-top:5px;color:#71717a;font-size:13px;line-height:1.45}
+    .drawer-overlay{position:relative!important;inset:auto!important;grid-column:1!important;grid-row:1/-1!important;z-index:1!important;opacity:1!important;pointer-events:auto!important;background:#fff0f6!important;backdrop-filter:none!important}
+    .drawer-panel{position:sticky!important;inset:auto!important;top:0;width:228px!important;height:100vh!important;padding:16px 12px!important;background:#fff0f6!important;border:0!important;box-shadow:none!important;transform:none!important;transition:none!important}
+    .drawer-nav{gap:4px!important;margin-top:0!important}
+    .nav-item{min-height:38px!important;padding:0 10px!important;border:1px solid transparent!important;border-radius:6px!important;background:transparent!important;color:#52525b!important;font-size:12px!important;font-weight:500!important;box-shadow:none!important;transition:background .15s ease,color .15s ease!important}
+    .nav-item:hover{background:var(--sc-muted)!important;color:var(--sc-foreground)!important;transform:none!important}
+    .nav-item.active{border-color:transparent!important;border-left:2px solid #db2777!important;background:#fce0ed!important;color:#831843!important;box-shadow:none!important}
+    .nav-item.active .nav-icon{color:#be185d!important}
+    .nav-icon,.nav-item.active .nav-icon{width:26px!important;height:26px!important;border-radius:5px!important;background:transparent!important;color:inherit!important}
+    .card,.delivery-result{border:1px solid #f1e2e9!important;border-radius:8px!important;background:var(--sc-card)!important;box-shadow:none!important;backdrop-filter:none!important;animation:none!important}
+    .fms-mobile-card,.pickup-mobile-card,.delivery-mobile-card{border:1px solid var(--sc-border)!important;border-radius:var(--sc-radius)!important;background:#fff!important;box-shadow:none!important;color:var(--sc-foreground)!important}
+    .fms-mobile-item,.pickup-mobile-item,.mobile-metric,.pickup-mobile-primary>div,.mobile-detail{border-radius:6px!important;background:#fafafa!important}
+    .cardhead,.delivery-result-head,.pickup-result-head{min-height:48px!important;padding:12px 14px!important;border-bottom:1px solid #f4e2eb!important;border-radius:8px 8px 0 0!important;background:#fff!important}
+    .cardtitle{color:var(--sc-foreground)!important;font-size:14px!important;font-weight:600!important;letter-spacing:-.01em!important}
+    .hint,.small{color:var(--sc-muted-foreground)!important;font-size:12px!important}
+    .label{color:#3f3f46!important;font-size:12px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important}
+    .input,.select,.pick,.pickup-driver-filter{
+      min-height:36px!important;height:36px!important;padding:0 10px!important;border:1px solid var(--sc-input)!important;
+      border-radius:6px!important;background:#fff!important;color:var(--sc-foreground)!important;font-size:13px!important;
+      box-shadow:0 1px 2px rgba(0,0,0,.025)!important;transition:border-color .15s ease,box-shadow .15s ease!important
+    }
+    .input:hover,.select:hover,.pick:hover,.pickup-driver-filter:hover{border-color:#f0a8c7!important}
+    .input:focus,.select:focus,.pick:focus,.pickup-driver-filter:focus{border-color:#f472b6!important;outline:0!important;box-shadow:0 0 0 3px rgba(244,114,182,.18)!important}
+    .pick{display:flex!important;align-items:center!important;justify-content:space-between!important;text-align:left!important}
+    .primary,.ghostbtn,.pager button,.pickup-pager button{
+      min-height:36px!important;height:36px!important;padding:0 14px!important;border-radius:6px!important;
+      font-size:13px!important;font-weight:500!important;letter-spacing:0!important;box-shadow:none!important;
+      transition:background .15s ease,border-color .15s ease,color .15s ease!important
+    }
+    .primary{border:1px solid var(--sc-primary)!important;background:var(--sc-primary)!important;color:var(--sc-primary-foreground)!important}
+    .primary:hover:not(:disabled){background:#be185d!important;border-color:#be185d!important;transform:none!important;filter:none!important}
+    .primary:active:not(:disabled){transform:none!important}
+    .ghostbtn{border:1px solid #f3c4d8!important;background:#fff0f6!important;color:#be185d!important}
+    .ghostbtn:hover:not(:disabled),.pager button:hover,.pickup-pager button:hover{border-color:#ec8fba!important;background:#fce7f3!important;color:#9d174d!important;transform:none!important}
+    button:disabled{opacity:.5!important;cursor:not-allowed!important}
+    .query,.delivery-form,.pickup-controls{padding:16px!important;gap:12px!important}
+    .tools{padding:12px!important;gap:8px!important;background:#fff!important}
+    .meta{background:#fafafa!important;border-color:var(--sc-border)!important;color:var(--sc-muted-foreground)!important}
+    .stat-strip,.delivery-kpis{gap:18px!important;padding:14px!important;border-bottom:1px solid #f4e2eb!important;background:#fff!important}
+    .stat-card{min-height:66px!important;padding:8px 10px!important;border:0!important;border-left:2px solid #ec4899!important;border-radius:0!important;background:#fff!important;box-shadow:none!important}
+    .stat-card:nth-child(n){background:#fff!important}
+    .stat-card::before,.stat-card::after{display:none!important;content:none!important}
+    .stat-label{color:var(--sc-muted-foreground)!important;font-size:11px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important}
+    .stat-value{margin-top:7px!important;color:var(--sc-foreground)!important;font-size:22px!important;font-weight:650!important;letter-spacing:-.03em!important}
+    .stat-note{color:var(--sc-muted-foreground)!important}
+    .tablewrap,.delivery-table-wrap,.pickup-table-wrap{border-top:1px solid var(--sc-border)!important;scrollbar-color:#d4d4d8 transparent!important}
+    table,.delivery-table,.pickup-table{border-collapse:collapse!important;border-spacing:0!important}
+    th,td{padding:10px 12px!important;border-color:var(--sc-border)!important;line-height:1.45!important}
+    th,.delivery-table thead th,.pickup-table thead th{background:#fff!important;color:#806b76!important;font-size:12px!important;font-style:normal!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important;box-shadow:none!important}
+    td{color:#3f3f46!important;font-size:12px!important}
+    tbody tr:nth-child(even) td,tbody tr:hover td{background:transparent!important;box-shadow:none!important}
+    tbody tr:hover td{background:#fff8fb!important}
+    .mono,.pickup-id,.pickup-driver,.pickup-point{color:#18181b!important}
+    .badge,.task-chip,.pickup-type,.rank-chip{display:inline-flex!important;align-items:center!important;min-height:22px!important;padding:2px 9px!important;border:1px solid #f3bfd5!important;border-radius:999px!important;background:#fff0f6!important;color:#be185d!important;font-size:11px!important;font-weight:500!important}
+    .badge,.task-chip,.rank-chip{border-color:#f9a8d4!important;background:#fce7f3!important;color:#9d174d!important}
+    .pickup-type.reverse{border-color:#e9a8d0!important;background:#fce7f3!important;color:#86198f!important}
+    .age{border:1px solid var(--sc-border)!important;border-radius:999px!important;background:#fafafa!important;color:#52525b!important}
+    .pager,.pickup-pager{min-height:52px!important;border-top:1px solid var(--sc-border)!important;background:#fff!important;color:var(--sc-muted-foreground)!important}
+    .delivery-table{min-width:900px!important}
+    .delivery-table th,.delivery-table td{border:1px solid var(--sc-border)!important;text-align:center!important}
+    .delivery-table thead th{position:sticky!important;top:0!important;z-index:2!important}
+    .delivery-table tr.rank-first td{background:#fefce8!important}.delivery-table tr.rank-second td{background:#fafafa!important}
+    .delivery-table tr.rank-third td{background:#fff7ed!important}.delivery-table tr.rank-zero td{background:#f0fdf4!important}
+    .delivery-table tfoot th{background:#f4f4f5!important;color:#18181b!important;font-weight:600!important}
+    .delivery-empty,.pickup-empty{padding:48px 20px!important;border:1px dashed #d4d4d8!important;border-radius:7px!important;background:#fff!important;color:var(--sc-muted-foreground)!important;font-size:13px!important}
+    .delivery-empty b{color:var(--sc-foreground)!important;font-size:14px!important}
+    .delivery-empty-icon{border:1px solid var(--sc-border)!important;border-radius:8px!important;background:var(--sc-muted)!important;color:#52525b!important}
+    .progress,.error{padding:10px 13px!important;border:1px solid var(--sc-border)!important;border-radius:7px!important;box-shadow:none!important;font-size:12px!important;font-weight:500!important;animation:none!important}
+    .progress{background:#fff0f6!important;border-color:#f3bfd5!important;color:#9d174d!important}.error{background:#fef2f2!important;border-color:#fecaca!important;color:#991b1b!important}
+    .pop{border:1px solid var(--sc-border)!important;border-radius:8px!important;background:#fff!important;box-shadow:0 8px 24px rgba(0,0,0,.10)!important;backdrop-filter:none!important}
+    .opt{min-height:34px!important;border-radius:5px!important;color:#27272a!important;font-size:12px!important}
+    .opt:hover{background:var(--sc-pink-soft)!important;color:var(--sc-pink-ink)!important;transform:none!important}
+    .preview-backdrop{background:rgba(9,9,11,.55)!important;backdrop-filter:blur(3px)!important;-webkit-backdrop-filter:blur(3px)!important}
+    .preview-modal{border:1px solid var(--sc-border)!important;border-radius:10px!important;background:#fff!important;box-shadow:0 16px 48px rgba(0,0,0,.18)!important}
+    .preview-head{border-bottom:1px solid var(--sc-border)!important;background:#fff!important}
+    .preview-scroll{background:#f4f4f5!important}
+    .seatalk-config{background:#fafafa!important;border-color:var(--sc-border)!important;box-shadow:none!important}
+    .seatalk-send{background:var(--sc-secondary)!important;border-color:var(--sc-border)!important;color:var(--sc-secondary-foreground)!important}
+    .seatalk-send:hover:not(:disabled){background:#e4e4e7!important;box-shadow:none!important}
+    @media(max-width:900px){.app{grid-template-columns:210px minmax(0,1fr)!important}.drawer-panel{width:210px!important}.ops-main{padding:20px!important}.ops-page{padding:0 0 20px!important}.header{padding:0 16px!important}}
+    @media(max-width:767px){
+      .app{display:flex!important;flex-direction:column!important}
+      .header{height:56px!important;flex:0 0 56px!important;justify-content:space-between!important;padding:0 10px!important;background:#fff0f6!important}
+      .menu-btn{display:grid!important;width:38px;height:38px}
+      .close{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important}
+      .drawer-overlay{position:fixed!important;inset:0!important;z-index:110!important;background:rgba(157,23,77,.22)!important;opacity:0!important;pointer-events:none!important;transition:opacity .18s ease!important}
+      .drawer-overlay.open{opacity:1!important;pointer-events:auto!important}
+      .drawer-panel{position:absolute!important;inset:0 auto 0 0!important;width:min(300px,86vw)!important;height:100%!important;padding:16px 12px!important;background:#fff0f6!important;border-right:1px solid #f1d5e1!important;box-shadow:0 12px 32px rgba(190,24,93,.15)!important;transform:translateX(-102%)!important;transition:transform .2s ease!important}
+      .drawer-overlay.open .drawer-panel{transform:translateX(0)!important}
+      .ops-main{width:100%!important;min-height:0!important;margin:0!important;padding:14px 12px calc(20px + env(safe-area-inset-bottom))!important;border:0!important;border-radius:0!important;background:#fff!important}
+      .ops-page{padding:0 0 8px!important}
+      .page-header{min-height:64px!important;margin-bottom:14px!important;padding-bottom:12px!important}
+      .page-heading{align-items:flex-start!important}.page-title{font-size:21px!important}.page-description{font-size:12px!important}
+      .query,.tools,.delivery-form,.pickup-controls{grid-template-columns:1fr!important;padding:12px!important}
+      .stat-strip,.delivery-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;padding:10px!important;gap:8px!important}
+      .stat-card{min-height:68px!important;padding:10px!important}.stat-value{font-size:19px!important}
+      .delivery-result-head,.pickup-result-head{align-items:flex-start!important}
+      .tablewrap,.delivery-table-wrap,.pickup-table-wrap{border-radius:0!important}
+    }
+    @media(max-width:420px){.ops-page{padding-left:10px!important;padding-right:10px!important}.page-title{font-size:19px!important}.page-description{max-width:280px}.stat-card{min-height:64px!important}.stat-value{font-size:18px!important}}
+    @media(pointer:coarse){.nav-item,.primary,.ghostbtn,.input,.select,.pick,.pickup-driver-filter{min-height:44px!important}.opt{min-height:40px!important}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+  `;
+  shadow.appendChild(shadcnStyle);
+
   const root = document.createElement("div");
   shadow.appendChild(root);
 
   function appHeaderHtml() {
     return `<header class="header">
       <button class="menu-btn" data-menu-open aria-label="Mở menu">${icon("menu",21)}</button>
-      <div class="brand">
-        <div class="title"><span style="color:#F53D2D">SPX</span> Operations Tools</div>
-      </div>
       <div class="header-actions">
         <button class="close" data-close aria-label="Đóng SPX Tools">${icon("close",20)}</button>
       </div>
@@ -2479,14 +2606,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
 
   function drawerHtml() {
     return `<div class="drawer-overlay ${state.drawerOpen ? "open" : ""}" data-menu-overlay>
-      <aside class="drawer-panel" aria-label="SPX Operations navigation">
-        <div class="drawer-head">
-          <div class="drawer-brand">
-            <div class="drawer-logo">${APP_ICON_URL ? `<img class="app-brand-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",19)}</div>
-            <div class="drawer-title">SPX Operations Tools</div>
-          </div>
-          <button class="drawer-close" data-menu-close aria-label="Đóng menu">${icon("close",20)}</button>
-        </div>
+      <aside class="drawer-panel" aria-label="Điều hướng">
         <nav class="drawer-nav">
           <button class="nav-item ${state.activeTab === "fms" ? "active" : ""}" data-nav="fms">
             <span class="nav-icon">${icon("fms",16)}</span><span>FMS Audit</span>
@@ -2494,26 +2614,30 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
           <button class="nav-item ${state.activeTab === "delivery" ? "active" : ""}" data-nav="delivery">
             <span class="nav-icon">${icon("delivery",16)}</span><span>Delivery Performance</span>
           </button>
+          <button class="nav-item ${state.activeTab === "delivery-month" ? "active" : ""}" data-nav="delivery-month">
+            <span class="nav-icon">${icon("calendar",16)}</span><span>Delivery Performance (Month)</span>
+          </button>
           <button class="nav-item ${state.activeTab === "pickup" ? "active" : ""}" data-nav="pickup">
             <span class="nav-icon">${icon("pickup",16)}</span><span>Pickup Assignment</span>
           </button>
         </nav>
-        <div class="drawer-footer">v1.9.0 · Operations Dashboard</div>
       </aside>
     </div>`;
   }
 
   function pageHeaderHtml(type) {
     const config = type === "pickup"
-      ? {icon:"pickup", title:"Pickup Assignment"}
+      ? {icon:"pickup", title:"Pickup Assignment", description:"Theo dõi đơn pickup, tài xế và địa chỉ được phân công."}
+      : type === "delivery-month"
+        ? {icon:"delivery", title:"Delivery Performance (Month)", description:"Tổng hợp hiệu suất giao hàng theo từng tài xế trong tháng."}
       : type === "delivery"
-        ? {icon:"delivery", title:"Delivery Performance"}
-        : {icon:"fms", title:"FMS Audit"};
+        ? {icon:"delivery", title:"Delivery Performance", description:"Theo dõi kết quả giao hàng theo ngày và hiệu suất tài xế."}
+        : {icon:"fms", title:"FMS Audit", description:"Rà soát hành trình và trạng thái kiện hàng giữa các trạm."};
 
     return `<header class="page-header">
       <div class="page-heading">
         <div class="page-icon">${icon(config.icon,20)}</div>
-        <h1 class="page-title">${config.title}</h1>
+        <div><h1 class="page-title">${config.title}</h1><div class="page-description">${config.description}</div></div>
       </div>
     </header>`;
   }
@@ -2666,6 +2790,40 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     return "Ngày " + parts[2] + " Tháng " + parts[1] + " Năm " + parts[0];
   }
 
+  function formatVietnameseReportMonth(value) {
+    const parts = String(value || "").split("-");
+    return parts.length === 2 ? "Tháng " + parts[1] + " Năm " + parts[0] : value || "";
+  }
+
+  function buildMonthlyDeliveryReport(csvText) {
+    const raw = parseCsv(csvText);
+    const rows = raw.map((item) => ({
+      driver:String(item.Driver || "").trim(),
+      workingDays:parseMetricNumber(item["Number of days working"]),
+      assigned:parseMetricNumber(item["Number of parcels assigned (VN)"]),
+      rateAssigned:parseMetricNumber(item["Number of Delivery Parcels Assigned (VN) with all Exclusions"]),
+      delivered:parseMetricNumber(item["Number of Parcels Delivered (VN) with all Exclusions"]),
+      rate:parseMetricNumber(item["Delivery Success Rate (VN) with all Exclusions"])
+    })).filter((item) => item.driver && (
+      item.workingDays > 0 || item.assigned > 0 || item.delivered > 0 || item.rate > 0
+    ));
+
+    rows.sort((a,b) =>
+      b.rate - a.rate || b.delivered - a.delivered ||
+      b.assigned - a.assigned || a.driver.localeCompare(b.driver)
+    );
+
+    const totals = rows.reduce((acc, item) => {
+      acc.workingDays += item.workingDays;
+      acc.assigned += item.assigned;
+      acc.rateAssigned += item.rateAssigned || item.assigned;
+      acc.delivered += item.delivered;
+      return acc;
+    }, {workingDays:0, assigned:0, rateAssigned:0, delivered:0, rate:0});
+    totals.rate = totals.rateAssigned > 0 ? totals.delivered / totals.rateAssigned * 100 : 0;
+    return {rows, totals};
+  }
+
   function requestDeliveryExport() {
     if (state.delivery.loading) return;
   
@@ -2703,6 +2861,34 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     post("SPX_DELIVERY_EXPORT_CANCEL", {
       requestId:state.delivery.requestId
     });
+  }
+
+  function requestDeliveryMonthExport() {
+    const d = state.deliveryMonth;
+    if (d.loading) return;
+    const month = String(d.startMonth || "").trim();
+    if (!/^\d{4}-\d{2}$/.test(month)) {
+      d.error = "Vui lòng chọn tháng hợp lệ.";
+      render();
+      return;
+    }
+
+    d.loading = true;
+    d.error = "";
+    d.progress = "Đang tạo export task theo tháng...";
+    d.requestId = Date.now() + "_delivery_month_" + Math.random().toString(36).slice(2);
+    d.taskId = 0;
+    d.fileName = "";
+    d.rows = [];
+    d.totals = null;
+    render();
+    post("SPX_DELIVERY_MONTH_EXPORT_RUN", {requestId:d.requestId, startDate:month});
+  }
+
+  function cancelDeliveryMonthExport() {
+    const d = state.deliveryMonth;
+    if (!d.loading) return;
+    post("SPX_DELIVERY_MONTH_EXPORT_CANCEL", {requestId:d.requestId});
   }
 
   function deliveryTableHtml() {
@@ -2830,6 +3016,96 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       ${d.error ? `<div class="error">${esc(d.error)}</div>` : ""}
   
       ${deliveryTableHtml()}
+    </section>`;
+  }
+
+  function deliveryMonthTableHtml() {
+    const d = state.deliveryMonth;
+    if (!d.rows.length) {
+      return `<div class="delivery-empty">
+        <div class="delivery-empty-icon">${icon("calendar",24)}</div>
+        <b>Chưa có Delivery Performance tháng</b>
+        <div>Chọn tháng rồi nhấn <strong>Export & xử lý báo cáo</strong>.</div>
+      </div>`;
+    }
+
+    const rows = d.rows.map((row) => `<tr>
+      <td class="driver">${esc(row.driver)}</td>
+      <td>${row.workingDays.toLocaleString("en-US")}</td>
+      <td>${row.assigned.toLocaleString("en-US")}</td>
+      <td>${row.delivered.toLocaleString("en-US")}</td>
+      <td><b>${row.rate.toFixed(2)}%</b></td>
+    </tr>`).join("");
+    const mobileCards = d.rows.map((row) => `<article class="delivery-mobile-card">
+      <div class="mobile-card-head"><div class="mobile-card-title">${esc(row.driver)}</div></div>
+      <div class="mobile-metric-grid">
+        <div class="mobile-metric"><span>Number of days working</span><b>${row.workingDays.toLocaleString("en-US")}</b></div>
+        <div class="mobile-metric"><span>Number of parcels assigned (VN)</span><b>${row.assigned.toLocaleString("en-US")}</b></div>
+        <div class="mobile-metric"><span>Parcels delivered</span><b>${row.delivered.toLocaleString("en-US")}</b></div>
+        <div class="mobile-metric"><span>Delivery Success Rate</span><b>${row.rate.toFixed(2)}%</b></div>
+      </div>
+    </article>`).join("");
+    const totals = d.totals || {workingDays:0, assigned:0, delivered:0, rate:0};
+
+    return `<section class="delivery-result">
+      <div class="delivery-kpis">
+        <div class="stat-card"><div class="stat-label">Drivers</div><div class="stat-value">${d.rows.length.toLocaleString("en-US")}</div></div>
+        <div class="stat-card"><div class="stat-label">Working Days</div><div class="stat-value">${totals.workingDays.toLocaleString("en-US")}</div></div>
+        <div class="stat-card"><div class="stat-label">Parcels Assigned</div><div class="stat-value">${totals.assigned.toLocaleString("en-US")}</div></div>
+        <div class="stat-card"><div class="stat-label">Parcels Delivered</div><div class="stat-value">${totals.delivered.toLocaleString("en-US")}</div></div>
+      </div>
+      <div class="delivery-result-head">
+        <div><div class="cardtitle">Delivery Performance Monthly Report</div><div class="hint">${esc(formatVietnameseReportMonth(d.startMonth))}</div></div>
+        ${d.taskId ? `<span class="task-chip">Task #${d.taskId}</span>` : ""}
+      </div>
+      <div class="delivery-mobile-list">${mobileCards}</div>
+      <div class="delivery-table-wrap">
+        <table class="delivery-table">
+          <thead><tr>
+            <th>Driver</th>
+            <th>Number of days working</th>
+            <th>Number of parcels assigned (VN)</th>
+            <th>Number of Parcels Delivered (VN) with all Exclusions</th>
+            <th>Delivery Success Rate (VN) with all Exclusions</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr>
+            <th>Total</th>
+            <th>${totals.workingDays.toLocaleString("en-US")}</th>
+            <th>${totals.assigned.toLocaleString("en-US")}</th>
+            <th>${totals.delivered.toLocaleString("en-US")}</th>
+            <th>${totals.rate.toFixed(2)}%</th>
+          </tr></tfoot>
+        </table>
+      </div>
+    </section>`;
+  }
+
+  function renderDeliveryMonthTab() {
+    const d = state.deliveryMonth;
+    return `<section class="delivery-layout">
+      <section class="card delivery-control">
+        <div class="cardhead">
+          <div class="cardtitle">Delivery Performance (Month)</div>
+          ${d.taskId ? `<span class="task-chip">Task #${d.taskId}</span>` : ""}
+        </div>
+        <div class="delivery-form">
+          <div class="field">
+            <label class="label">Tháng báo cáo</label>
+            <input class="input" type="month" data-delivery-month value="${esc(d.startMonth)}" ${d.loading ? "disabled" : ""}>
+          </div>
+          <div></div>
+          <div class="delivery-form-actions">
+            ${d.loading ? `<button class="ghostbtn" data-delivery-month-cancel>Hủy</button>` : ""}
+            <button class="primary delivery-run" data-delivery-month-run ${d.loading || !state.bridgeReady ? "disabled" : ""}>
+              ${d.loading ? "Đang xử lý..." : icon("download",16) + "<span>Export & xử lý báo cáo</span>"}
+            </button>
+          </div>
+        </div>
+      </section>
+      ${d.progress ? `<div class="progress">${esc(d.progress)}</div>` : ""}
+      ${d.error ? `<div class="error">${esc(d.error)}</div>` : ""}
+      ${deliveryMonthTableHtml()}
     </section>`;
   }
 
@@ -2965,10 +3241,10 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
 
     return `<div class="pop">
       <div class="status-search-wrap">
-        <input class="input status-search" data-status-search type="search" autocomplete="off" placeholder="Tìm tên hoặc mã status..." value="${esc(state.statusSearch)}">
+        <input class="input status-search" data-status-search type="search" autocomplete="off" placeholder="Tìm trạng thái..." value="${esc(state.statusSearch)}">
       </div>
       <label class="opt"><input type="checkbox" data-all ${state.selectedStatuses.length===0?"checked":""}><span>Tất cả trạng thái</span></label>
-      ${visibleStatuses.map(x => `<label class="opt"><input type="checkbox" data-status="${esc(x.code)}" ${state.selectedStatuses.includes(String(x.code))?"checked":""}><span>${esc(x.name)}</span><b>${esc(x.code)}</b></label>`).join("")}
+      ${visibleStatuses.map(x => `<label class="opt"><input type="checkbox" data-status="${esc(x.code)}" ${state.selectedStatuses.includes(String(x.code))?"checked":""}><span>${esc(x.name)}</span></label>`).join("")}
       ${visibleStatuses.length ? "" : `<div class="empty" style="padding:24px 12px">Không tìm thấy trạng thái.</div>`}
     </div>`;
   }
@@ -2990,11 +3266,11 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
           <span class="age">${esc(aging(row.latest?.timestamp))}</span>
         </div>
         <div class="fms-mobile-grid">
-          <div class="fms-mobile-item"><div class="fms-mobile-label">Order Status</div><div class="fms-mobile-value">${esc(row.orderStatus || "—")} · ${esc(statusName(row.orderStatus))}</div></div>
+          <div class="fms-mobile-item"><div class="fms-mobile-label">Order Status</div><div class="fms-mobile-value">${esc(statusName(row.orderStatus))}</div></div>
           <div class="fms-mobile-item"><div class="fms-mobile-label">Đã qua</div><div class="fms-mobile-value">${esc(elapsed(row.latest?.timestamp))}</div></div>
           <div class="fms-mobile-item"><div class="fms-mobile-label">Current Station</div><div class="fms-mobile-value">${esc(row.current || "—")}</div></div>
           <div class="fms-mobile-item"><div class="fms-mobile-label">Next Station</div><div class="fms-mobile-value">${esc(row.next || "—")}</div></div>
-          <div class="fms-mobile-item"><div class="fms-mobile-label">Tracking cuối</div><div class="fms-mobile-value">${esc(row.latest?.status || "—")} · ${esc(row.latest?.message || "—")}</div></div>
+          <div class="fms-mobile-item"><div class="fms-mobile-label">Tracking cuối</div><div class="fms-mobile-value">${esc(row.latest?.message || "—")}</div></div>
           <div class="fms-mobile-item"><div class="fms-mobile-label">Cập nhật</div><div class="fms-mobile-value">${esc(dateTime(row.latest?.timestamp))}</div></div>
         </div>
       </article>
@@ -3021,7 +3297,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
         </select>
         <select class="select" data-order-status>
           <option value="ALL">Tất cả Order Status đã tải</option>
-          ${resultStatuses().map(c=>`<option value="${esc(c)}" ${state.orderStatus===c?"selected":""}>${esc(c)} · ${esc(statusName(c))}</option>`).join("")}
+          ${resultStatuses().map(c=>`<option value="${esc(c)}" ${state.orderStatus===c?"selected":""}>${esc(statusName(c))}</option>`).join("")}
         </select>
       </div>
       <div class="meta"><span>${esc(state.applied?.current||"")} → ${esc(state.applied?.next||"")}</span><span>${state.applied?.statuses?.length||"Tất cả"} Order Status</span></div>
@@ -3029,9 +3305,9 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       <div class="tablewrap"><table><thead><tr><th>SPX Tracking Number</th><th>TO Number</th><th>Order Status</th><th>Current Station</th><th>Next Station</th><th>Tracking cuối</th><th>Cập nhật cuối</th><th>Đã qua</th><th>Aging</th></tr></thead>
       <tbody>${view.map(row=>`<tr>
         <td class="mono">${esc(row.shipmentId)}</td><td class="mono">${esc(row.to||"—")}</td>
-        <td><span class="badge">${esc(row.orderStatus||"—")}</span><div class="small">${esc(statusName(row.orderStatus))}</div></td>
+        <td><span class="badge">${esc(statusName(row.orderStatus))}</span></td>
         <td>${esc(row.current||"—")}</td><td>${esc(row.next||"—")}</td>
-        <td><span class="badge">${esc(row.latest?.status||"—")}</span><div class="small">${esc(row.latest?.message||"—")}</div></td>
+        <td>${esc(row.latest?.message||"—")}</td>
         <td>${esc(dateTime(row.latest?.timestamp))}</td><td><b>${esc(elapsed(row.latest?.timestamp))}</b></td><td><span class="age">${esc(aging(row.latest?.timestamp))}</span></td>
       </tr>`).join("")}</tbody></table></div>
       <div class="pager"><span>${rows.length?start+1:0}-${Math.min(start+PAGE_SIZE,rows.length)} / ${rows.length}</span><span><button data-prev>${icon("chevronLeft",14)}<span>Trước</span></button> &nbsp; Trang ${state.page}/${pages} &nbsp; <button data-next><span>Sau</span>${icon("chevronRight",14)}</button></span></div>
@@ -3061,6 +3337,66 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       addressError:String(row?.address_error || ""),
       driverError:String(row?.driver_error || "")
     })).filter((row) => row.shipmentId);
+  }
+
+  function loadPickupAddressCache() {
+    return new Promise((resolve) => {
+      const storage = globalThis.chrome?.storage?.local;
+      if (!storage?.get) {
+        resolve({});
+        return;
+      }
+
+      storage.get([PICKUP_ADDRESS_CACHE_KEY], (result) => {
+        const stored = result?.[PICKUP_ADDRESS_CACHE_KEY];
+        const now = Date.now();
+        const cache = {};
+        for (const [shipmentId, entry] of Object.entries(stored && typeof stored === "object" ? stored : {})) {
+          const address = String(entry?.address || "").trim();
+          const savedAt = Number(entry?.savedAt || 0);
+          if (!shipmentId || !address || !savedAt || savedAt > now || now - savedAt >= PICKUP_ADDRESS_CACHE_TTL) continue;
+          cache[shipmentId] = {address, savedAt};
+        }
+
+        storage.set?.({[PICKUP_ADDRESS_CACHE_KEY]:cache}, () => resolve(cache));
+        if (!storage.set) resolve(cache);
+      });
+    });
+  }
+
+  function persistPickupAddressCache(rows, previousCache) {
+    const now = Date.now();
+    const validRows = Array.isArray(rows) ? rows : [];
+    const cache = {};
+    for (const row of validRows) {
+      const shipmentId = String(row?.pickup_order_id || "").trim();
+      if (!shipmentId) continue;
+      const previous = previousCache?.[shipmentId];
+      const address = String(row?.address || previous?.address || "").trim();
+      if (!address) continue;
+      const savedAt = previous && previous.address === address
+        ? Number(previous.savedAt || now)
+        : now;
+      cache[shipmentId] = {address, savedAt};
+    }
+
+    return new Promise((resolve) => {
+      const storage = globalThis.chrome?.storage?.local;
+      if (!storage?.set) {
+        resolve(validRows.map((row) => ({
+          ...row,
+          address:String(row?.address || previousCache?.[String(row?.pickup_order_id || "")]?.address || "")
+        })));
+        return;
+      }
+
+      storage.set({[PICKUP_ADDRESS_CACHE_KEY]:cache}, () => {
+        resolve(validRows.map((row) => ({
+          ...row,
+          address:String(row?.address || cache[String(row?.pickup_order_id || "")]?.address || "")
+        })));
+      });
+    });
   }
 
   function pickupDriverOptions() {
@@ -3097,15 +3433,25 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     p.rows = [];
     p.total = 0;
     p.page = 1;
+    p.addressCache = {};
     resetPickupFilter();
     render();
 
-    post("SPX_PICKUP_ASSIGNMENT_FETCH", {
-      requestId:p.requestId,
-      range:{
-        startDate:p.startDate,
-        endDate:p.endDate
-      }
+    const requestId = p.requestId;
+    loadPickupAddressCache().then((cache) => {
+      if (!p.loading || p.requestId !== requestId) return;
+      p.addressCache = cache;
+      const addressCache = Object.fromEntries(
+        Object.entries(cache).map(([shipmentId, entry]) => [shipmentId, entry.address])
+      );
+      post("SPX_PICKUP_ASSIGNMENT_FETCH", {
+        requestId,
+        range:{
+          startDate:p.startDate,
+          endDate:p.endDate
+        },
+        addressCache
+      });
     });
   }
 
@@ -3236,7 +3582,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
 
   function render() {
     if (!state.open) {
-      root.innerHTML = `<button class="launch" data-open aria-label="Mở SPX Operations Tools" title="SPX Operations Tools">${APP_ICON_URL ? `<img class="launch-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",20)}</button>`;
+      root.innerHTML = `<button class="launch" data-open aria-label="Mở SPX Tools" title="SPX Tools">${APP_ICON_URL ? `<img class="launch-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",20)}</button>`;
       return;
     }
 
@@ -3265,6 +3611,20 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
           </section>
         </main>
         ${renderDeliveryPreviewModal()}
+      </div>`;
+      return;
+    }
+
+    if (state.activeTab === "delivery-month") {
+      root.innerHTML = `<div class="app">
+        ${appHeaderHtml()}
+        ${drawerHtml()}
+        <main class="ops-main">
+          <section class="ops-page">
+            ${pageHeaderHtml("delivery-month")}
+            ${renderDeliveryMonthTab()}
+          </section>
+        </main>
       </div>`;
       return;
     }
@@ -3314,13 +3674,19 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       }
 
       if (d.type === "SPX_PICKUP_ASSIGNMENT_RESULT") {
-        state.pickup.loading = false;
-        state.pickup.progress = "";
-        state.pickup.error = "";
-        state.pickup.rows = normalizePickupRows(d.result?.rows);
-        state.pickup.total = Number(d.result?.assigned_count || state.pickup.rows.length);
-        state.pickup.page = 1;
-        render();
+        const p = state.pickup;
+        p.progress = "Đang cập nhật bộ nhớ địa chỉ...";
+        persistPickupAddressCache(d.result?.rows, p.addressCache).then((rows) => {
+          if (d.requestId && d.requestId !== p.requestId) return;
+          p.loading = false;
+          p.progress = "";
+          p.error = "";
+          p.addressCache = {};
+          p.rows = normalizePickupRows(rows);
+          p.total = Number(d.result?.assigned_count || p.rows.length);
+          p.page = 1;
+          render();
+        });
         return;
       }
 
@@ -3341,18 +3707,19 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     }
 
     if (String(d.type || "").startsWith("SPX_DELIVERY_EXPORT_")) {
-      if (d.requestId && d.requestId !== state.delivery.requestId) return;
+      const deliveryState = d.reportType === "month" ? state.deliveryMonth : state.delivery;
+      if (d.requestId && d.requestId !== deliveryState.requestId) return;
 
       if (d.type === "SPX_DELIVERY_EXPORT_PROGRESS") {
         if (d.stage === "create") {
-          state.delivery.progress = "Đang tạo export task cho " + (d.startDate || state.delivery.startDate) + "...";
+          deliveryState.progress = "Đang tạo export task cho " + (d.startDate || deliveryState.startDate || deliveryState.startMonth) + "...";
         } else if (d.stage === "task-created") {
-          state.delivery.taskId = Number(d.taskId || 0);
-          state.delivery.progress = "Đã tạo task #" + state.delivery.taskId + " · đang chờ SPX tạo file...";
+          deliveryState.taskId = Number(d.taskId || 0);
+          deliveryState.progress = "Đã tạo task #" + deliveryState.taskId + " · đang chờ SPX tạo file...";
         } else if (d.stage === "poll") {
-          state.delivery.progress = "Đang chờ file export · lần kiểm tra " + (d.attempt || 0) + "/" + (d.maxAttempts || 60);
+          deliveryState.progress = "Đang chờ file export · lần kiểm tra " + (d.attempt || 0) + "/" + (d.maxAttempts || 60);
         } else if (d.stage === "download") {
-          state.delivery.progress = "File đã sẵn sàng · đang tải CSV vào bộ nhớ tạm...";
+          deliveryState.progress = "File đã sẵn sàng · đang tải CSV vào bộ nhớ tạm...";
         }
         render();
         return;
@@ -3360,34 +3727,38 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
 
       if (d.type === "SPX_DELIVERY_EXPORT_RESULT") {
         const result = d.result || {};
-        const report = buildDeliveryReport(result.csv_text || "");
+        const report = d.reportType === "month"
+          ? buildMonthlyDeliveryReport(result.csv_text || "")
+          : buildDeliveryReport(result.csv_text || "");
 
-        state.delivery.loading = false;
-        state.delivery.progress = "";
-        state.delivery.error = "";
-        state.delivery.taskId = Number(result.task_id || 0);
-        state.delivery.stationName = String(result.station_name || "44-GLI Pleiku 03 Hub");
-        state.delivery.fileName = String(result.file_name || "");
-        state.delivery.csvText = String(result.csv_text || "");
-        state.delivery.rows = report.rows;
-        state.delivery.totals = report.totals;
-        state.delivery.previewDataUrl = "";
-        state.delivery.previewOpen = false;
+        deliveryState.loading = false;
+        deliveryState.progress = "";
+        deliveryState.error = "";
+        deliveryState.taskId = Number(result.task_id || 0);
+        deliveryState.fileName = String(result.file_name || "");
+        deliveryState.rows = report.rows;
+        deliveryState.totals = report.totals;
+        if (d.reportType !== "month") {
+          deliveryState.stationName = String(result.station_name || "44-GLI Pleiku 03 Hub");
+          deliveryState.csvText = String(result.csv_text || "");
+          deliveryState.previewDataUrl = "";
+          deliveryState.previewOpen = false;
+        }
         render();
         return;
       }
 
       if (d.type === "SPX_DELIVERY_EXPORT_ERROR") {
-        state.delivery.loading = false;
-        state.delivery.progress = "";
-        state.delivery.error = String(d.message || "Không thể export Delivery Performance.");
+        deliveryState.loading = false;
+        deliveryState.progress = "";
+        deliveryState.error = String(d.message || "Không thể export Delivery Performance.");
         render();
         return;
       }
 
       if (d.type === "SPX_DELIVERY_EXPORT_CANCELLED") {
-        state.delivery.loading = false;
-        state.delivery.progress = "";
+        deliveryState.loading = false;
+        deliveryState.progress = "";
         render();
         return;
       }
@@ -3536,6 +3907,18 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       return;
     }
 
+    const deliveryMonthRunButton = t.closest("[data-delivery-month-run]");
+    if (deliveryMonthRunButton) {
+      requestDeliveryMonthExport();
+      return;
+    }
+
+    const deliveryMonthCancelButton = t.closest("[data-delivery-month-cancel]");
+    if (deliveryMonthCancelButton) {
+      cancelDeliveryMonthExport();
+      return;
+    }
+
     const deliveryCancelButton = t.closest("[data-delivery-cancel]");
     if (deliveryCancelButton) {
       cancelDeliveryExport();
@@ -3598,6 +3981,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     if (t.matches("[data-pickup-end-date]")) { state.pickup.endDate=t.value; return; }
     if (t.matches("[data-pickup-driver-filter]")) { state.pickup.driverFilter=t.value || "ALL"; state.pickup.page=1; render(); return; }
     if (t.matches("[data-delivery-date]")) { state.delivery.startDate=t.value; return; }
+    if (t.matches("[data-delivery-month]")) { state.deliveryMonth.startMonth=t.value; return; }
     if (t.matches("[data-current]")) { state.currentStation=t.value; render(); return; }
     if (t.matches("[data-next-station]")) { state.nextStation=t.value; render(); return; }
     if (t.matches("[data-all]")) { state.selectedStatuses=[]; render(); return; }
@@ -3689,7 +4073,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
         state.delivery.seatalkError = chrome.runtime.lastError.message;
       } else {
         state.delivery.seatalkWebhook = value;
-        state.delivery.seatalkMessage = "✓ Đã lưu SeaTalk Webhook trên thiết bị này.";
+        state.delivery.seatalkMessage = "Đã lưu SeaTalk Webhook trên thiết bị này.";
       }
       render();
     });
@@ -3760,7 +4144,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       }
 
       d.seatalkError = "";
-      d.seatalkMessage = "✓ Đã gửi ảnh Delivery Performance vào SeaTalk.";
+      d.seatalkMessage = "Đã gửi ảnh Delivery Performance vào SeaTalk.";
       render();
     });
   }
