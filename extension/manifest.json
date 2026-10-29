@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SPX Operations Tools",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "SPX Operations Tools: FMS, Pickup, Delivery Performance ngày/tháng và SeaTalk.",
   "content_scripts": [
     {

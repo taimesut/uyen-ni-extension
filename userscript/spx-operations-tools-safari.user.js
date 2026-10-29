@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SPX Operations Tools - Safari
 // @namespace    https://github.com/taimesut/uyen-ni-extension
-// @version      2.1.3.0
+// @version      2.1.4.0
 // @description  FMS, Pickup, Delivery Performance ngày/tháng và SeaTalk trực tiếp trên SPX.
 // @author       taimesut
 // @match        https://spx.shopee.vn/*
@@ -4373,10 +4373,10 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     title.className = "ssc-menu-submenu-title";
     title.tabIndex = 0;
     title.setAttribute("role", "button");
-    title.setAttribute("aria-label", "Uyển Ni");
+    title.setAttribute("aria-label", "Uyen Ni");
     title.innerHTML =
       '<svg class="title-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3c1.9 0 3.1 1.4 3.1 3.3 0 2.1-1.7 4.4-3.1 5.7-1.4-1.3-3.1-3.6-3.1-5.7C8.9 4.4 10.1 3 12 3z"/><path d="M12 3c1.9 0 3.1 1.4 3.1 3.3 0 2.1-1.7 4.4-3.1 5.7-1.4-1.3-3.1-3.6-3.1-5.7C8.9 4.4 10.1 3 12 3z" transform="rotate(72 12 12)"/><path d="M12 3c1.9 0 3.1 1.4 3.1 3.3 0 2.1-1.7 4.4-3.1 5.7-1.4-1.3-3.1-3.6-3.1-5.7C8.9 4.4 10.1 3 12 3z" transform="rotate(144 12 12)"/><path d="M12 3c1.9 0 3.1 1.4 3.1 3.3 0 2.1-1.7 4.4-3.1 5.7-1.4-1.3-3.1-3.6-3.1-5.7C8.9 4.4 10.1 3 12 3z" transform="rotate(216 12 12)"/><path d="M12 3c1.9 0 3.1 1.4 3.1 3.3 0 2.1-1.7 4.4-3.1 5.7-1.4-1.3-3.1-3.6-3.1-5.7C8.9 4.4 10.1 3 12 3z" transform="rotate(288 12 12)"/><circle cx="12" cy="12" r="2" fill="#0e1723"/></svg>' +
-      '<span class="sub-menu-title">Uyển Ni</span>' +
+      '<span class="sub-menu-title">Uyen Ni</span>' +
       '<span class="ssc-menu-submenu-title-icon"><svg class="submenu-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m7 10 5 5 5-5-1.4-1.4L12 12.2 8.4 8.6z"/></svg></span>';
     const list = document.createElement("ul");
     list.className = "ssc-menu";

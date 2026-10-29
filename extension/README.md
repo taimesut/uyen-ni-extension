@@ -200,19 +200,19 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 
 ## v2.1.0 - Native sidebar
 
-- Chèn Uyển Ni vào sidebar SPX sau Outbound.
+- Chèn Uyen Ni vào sidebar SPX sau Outbound.
 - Mở bốn trang công cụ hiện có trong không gian bên phải sidebar.
 - Tự gắn lại menu sau Vue DOM re-render, không đổi hash route hay request API mới.
 - Extension và userscript dùng chung source `extension/menu.js`.
 
 ## v2.1.1 - Đổi tên menu
 
-- Đổi nhãn nhóm menu gốc SPX từ **OPS Tools** thành **Uyển Ni**.
+- Đổi nhãn nhóm menu gốc SPX từ **OPS Tools** thành **Uyen Ni**.
 - Giữ nguyên các mục con và nghiệp vụ hiện có.
 
-## v2.1.2 - Icon bông hoa cho Uyển Ni
+## v2.1.2 - Icon bông hoa cho Uyen Ni
 
-- Thay biểu tượng 4 ô vuông của nhóm menu **Uyển Ni** bằng bông hoa năm cánh SVG, cùng màu với menu SPX.
+- Thay biểu tượng 4 ô vuông của nhóm menu **Uyen Ni** bằng bông hoa năm cánh SVG, cùng màu với menu SPX.
 - Giữ nguyên biểu tượng của Chrome Extension và các chức năng con.
 
 ## v2.1.3 - Reverse Pickup address
@@ -220,3 +220,7 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Reverse (`pickup_order_type=5`) lấy `seller_addr` thay vì `buyer_addr`.
 - Pickup thường (`pickup_order_type=0`) vẫn lấy `seller_addr`.
 - Đổi địa chỉ cache sang `spxPickupAddressCacheV2` để tải lại địa chỉ, tránh hiển thị `buyer_addr` đã lưu trong cache cũ; TTL vẫn 3 ngày.
+
+## v2.1.4 - Tên menu không dấu
+
+- Đổi nhãn menu ở sidebar SPX từ `Uyển Ni` thành `Uyen Ni`, giữ nguyên icon bông hoa và các chức năng.
