@@ -200,7 +200,12 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 
 ## v2.1.0 - Native sidebar
 
-- Chèn OPS Tools vào sidebar SPX sau Outbound.
+- Chèn Uyển Ni vào sidebar SPX sau Outbound.
 - Mở bốn trang công cụ hiện có trong không gian bên phải sidebar.
 - Tự gắn lại menu sau Vue DOM re-render, không đổi hash route hay request API mới.
 - Extension và userscript dùng chung source `extension/menu.js`.
+
+## v2.1.1 - Đổi tên menu
+
+- Đổi nhãn nhóm menu gốc SPX từ **OPS Tools** thành **Uyển Ni**.
+- Giữ nguyên các mục con và nghiệp vụ hiện có.

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SPX Operations Tools - Safari
 // @namespace    https://github.com/taimesut/uyen-ni-extension
-// @version      2.1.0.0
+// @version      2.1.1.0
 // @description  FMS, Pickup, Delivery Performance ngày/tháng và SeaTalk trực tiếp trên SPX.
 // @author       taimesut
 // @match        https://spx.shopee.vn/*
@@ -4373,10 +4373,10 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
     title.className = "ssc-menu-submenu-title";
     title.tabIndex = 0;
     title.setAttribute("role", "button");
-    title.setAttribute("aria-label", "OPS Tools");
+    title.setAttribute("aria-label", "Uyển Ni");
     title.innerHTML =
       '<svg class="title-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg>' +
-      '<span class="sub-menu-title">OPS Tools</span>' +
+      '<span class="sub-menu-title">Uyển Ni</span>' +
       '<span class="ssc-menu-submenu-title-icon"><svg class="submenu-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m7 10 5 5 5-5-1.4-1.4L12 12.2 8.4 8.6z"/></svg></span>';
     const list = document.createElement("ul");
     list.className = "ssc-menu";

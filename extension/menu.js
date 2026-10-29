@@ -68,10 +68,10 @@
     title.className = "ssc-menu-submenu-title";
     title.tabIndex = 0;
     title.setAttribute("role", "button");
-    title.setAttribute("aria-label", "OPS Tools");
+    title.setAttribute("aria-label", "Uyển Ni");
     title.innerHTML =
       '<svg class="title-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg>' +
-      '<span class="sub-menu-title">OPS Tools</span>' +
+      '<span class="sub-menu-title">Uyển Ni</span>' +
       '<span class="ssc-menu-submenu-title-icon"><svg class="submenu-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m7 10 5 5 5-5-1.4-1.4L12 12.2 8.4 8.6z"/></svg></span>';
     const list = document.createElement("ul");
     list.className = "ssc-menu";

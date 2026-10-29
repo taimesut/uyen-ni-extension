@@ -31,4 +31,4 @@ Chrome Extension vẫn cài trực tiếp bằng `Load unpacked` → `extension/
 
 ## Tích hợp menu gốc SPX
 
-Bản Extension và Safari Userscript chèn **OPS Tools** sau **Outbound**, gồm FMS Audit, Delivery Performance (ngày/tháng) và Pickup Assignment. Khi mở từ menu mới, trang công cụ hiển thị bên phải sidebar SPX. Có thể quay về SPX bằng nút đóng hoặc chuyển sang mục menu gốc. Nếu SPX thay đổi DOM menu, launcher cũ vẫn được dùng làm dự phòng.
+Bản Extension và Safari Userscript chèn **Uyển Ni** sau **Outbound**, gồm FMS Audit, Delivery Performance (ngày/tháng) và Pickup Assignment. Khi mở từ menu mới, trang công cụ hiển thị bên phải sidebar SPX. Có thể quay về SPX bằng nút đóng hoặc chuyển sang mục menu gốc. Nếu SPX thay đổi DOM menu, launcher cũ vẫn được dùng làm dự phòng.
