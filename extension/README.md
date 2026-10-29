@@ -197,3 +197,10 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Thay toàn bộ giao diện bằng hệ màu neutral, surface, border, radius và focus style kiểu shadcn/ui.
 - Đồng bộ button, input, select, card, navigation, table, dialog và mobile cards.
 - Giữ nguyên cấu trúc responsive và toàn bộ nghiệp vụ hiện có.
+
+## v2.1.0 - Native sidebar
+
+- Chèn OPS Tools vào sidebar SPX sau Outbound.
+- Mở bốn trang công cụ hiện có trong không gian bên phải sidebar.
+- Tự gắn lại menu sau Vue DOM re-render, không đổi hash route hay request API mới.
+- Extension và userscript dùng chung source `extension/menu.js`.

@@ -10,7 +10,8 @@ const OUTPUT = "userscript/spx-operations-tools-safari.user.js";
 const PARTS = [
   ["SPX same-origin API bridge", "extension/bridge.js"],
   ["SPX status data", "extension/status-data.js"],
-  ["SPX responsive UI", "extension/ui.js"]
+  ["SPX responsive UI", "extension/ui.js"],
+  ["SPX native sidebar menu", "extension/menu.js"]
 ];
 
 function read(relativePath) {

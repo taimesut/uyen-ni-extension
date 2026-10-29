@@ -1255,6 +1255,61 @@
   const root = document.createElement("div");
   shadow.appendChild(root);
 
+  // Native SPX menu: render our existing pages to the right of its sidebar.
+  const embeddedStyle = document.createElement("style");
+  embeddedStyle.id = "spx-native-embedded-style";
+  embeddedStyle.textContent = [
+    ':host([data-spx-embedded="true"]) .launch{display:none!important}',
+    ':host([data-spx-embedded="true"]) .app{position:fixed!important;inset:auto 0 0 var(--spx-ops-left,220px)!important;top:var(--spx-ops-top,0px)!important;width:auto!important;height:auto!important;max-width:none!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:48px minmax(0,1fr)!important;z-index:2147483645!important}',
+    ':host([data-spx-embedded="true"]) .drawer-overlay{display:none!important}',
+    ':host([data-spx-embedded="true"]) .header{grid-column:1!important;grid-row:1!important;display:flex!important;justify-content:flex-end!important}',
+    ':host([data-spx-embedded="true"]) .menu-btn{display:none!important}',
+    ':host([data-spx-embedded="true"]) .ops-main{grid-column:1!important;grid-row:2!important;min-height:0!important;min-width:0!important;margin:0!important;border:0!important;border-radius:0!important;overflow:auto!important}',
+    '@media(max-width:767px){:host([data-spx-embedded="true"]) .app{inset:0!important;width:100vw!important;height:100vh!important}}'
+  ].join("\n");
+  shadow.appendChild(embeddedStyle);
+
+  function syncEmbeddedBounds() {
+    if (!state.embedded) return;
+    const title = document.querySelector("#spx-ops-native-menu > .ssc-menu-submenu-title");
+    const rect = title?.getBoundingClientRect();
+    const left = rect?.width > 0 && rect.right < window.innerWidth - 200
+      ? Math.round(rect.right) : 0;
+    let top = 0;
+    document.querySelectorAll("header,.ssc-header,.main-header,.app-header").forEach(element => {
+      const r = element.getBoundingClientRect();
+      if (r.top >= 0 && r.top < 5 && r.bottom <= 140 &&
+          r.width >= window.innerWidth * 0.6) top = Math.max(top, Math.round(r.bottom));
+    });
+    host.style.setProperty("--spx-ops-left", Math.max(0,left) + "px");
+    host.style.setProperty("--spx-ops-top", top + "px");
+  }
+
+  window.addEventListener("SPX_OPS_OPEN", event => {
+    const tab = String(event.detail?.tab || "");
+    if (!["fms","delivery","delivery-month","pickup"].includes(tab)) return;
+    state.embedded = true;
+    state.open = true;
+    state.activeTab = tab;
+    state.drawerOpen = false;
+    state.picker = false;
+    host.setAttribute("data-spx-embedded","true");
+    syncEmbeddedBounds();
+    render();
+  });
+  window.addEventListener("SPX_OPS_NATIVE_NAV", () => {
+    if (!state.embedded) return;
+    state.embedded = false;
+    state.open = false;
+    host.removeAttribute("data-spx-embedded");
+    render();
+  });
+  window.addEventListener("SPX_OPS_MENU_READY", () => {
+    if (!state.open) render();
+  });
+  window.addEventListener("resize", syncEmbeddedBounds);
+
+
   function appHeaderHtml() {
     return `<header class="header">
       <button class="menu-btn" data-menu-open aria-label="Mở menu">${icon("menu",21)}</button>
@@ -2242,6 +2297,7 @@
 
   function render() {
     if (!state.open) {
+      if (document.getElementById("spx-ops-native-menu")) { root.innerHTML = ""; return; }
       root.innerHTML = `<button class="launch" data-open aria-label="Mở SPX Tools" title="SPX Tools">${APP_ICON_URL ? `<img class="launch-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",20)}</button>`;
       return;
     }
@@ -2503,6 +2559,9 @@
       state.picker = false;
       state.delivery.previewOpen = false;
       state.open = false;
+      state.embedded = false;
+      host.removeAttribute("data-spx-embedded");
+      window.dispatchEvent(new Event("SPX_OPS_CLOSED"));
       render();
       return;
     }

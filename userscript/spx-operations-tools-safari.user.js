@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SPX Operations Tools - Safari
 // @namespace    https://github.com/taimesut/uyen-ni-extension
-// @version      2.0.0.0
+// @version      2.1.0.0
 // @description  FMS, Pickup, Delivery Performance ngày/tháng và SeaTalk trực tiếp trên SPX.
 // @author       taimesut
 // @match        https://spx.shopee.vn/*
@@ -2588,6 +2588,61 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
   const root = document.createElement("div");
   shadow.appendChild(root);
 
+  // Native SPX menu: render our existing pages to the right of its sidebar.
+  const embeddedStyle = document.createElement("style");
+  embeddedStyle.id = "spx-native-embedded-style";
+  embeddedStyle.textContent = [
+    ':host([data-spx-embedded="true"]) .launch{display:none!important}',
+    ':host([data-spx-embedded="true"]) .app{position:fixed!important;inset:auto 0 0 var(--spx-ops-left,220px)!important;top:var(--spx-ops-top,0px)!important;width:auto!important;height:auto!important;max-width:none!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:48px minmax(0,1fr)!important;z-index:2147483645!important}',
+    ':host([data-spx-embedded="true"]) .drawer-overlay{display:none!important}',
+    ':host([data-spx-embedded="true"]) .header{grid-column:1!important;grid-row:1!important;display:flex!important;justify-content:flex-end!important}',
+    ':host([data-spx-embedded="true"]) .menu-btn{display:none!important}',
+    ':host([data-spx-embedded="true"]) .ops-main{grid-column:1!important;grid-row:2!important;min-height:0!important;min-width:0!important;margin:0!important;border:0!important;border-radius:0!important;overflow:auto!important}',
+    '@media(max-width:767px){:host([data-spx-embedded="true"]) .app{inset:0!important;width:100vw!important;height:100vh!important}}'
+  ].join("\n");
+  shadow.appendChild(embeddedStyle);
+
+  function syncEmbeddedBounds() {
+    if (!state.embedded) return;
+    const title = document.querySelector("#spx-ops-native-menu > .ssc-menu-submenu-title");
+    const rect = title?.getBoundingClientRect();
+    const left = rect?.width > 0 && rect.right < window.innerWidth - 200
+      ? Math.round(rect.right) : 0;
+    let top = 0;
+    document.querySelectorAll("header,.ssc-header,.main-header,.app-header").forEach(element => {
+      const r = element.getBoundingClientRect();
+      if (r.top >= 0 && r.top < 5 && r.bottom <= 140 &&
+          r.width >= window.innerWidth * 0.6) top = Math.max(top, Math.round(r.bottom));
+    });
+    host.style.setProperty("--spx-ops-left", Math.max(0,left) + "px");
+    host.style.setProperty("--spx-ops-top", top + "px");
+  }
+
+  window.addEventListener("SPX_OPS_OPEN", event => {
+    const tab = String(event.detail?.tab || "");
+    if (!["fms","delivery","delivery-month","pickup"].includes(tab)) return;
+    state.embedded = true;
+    state.open = true;
+    state.activeTab = tab;
+    state.drawerOpen = false;
+    state.picker = false;
+    host.setAttribute("data-spx-embedded","true");
+    syncEmbeddedBounds();
+    render();
+  });
+  window.addEventListener("SPX_OPS_NATIVE_NAV", () => {
+    if (!state.embedded) return;
+    state.embedded = false;
+    state.open = false;
+    host.removeAttribute("data-spx-embedded");
+    render();
+  });
+  window.addEventListener("SPX_OPS_MENU_READY", () => {
+    if (!state.open) render();
+  });
+  window.addEventListener("resize", syncEmbeddedBounds);
+
+
   function appHeaderHtml() {
     return `<header class="header">
       <button class="menu-btn" data-menu-open aria-label="Mở menu">${icon("menu",21)}</button>
@@ -3575,6 +3630,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
 
   function render() {
     if (!state.open) {
+      if (document.getElementById("spx-ops-native-menu")) { root.innerHTML = ""; return; }
       root.innerHTML = `<button class="launch" data-open aria-label="Mở SPX Tools" title="SPX Tools">${APP_ICON_URL ? `<img class="launch-icon" src="${esc(APP_ICON_URL)}" alt="">` : icon("app",20)}</button>`;
       return;
     }
@@ -3836,6 +3892,9 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
       state.picker = false;
       state.delivery.previewOpen = false;
       state.open = false;
+      state.embedded = false;
+      host.removeAttribute("data-spx-embedded");
+      window.dispatchEvent(new Event("SPX_OPS_CLOSED"));
       render();
       return;
     }
@@ -4240,4 +4299,156 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
   render();
   seatalkLoadWebhook();
   post("SPX_FMS_PING");
+})();
+
+// ---- SPX native sidebar menu ----
+
+(() => {
+  "use strict";
+  if (window.__SPX_OPS_MENU_SCRIPT__) return;
+  window.__SPX_OPS_MENU_SCRIPT__ = true;
+
+  const ID = "spx-ops-native-menu";
+  const items = [
+    ["fms", "FMS Audit"],
+    ["delivery", "Delivery Performance"],
+    ["delivery-month", "Delivery Performance (Month)"],
+    ["pickup", "Pickup Assignment"]
+  ];
+  let menu = null;
+  let expanded = false;
+  let active = "";
+  let queued = false;
+
+  function installStyle() {
+    if (document.getElementById("spx-ops-menu-style") || !document.head) return;
+    const style = document.createElement("style");
+    style.id = "spx-ops-menu-style";
+    style.textContent = [
+      "#" + ID + "{list-style:none;border-top:1px solid transparent;border-bottom:1px solid transparent;color:rgba(255,255,255,.7)}",
+      "#" + ID + ">.ssc-menu-submenu-title{min-height:44px;display:flex;align-items:center;gap:12px;padding:0 14px;cursor:pointer;color:inherit}",
+      "#" + ID + " .title-icon{width:24px;height:24px;flex-shrink:0}",
+      "#" + ID + " .sub-menu-title{flex:1}",
+      "#" + ID + " .submenu-icon{width:20px;height:20px;transition:transform .15s}",
+      "#" + ID + ".ssc-menu-opened .submenu-icon{transform:rotate(180deg)}",
+      "#" + ID + ">ul.ssc-menu{list-style:none;margin:0;padding:0;background:#0e1723}",
+      "#" + ID + " button.ssc-menu-item{display:block;box-sizing:border-box;width:100%;min-height:40px;border:0;border-radius:0;padding:10px 10px 10px 44px;background:transparent;text-align:left;color:rgba(255,255,255,.7);font:inherit;font-size:14px;cursor:pointer}",
+      "#" + ID + " button.ssc-menu-item:hover{background:rgba(255,255,255,.08);color:#fff}",
+      "#" + ID + " button.ssc-menu-item.ssc-menu-item-active{background:#ee4d2d;color:#fff}",
+      "#" + ID + " button:focus-visible,#" + ID + " [role=button]:focus-visible{outline:2px solid #ee4d2d;outline-offset:-2px}"
+    ].join("\n");
+    document.head.appendChild(style);
+  }
+
+  function outboundMenu() {
+    for (const li of document.querySelectorAll("li.ssc-menu-submenu")) {
+      if (li.id === ID || li.closest("#" + ID)) continue;
+      const label = li.querySelector(":scope > .ssc-menu-submenu-title > .sub-menu-title");
+      if (label?.textContent.trim() === "Outbound") return li;
+    }
+    return null;
+  }
+
+  function redraw() {
+    if (!menu?.isConnected) return;
+    menu.classList.toggle("ssc-menu-opened", expanded);
+    menu.style.background = expanded ? "#0e1723" : "";
+    const title = menu.querySelector(":scope > .ssc-menu-submenu-title");
+    const list = menu.querySelector(":scope > ul.ssc-menu");
+    title?.setAttribute("aria-expanded", String(expanded));
+    if (list) list.style.display = expanded ? "block" : "none";
+    menu.querySelectorAll("[data-spx-tool]").forEach(button => {
+      const current = button.dataset.spxTool === active;
+      button.classList.toggle("ssc-menu-item-active", current);
+      if (current) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    });
+  }
+
+  function createMenu() {
+    const li = document.createElement("li");
+    li.id = ID;
+    li.className = "submenu ssc-menu-submenu";
+    const title = document.createElement("div");
+    title.className = "ssc-menu-submenu-title";
+    title.tabIndex = 0;
+    title.setAttribute("role", "button");
+    title.setAttribute("aria-label", "OPS Tools");
+    title.innerHTML =
+      '<svg class="title-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 13h7v7H4zm9 0h7v7h-7z"/></svg>' +
+      '<span class="sub-menu-title">OPS Tools</span>' +
+      '<span class="ssc-menu-submenu-title-icon"><svg class="submenu-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m7 10 5 5 5-5-1.4-1.4L12 12.2 8.4 8.6z"/></svg></span>';
+    const list = document.createElement("ul");
+    list.className = "ssc-menu";
+    items.forEach(([tab, label]) => {
+      const wrapper = document.createElement("div");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "submenu-item ssc-menu-item";
+      button.dataset.spxTool = tab;
+      button.textContent = label;
+      wrapper.appendChild(button);
+      list.appendChild(wrapper);
+    });
+    li.append(title, list);
+    function toggle(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      expanded = !expanded;
+      redraw();
+    }
+    title.addEventListener("click", toggle);
+    title.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") toggle(event);
+    });
+    list.addEventListener("click", event => {
+      const button = event.target instanceof Element ? event.target.closest("[data-spx-tool]") : null;
+      if (!button) return;
+      event.preventDefault();
+      event.stopPropagation();
+      active = button.dataset.spxTool;
+      expanded = true;
+      redraw();
+      window.dispatchEvent(new CustomEvent("SPX_OPS_OPEN", {detail:{tab:active}}));
+    });
+    return li;
+  }
+
+  function attach() {
+    queued = false;
+    if (menu?.isConnected) return;
+    const anchor = outboundMenu();
+    if (!anchor?.parentElement) return;
+    installStyle();
+    menu = document.getElementById(ID) || createMenu();
+    anchor.insertAdjacentElement("afterend", menu);
+    redraw();
+    window.dispatchEvent(new Event("SPX_OPS_MENU_READY"));
+  }
+
+  function queueAttach() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(attach);
+  }
+  new MutationObserver(() => {
+    if (!menu?.isConnected) queueAttach();
+  }).observe(document.documentElement, {childList:true, subtree:true});
+  queueAttach();
+
+  function closeOnNativeNavigation() {
+    if (!active) return;
+    active = "";
+    redraw();
+    window.dispatchEvent(new Event("SPX_OPS_NATIVE_NAV"));
+  }
+  document.addEventListener("click", event => {
+    const anchor = event.target instanceof Element ? event.target.closest('a[href^="#/"]') : null;
+    if (anchor && !anchor.closest("#" + ID)) closeOnNativeNavigation();
+  }, true);
+  window.addEventListener("hashchange", closeOnNativeNavigation);
+  window.addEventListener("SPX_OPS_CLOSED", () => {
+    active = "";
+    redraw();
+  });
 })();

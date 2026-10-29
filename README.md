@@ -19,6 +19,7 @@ userscript/safari-bootstrap.js   -> metadata + Safari GM / chrome compatibility
 extension/bridge.js              -> same-origin SPX API bridge
 extension/status-data.js         -> order statuses
 extension/ui.js                  -> responsive UI and business logic
+extension/menu.js                -> native SPX sidebar menu
   => userscript/spx-operations-tools-safari.user.js
 ```
 
@@ -27,3 +28,7 @@ Builder đọc version từ `extension/manifest.json`, và đồng bộ `@versio
 **Không chỉnh sửa file `.user.js` đầu ra bằng tay** vì lần build sau sẽ ghi đè. Cập nhật `extension/` khi thay đổi nghiệp vụ/UI; nếu cần thay đổi cơ chế chạy hoặc metadata của userscript, chỉnh `userscript/safari-bootstrap.js`.
 
 Chrome Extension vẫn cài trực tiếp bằng `Load unpacked` → `extension/`; không cần build.
+
+## Tích hợp menu gốc SPX
+
+Bản Extension và Safari Userscript chèn **OPS Tools** sau **Outbound**, gồm FMS Audit, Delivery Performance (ngày/tháng) và Pickup Assignment. Khi mở từ menu mới, trang công cụ hiển thị bên phải sidebar SPX. Có thể quay về SPX bằng nút đóng hoặc chuyển sang mục menu gốc. Nếu SPX thay đổi DOM menu, launcher cũ vẫn được dùng làm dự phòng.
