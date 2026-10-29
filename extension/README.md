@@ -209,3 +209,8 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 
 - Đổi nhãn nhóm menu gốc SPX từ **OPS Tools** thành **Uyển Ni**.
 - Giữ nguyên các mục con và nghiệp vụ hiện có.
+
+## v2.1.2 - Icon bông hoa cho Uyển Ni
+
+- Thay biểu tượng 4 ô vuông của nhóm menu **Uyển Ni** bằng bông hoa năm cánh SVG, cùng màu với menu SPX.
+- Giữ nguyên biểu tượng của Chrome Extension và các chức năng con.

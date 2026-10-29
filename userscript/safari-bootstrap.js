@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SPX Operations Tools - Safari
 // @namespace    https://github.com/taimesut/uyen-ni-extension
-// @version      2.1.1.0
+// @version      2.1.2.0
 // @description  FMS, Pickup, Delivery Performance ngày/tháng và SeaTalk trực tiếp trên SPX.
 // @author       taimesut
 // @match        https://spx.shopee.vn/*
