@@ -10,7 +10,7 @@
   const STATUS_MAP = new Map(STATUSES.map(x => [String(x.code), x.name]));
   const DEFAULT_STATUSES = ["880", "36", "15"];
   const PAGE_SIZE = 25;
-  const PICKUP_ADDRESS_CACHE_KEY = "spxPickupAddressCacheV1";
+  const PICKUP_ADDRESS_CACHE_KEY = "spxPickupAddressCacheV2";
   const PICKUP_ADDRESS_CACHE_TTL = 3 * 24 * 60 * 60 * 1000;
   const APP_ICON_URL = globalThis.chrome?.runtime?.getURL
     ? chrome.runtime.getURL("icons/icon-48.png")

@@ -551,7 +551,7 @@
     if (pickupOrderType === 0) {
       dataField = "seller_addr";
     } else if (pickupOrderType === 5) {
-      dataField = "buyer_addr";
+      dataField = "seller_addr";
     } else {
       throw new Error(
         "Không hỗ trợ pickup_order_type=" + String(order?.pickup_order_type ?? "")

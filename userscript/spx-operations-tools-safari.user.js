@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SPX Operations Tools - Safari
 // @namespace    https://github.com/taimesut/uyen-ni-extension
-// @version      2.1.2.0
+// @version      2.1.3.0
 // @description  FMS, Pickup, Delivery Performance ngày/tháng và SeaTalk trực tiếp trên SPX.
 // @author       taimesut
 // @match        https://spx.shopee.vn/*
@@ -912,7 +912,7 @@
     if (pickupOrderType === 0) {
       dataField = "seller_addr";
     } else if (pickupOrderType === 5) {
-      dataField = "buyer_addr";
+      dataField = "seller_addr";
     } else {
       throw new Error(
         "Không hỗ trợ pickup_order_type=" + String(order?.pickup_order_type ?? "")
@@ -1343,7 +1343,7 @@ globalThis.SPX_FMS_STATUS_OPTIONS = [{"code":"0","name":"Created"},{"code":"1","
   const STATUS_MAP = new Map(STATUSES.map(x => [String(x.code), x.name]));
   const DEFAULT_STATUSES = ["880", "36", "15"];
   const PAGE_SIZE = 25;
-  const PICKUP_ADDRESS_CACHE_KEY = "spxPickupAddressCacheV1";
+  const PICKUP_ADDRESS_CACHE_KEY = "spxPickupAddressCacheV2";
   const PICKUP_ADDRESS_CACHE_TTL = 3 * 24 * 60 * 60 * 1000;
   const APP_ICON_URL = globalThis.chrome?.runtime?.getURL
     ? chrome.runtime.getURL("icons/icon-48.png")

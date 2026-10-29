@@ -110,7 +110,7 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 - Thêm mục **Pickup Assignment** trong drawer navigation.
 - Lấy danh sách đơn từ `/api/admin/pickup/fm_hub/pickup_order/search` với `status=2` và dùng `assigned_count` làm số đơn thực tế.
 - Mỗi đơn hiển thị mã SPX, ETA, số lần pickup, loại đơn, điểm pickup, địa chỉ, tài xế, thời gian xử lý gần nhất và lý do/trạng thái.
-- `pickup_order_type=0` lấy `seller_addr`; `pickup_order_type=5` lấy `buyer_addr`.
+- `pickup_order_type=0` lấy `seller_addr`; `pickup_order_type=5` lấy `seller_addr`.
 - Tài xế lấy từ `pickup_info`, ưu tiên `pickup_driver_name` có `ctime` mới nhất.
 - Có filter riêng cho từng cột và phân trang 25 dòng.
 - Detail được lấy theo batch nhỏ, retry khi SPX trả 429/503; lỗi detail của một shipment không làm hỏng toàn bộ bảng.
@@ -157,7 +157,7 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 ## v1.8.2 - Pickup Address & Driver Logic
 
 - `pickup_order_type = 0` → `seller_addr`.
-- `pickup_order_type = 5` → `buyer_addr`.
+- `pickup_order_type = 5` → `seller_addr`.
 - Không tự suy đoán địa chỉ cho các pickup type khác.
 - Tài xế lấy từ `pickup_order_tracking[].pickup_driver_name` có `ctime` gần thời điểm hiện tại nhất.
 - Chỉ fallback sang `driver_name[0]` nếu không có tracking driver.
@@ -214,3 +214,9 @@ Chrome Extension chạy trực tiếp trên `https://spx.shopee.vn/` bằng sess
 
 - Thay biểu tượng 4 ô vuông của nhóm menu **Uyển Ni** bằng bông hoa năm cánh SVG, cùng màu với menu SPX.
 - Giữ nguyên biểu tượng của Chrome Extension và các chức năng con.
+
+## v2.1.3 - Reverse Pickup address
+
+- Reverse (`pickup_order_type=5`) lấy `seller_addr` thay vì `buyer_addr`.
+- Pickup thường (`pickup_order_type=0`) vẫn lấy `seller_addr`.
+- Đổi địa chỉ cache sang `spxPickupAddressCacheV2` để tải lại địa chỉ, tránh hiển thị `buyer_addr` đã lưu trong cache cũ; TTL vẫn 3 ngày.
