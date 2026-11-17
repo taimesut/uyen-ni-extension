@@ -12,7 +12,7 @@
   const PAGE_SIZE = 25;
   const PICKUP_ADDRESS_CACHE_KEY = "spxPickupAddressCacheV2";
   const PICKUP_ADDRESS_CACHE_TTL = 3 * 24 * 60 * 60 * 1000;
-  const APP_ICON_URL = globalThis.chrome?.runtime?.getURL
+  const APP_ICON_URL = chrome?.runtime?.getURL
     ? chrome.runtime.getURL("icons/icon-48.png")
     : "";
 
@@ -2056,7 +2056,7 @@
 
   function loadPickupAddressCache() {
     return new Promise((resolve) => {
-      const storage = globalThis.chrome?.storage?.local;
+      const storage = chrome?.storage?.local;
       if (!storage?.get) {
         resolve({});
         return;
@@ -2096,7 +2096,7 @@
     }
 
     return new Promise((resolve) => {
-      const storage = globalThis.chrome?.storage?.local;
+      const storage = chrome?.storage?.local;
       if (!storage?.set) {
         resolve(validRows.map((row) => ({
           ...row,
@@ -2756,7 +2756,7 @@
   }
 
   function seatalkLoadWebhook() {
-    if (!globalThis.chrome?.storage?.local) {
+    if (!chrome?.storage?.local) {
       state.delivery.seatalkLoaded = true;
       return;
     }

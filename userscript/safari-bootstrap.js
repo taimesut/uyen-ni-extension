@@ -12,11 +12,15 @@
 // @grant        GM.setValue
 // @grant        GM.deleteValue
 // @grant        GM.xmlHttpRequest
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_xmlhttpRequest
 // @connect      openapi.seatalk.io
 // @connect      spx.shopee.vn
 // @icon         https://raw.githubusercontent.com/taimesut/uyen-ni-extension/main/extension/icons/icon-48.png
 // @downloadURL  https://raw.githubusercontent.com/taimesut/uyen-ni-extension/main/userscript/spx-operations-tools-safari.user.js
-// @updateURL    https://raw.githubusercontent.com/taimesut/uyen-ni-extension/main/userscript/spx-operations-tools-safari.user.js
+// @updateURL    https://raw.githubusercontent.com/taimesut/uyen-ni-extension/main/userscript/spx-operations-tools-safari.meta.js
 // ==/UserScript==
 
 
@@ -28,7 +32,30 @@
   // The extension UI expects chrome.storage.local + chrome.runtime.sendMessage.
   // This userscript maps those calls to GM APIs so the same UI/business logic can run unchanged.
 
-  const GM_API = globalThis.GM || {};
+  // Modern GM.* APIs and legacy GM_* APIs (Safari/Tampermonkey/Violentmonkey).
+  const MODERN = globalThis.GM || {};
+  const GM_API = {
+    getValue: typeof MODERN.getValue === "function"
+      ? MODERN.getValue.bind(MODERN)
+      : (typeof globalThis.GM_getValue === "function"
+          ? (key, fallback) => Promise.resolve(globalThis.GM_getValue(key, fallback))
+          : null),
+    setValue: typeof MODERN.setValue === "function"
+      ? MODERN.setValue.bind(MODERN)
+      : (typeof globalThis.GM_setValue === "function"
+          ? (key, value) => Promise.resolve(globalThis.GM_setValue(key, value))
+          : null),
+    deleteValue: typeof MODERN.deleteValue === "function"
+      ? MODERN.deleteValue.bind(MODERN)
+      : (typeof globalThis.GM_deleteValue === "function"
+          ? key => Promise.resolve(globalThis.GM_deleteValue(key))
+          : null),
+    xmlHttpRequest: typeof MODERN.xmlHttpRequest === "function"
+      ? MODERN.xmlHttpRequest.bind(MODERN)
+      : (typeof globalThis.GM_xmlhttpRequest === "function"
+          ? globalThis.GM_xmlhttpRequest.bind(globalThis)
+          : null)
+  };
 
   function normalizeKeys(keys) {
     if (Array.isArray(keys)) return keys;
@@ -327,32 +354,10 @@
     }
   };
 
-  const existingChrome =
-    globalThis.chrome &&
-    typeof globalThis.chrome === "object"
-      ? globalThis.chrome
-      : {};
-
-  existingChrome.storage =
-    existingChrome.storage || {};
-
-  existingChrome.storage.local =
-    storageLocal;
-
-  existingChrome.runtime =
-    runtime;
-
-  try {
-    globalThis.chrome =
-      existingChrome;
-  } catch (_) {
-    Object.defineProperty(
-      globalThis,
-      "chrome",
-      {
-        value: existingChrome,
-        configurable: true
-      }
-    );
-  }
+  // Never overwrite the native chrome object provided by a browser or manager.
+  // The builder binds this shim lexically for all four extension modules.
+  globalThis.__SPX_USERSCRIPT_CHROME__ = {
+    storage: { local: storageLocal },
+    runtime
+  };
 })();
